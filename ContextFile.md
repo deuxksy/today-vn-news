@@ -59,27 +59,11 @@
 - **TTS:** edge-tts (Voice: `vi-VN-HoaiMyNeural` 또는 `vi-VN-NamMinhNeural`)
 - **Video:** FFmpeg (VAAPI/VideoToolbox 기반 하드웨어 인코딩)
 
-## 4. 운영 가이드라인 (Vibe Coding Principles)
-
-- **KISS (Keep It Simple, Stupid):** 초기 MVP 단계에서 불필요한 클래스 추상화보다 기능 구현에 집중한다.
-- **Efficiency:** 24시간 가동되는 Steam Deck의 자원을 효율적으로 사용하도록 배치 프로세스를 설계한다.
-- **Safety:** 사용자의 건강(궤양성 대장염)과 직결된 정보 누락을 방지하기 위한 필터링 로직을 최우선으로 검증한다.
-
-## 5. 실행 주체별 역할 (Execution Roles)
-
-- **Gemini (AI Architect):** 시스템 설계, 비즈니스 로직 정의, 코드 작성 가이드라인 제공.
-- **Antigravity (AI Coder):** Gemini의 설계를 바탕으로 실질적인 Python/Bash 코드 구현 및 최적화.
-
-## 6. Antigravity를 위한 코딩 원칙
-
-- 하드웨어 가속(VAAPI, VideoToolbox) 옵션을 기기 환경에 맞춰 조건부로 적용한다.
-- 한국어 주석을 상세히 달고, Crong의 Git 커밋 메시지 규칙을 준수한다.
-
-## 7. 일간지별 데이터 수집 모듈 상세 명세 (Gemini CLI Wrapper)
+## 4. 일간지별 데이터 수집 모듈 상세 명세 (Gemini CLI Wrapper)
 
 모든 데이터는 Gemini CLI를 통해 정제되며, **TTS 최적화(특수문자/영어 제거)**를 거쳐 `/mnt/nas/data/{YYMMDD}.md` 파일에 Append 됩니다.
 
-### 7.1 안전 및 기상 관제 (Safety & Weather)
+### 4.1 안전 및 기상 관제 (Safety & Weather)
 
 - **목적:** 실시간 기상 특보 및 공기질 데이터 제공을 통한 사용자 신체 안전 및 컨디션 관리 지원.
 - **데이터 소스:** NCHMF(국립기상예보센터), IGP-VAST(지질연구소), IQAir(Ho Chi Minh City 실시간 데이터).
@@ -95,7 +79,7 @@
   - **변환:** 32°C → '32도', 80% → '80퍼센트' 등 음독 처리 (Gemini 프롬프트에서 강제).
 - **가중치**: Critical (P0)
 
-### 7.2 Nhân Dân (정부 기관지)
+### 4.2 Nhân Dân (정부 기관지)
 
 - **목적:** 베트남 공산당 및 정부의 공식 입장, 신규 법령, 행정 절차(비자, 거주증) 정보 수집.
 - **데이터 소스:** [Nhân Dân](https://nhandan.vn/)
@@ -103,7 +87,7 @@
 - **TTS 최적화:** 부서명 및 직함 등 복잡한 한자어 명칭을 명확한 한글 발음으로 정제.
 - **가중치**: High (P1)
 
-### 7.3 Sức khỏe & Đời sống (건강/위생)
+### 4.3 Sức khỏe & Đời sống (건강/위생)
 
 - **목적:** **[통합 안전 관제 핵심]** 보건부 산하 매체로 식품 위생 위반 사례, 알레르기 유발 정보, 질병 주의보 수집.
 - **데이터 소스:** [Sức khỏe & Đời sống](https://suckhoedoisong.vn/)
@@ -111,7 +95,7 @@
 - **TTS 최적화:** '궤양성 대장염' 등 사용자 맞춤형 키워드 강조, 의학 전문 용어 순화.
 - **가중치**: Critical (P0)
 
-### 7.4 VnExpress (종합 속보)
+### 4.4 VnExpress (종합 속보)
 
 - **목적:** 베트남 최대 뉴스 포털로서 가장 빠른 전국구 이슈 및 글로벌 경제 뉴스 수집.
 - **데이터 소스:** [의심스러운 링크 삭제됨]
@@ -119,7 +103,7 @@
 - **TTS 최적화:** 기사 서두의 지역명(예: 하노이, 호치민) 및 날짜 정보 간소화.
 - **가중치**: Normal (P2)
 
-### 7.5 Tuổi Trẻ (로컬/시정)
+### 4.5 Tuổi Trẻ (로컬/시정)
 
 - **목적:** 호치민(HCMC) 중심의 시정 소식, 주요 도로 통제, 랜드마크 2 인근 이벤트 수집.
 - **데이터 소스:** [Tuổi Trẻ](https://tuoitre.vn/)
@@ -127,7 +111,7 @@
 - **TTS 최적화:** 베트남어 성조가 포함된 거리명 등을 한국어 독음으로 변환 (예: Quận 1 -> 1군).
 - **가중치**: Normal (P2)
 
-### 7.6 Thanh Niên (사회/청년)
+### 4.6 Thanh Niên (사회/청년)
 
 - **목적:** 대중적 관심사가 높은 트렌드, 사회 현상 및 독자 제보 뉴스 수집.
 - **데이터 소스:** [Thanh Niên](https://thanhnien.vn/)
@@ -135,7 +119,7 @@
 - **TTS 최적화:** 불필요한 수식어 및 자극적인 문장 부호(!!!, ???) 제거.
 - **가중치**: Normal (P2)
 
-### 7.7 ICTNews (IT/Tech)
+### 4.7 ICTNews (IT/Tech)
 
 - **목적:** 베트남 IT 산업 동향, **Java/Spring 개발 시장**, Cloud(AWS) 도입 현황 수집.
 - **데이터 소스:** [ICTNews](https://vietnamnet.vn/ict)
@@ -143,7 +127,7 @@
 - **TTS 최적화:** 영어 약어 한글화 (예: AWS -> 에이더블유에스, SaaS -> 사스).
 - **가중치**: Normal (P2)
 
-### 7.8 The Saigon Times (경제)
+### 4.8 The Saigon Times (경제)
 
 - **목적:** 경제 전문지로 환율, 물가, 호치민 부동산 및 투자 동향 수집.
 - **데이터 소스:** [The Saigon Times](https://thesaigontimes.vn/)

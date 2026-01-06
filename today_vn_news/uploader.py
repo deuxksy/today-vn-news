@@ -10,7 +10,7 @@ from googleapiclient.http import MediaFileUpload
 """
 YouTube 업로드 모듈 (YouTube Data API v3 Wrapper)
 - 목적: 생성된 뉴스 영상을 유튜브 채널에 자동 업로드
-- 상세 사양: ContextFile.md 3.1, 4단계 배포 참조
+- 상세 사양: ContextFile.md 3.1 (인프라) 참조
 - 필요 파일: client_secrets.json (OAuth2 자격 증명)
 """
 

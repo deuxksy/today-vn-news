@@ -108,7 +108,7 @@ python main.py 260106
 ## 🛠️ 핵심 최적화 지침
 
 - **Zero-Noise:** 뉴스 리포트 내 AI의 메타 정보(진행 멘트 등) 자동 제거 로직 적용.
-- **SOP 순서 준수:** `ContextFile.md`에 명시된 7.1~7.8 섹션 순서대로 수집 및 정렬.
+- **SOP 순서 준수:** `ContextFile.md`에 명시된 4.1~4.8 섹션 순서대로 수집 및 정렬.
 - **Hardware Accel:** 기기별(Mac/Steam Deck) 최적화된 하드웨어 인코더 자동 선택.
 
 ## ⚖️ 라이선스

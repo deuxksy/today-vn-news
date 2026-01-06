@@ -7,7 +7,7 @@ import re
 """
 TTS 변환 모듈 (edge-tts Wrapper)
 - 목적: 마크다운 파일의 텍스트를 추출하여 MP3 음성 파일로 변환
-- 상세 사양: ContextFile.md 3.2 참조
+- 상세 사양: ContextFile.md 3.2 (기술 스택) 및 4장 (TTS 최적화 등) 참조
 """
 
 async def generate_tts(text: str, output_path: str, voice: str = "ko-KR-SunHiNeural"):

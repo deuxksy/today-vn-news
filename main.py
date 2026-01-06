@@ -56,19 +56,16 @@ async def main():
         print(f"\n[*] 3단계: 최종 영상이 이미 존재합니다. ({final_video})")
 
     # 4. 유튜브 업로드 (인증 완료 시까지 주석 처리)
-    # if os.path.exists(final_video):
-    #     print("\n[*] 4단계: 유튜브 업로드 시작...")
-    #     success = upload_video(yymmdd)
-    #     if success:
-    #         print("\n🎉 모든 파이프라인 작업이 성공적으로 완료되었습니다!")
-    #     else:
-    #         print("\n⚠️ 유튜브 업로드 단계에서 문제가 발생했습니다.")
-    # else:
-    #     print("\n[!] 4단계: 업로드할 최종 영상이 없어 종료합니다.")
-    
+    # 4. 유튜브 업로드
     if os.path.exists(final_video):
-        print(f"\n✅ 영상 생성이 완료되었습니다: {final_video}")
-        print("💡 유튜브 업로드는 인증 설정 완료 후 활성화 예정입니다.")
+        print("\n[*] 4단계: 유튜브 업로드 시작...")
+        success = upload_video(yymmdd)
+        if success:
+            print("\n🎉 모든 파이프라인 작업이 성공적으로 완료되었습니다!")
+        else:
+            print("\n⚠️ 유튜브 업로드 단계에서 문제가 발생했습니다.")
+    else:
+        print("\n[!] 4단계: 업로드할 최종 영상이 없어 종료합니다.")
 
     print("=" * 40)
 

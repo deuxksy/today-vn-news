@@ -6,25 +6,32 @@ import sys
 """
 영상 합성 엔진 (FFmpeg Wrapper)
 - 목적: 정제된 음성(MP3)과 배경 영상(MOV)을 합쳐 최종 뉴스 영상 생성
-- 상세 사양: ContextFile.md 3.1, 47절 및 6절 참조
+- 상세 사양: ContextFile.md 3.1 (인프라) 및 3.2 (기술 스택) 참조
 - 업데이트: 영상 오디오 제거, TTS 길이에 맞춰 영상 루프/컷 처리
 """
 
-def get_hw_encoder():
+def get_hw_encoder_config():
     """
-    현재 시스템 환경에 맞는 하드웨어 가속 인코더 반환
+    현재 시스템 환경에 맞는 하드웨어 가속 인코더 및 옵션 반환
+    Returns: (encoder_name, extra_input_flags, extra_output_flags)
     """
     if sys.platform == "darwin":
-        return "h264_videotoolbox"
+        return "h264_videotoolbox", [], []
     
+    # Linux (VAAPI check)
     try:
-        res = subprocess.run(["ffmpeg", "-encoders"], capture_output=True, text=True)
-        if "h264_vaapi" in res.stdout:
-            return "h264_vaapi"
+        # Check for renderD128 (common DRI render node)
+        if os.path.exists("/dev/dri/renderD128"):
+            res = subprocess.run(["ffmpeg", "-encoders"], capture_output=True, text=True)
+            if "h264_vaapi" in res.stdout:
+                # Steam Deck / Standard Linux VAAPI
+                # Input args: -vaapi_device /dev/dri/renderD128
+                # Output args: -vf format=nv12,hwupload
+                return "h264_vaapi", ["-vaapi_device", "/dev/dri/renderD128"], ["-vf", "format=nv12,hwupload"]
     except:
         pass
         
-    return "libx264"
+    return "libx264", [], []
 
 def synthesize_video(base_name: str, data_dir: str = "data"):
     """
@@ -40,9 +47,11 @@ def synthesize_video(base_name: str, data_dir: str = "data"):
         print(f"[!] 필수 입력 파일이 없습니다. (Video: {os.path.exists(video_in)}, Audio: {os.path.exists(audio_in)})")
         return False
 
-    encoder = get_hw_encoder()
+    encoder, input_flags, output_flags = get_hw_encoder_config()
     print(f"[*] 영상 합성 시작: {base_name}")
     print(f"[*] 사용 인코더: {encoder}")
+    if input_flags:
+        print(f"[*] 가속 옵션: {' '.join(input_flags)} {' '.join(output_flags)}")
     print("[*] 오디오 제거 및 TTS 길이 맞춤 설정 적용 중...")
 
     # FFmpeg 명령어 구성
@@ -54,19 +63,31 @@ def synthesize_video(base_name: str, data_dir: str = "data"):
     # -shortest: 입력 중 가장 짧은 스트림(여기서는 오디오)이 끝나면 종료
     # -fflags +genpts: 루프 시 타임스탬프 재생성
     cmd = [
-        "ffmpeg", "-y",
+        "ffmpeg", "-y"
+    ]
+    
+    # Add Hardware Device Flags (e.g. -vaapi_device ...)
+    cmd.extend(input_flags)
+    
+    cmd.extend([
         "-stream_loop", "-1",    # 영상 무한 루프 설정
         "-i", video_in,
         "-i", audio_in,
         "-map", "0:v:0",         # 비디오만 맵핑 (오디오 제거 효과)
         "-map", "1:a:0",         # TTS 오디오 맵핑
-        "-c:v", encoder,
+        "-c:v", encoder
+    ])
+    
+    # Add Output Filters (e.g. -vf format=nv12,hwupload)
+    cmd.extend(output_flags)
+    
+    cmd.extend([
         "-b:v", "5000k",
         "-c:a", "aac",
         "-shortest",             # TTS 오디오 길이에 맞춰 중단
         "-fflags", "+genpts",    # 루프 시 안정적인 타임스탬프 생성
         video_out
-    ]
+    ])
 
     try:
         process = subprocess.run(cmd, capture_output=True, text=True)

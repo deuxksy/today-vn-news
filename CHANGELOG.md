@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1] - 2026-01-06 [Internal]
+
+### Changed
+
+- **Linux/Steam Deck 최적화**: `engine.py`의 VAAPI 가속 로직을 개선하여 SteamOS 호환성 확보 (`-vaapi_device` 플래그 추가).
+- **파이프라인 완전 가동**: `main.py`의 유튜브 업로드 로직 주석 해제 및 정식 활성화.
+- **문서 정합성 수정**: `ContextFile.md` 구조 변경(4장)에 발맞춰 Python 모듈 내 Docstring 참조 일괄 업데이트.
+
 ## [0.4.0] - 2026-01-06 [GitHub]
 
 ### Added

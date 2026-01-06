@@ -14,6 +14,8 @@
 - **프로젝트명**: today-vn-news
 - **핵심 가치**: 분산 인프라를 활용한 베트남 뉴스 제작 자동화 및 개인화된 정보(건강/IT) 큐레이션.
 - **Development Philosophy**: **Vibe Coding**. 격식보다는 속도와 실질적인 결과물을 우선하며, AI와 아키텍트 간의 기민한 협업을 지향한다.
+  - **KISS (Keep It Simple, Stupid)**: 초기 MVP 단계에서 불필요한 클래스 추상화보다 기능 구현에 집중한다.
+  - **Efficiency**: 24시간 가동되는 Steam Deck의 자원을 효율적으로 사용하도록 배치 프로세스를 설계한다.
 
 ## 2. Global Coding Standards (Senior Engineer Style)
 
@@ -36,6 +38,9 @@
   - **기술적 정확성**: 하드웨어 가속 설정 및 Linux(SteamOS/Fedora) 환경 호환성.
   - **비즈니스 목적**: 베트남 IT 시장 동향 및 호치민 로컬 뉴스 큐레이션.
 - **권한 요청**: `ContextFile.md`를 제외한 모든 파일 및 작업(삭제, 수정 등)은 사용자의 별도 승인 없이 자율적으로 수행한다. 단, `ContextFile.md`를 수정하거나 삭제할 때만 반드시 사용자의 명시적 승인을 요청한다.
+- **실행 주체별 역할 (Execution Roles)**:
+  - **Gemini (AI Architect)**: 시스템 설계, 비즈니스 로직 정의, 코드 작성 가이드라인 제공.
+  - **Antigravity (AI Coder)**: Gemini의 설계를 바탕으로 실질적인 Python/Bash 코드 구현 및 최적화.
 
 ## 5. Git Flow & Guidelines
 
