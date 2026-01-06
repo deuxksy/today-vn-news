@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7] - 2026-01-06
+
+### Changed
+
+- AI 작업 권한 전면 시행: `ContextFile.md` 제외 모든 파일(`README.md` 포함) 및 로컬 Git 작업(`add`, `commit`) 자율화.
+- Git 운영 정책 확정: 수시 커밋은 AI가 담당, 푸시(`push`)만 사용자 승인 체계로 고정.
+
 ## [0.1.6] - 2026-01-06
 
 ### Changed
