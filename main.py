@@ -3,10 +3,14 @@ import asyncio
 import datetime
 import os
 import sys
+from dotenv import load_dotenv
 from today_vn_news.collector import fetch_it_news
 from today_vn_news.tts import md_to_tts
 from today_vn_news.engine import synthesize_video
 from today_vn_news.uploader import upload_video
+
+# .env 파일 로드
+load_dotenv()
 
 async def main():
     """
