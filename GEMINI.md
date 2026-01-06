@@ -35,7 +35,8 @@ today-vn-news/
 │   ├── __init__.py
 │   ├── collector.py    # IT 뉴스 수집 모듈
 │   ├── tts.py          # edge-tts 기반 음성 변환 모듈
-│   └── engine.py       # MD 파서 + FFmpeg 통합 실행 엔진
+│   ├── engine.py       # MD 파서 + FFmpeg 통합 실행 엔진
+│   └── uploader.py      # YouTube Data API v3 영상 업로드 모듈
 ├── main.py             # [Entry] 프로그램 통합 실행 포인트
 └── requirements.txt    # 의존성 관리 (edge-tts 등)
 ```

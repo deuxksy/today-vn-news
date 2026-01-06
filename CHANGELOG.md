@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.17] - 2026-01-06 [Internal]
+
+### Added
+
+- 유튜브 업로드 모듈 (`uploader.py`) 구현: YouTube Data API v3를 활용한 자동 업로드 기능 추가.
+- 파이프라인 통합: 수집, TTS, 합성, 업로드까지 이어지는 전체 공정 통합 (`main.py`).
+
 ## [0.1.16] - 2026-01-06 [Internal]
 
 ### Changed
