@@ -55,7 +55,7 @@ today-vn-news/
   - 커밋(Commit)은 개발 과정에서 AI가 자율적으로 수시로 수행한다.
   - 푸시(Push) 및 릴리즈(Release) 등 원격 저장소에 영향을 주는 작업은 반드시 사용자의 명시적 승인을 얻은 후 수행한다.
   - **주의**: `git push` 명령어는 다른 명령어와 조합(`&&`, `;` 등)하여 사용하지 않고 단독으로 실행한다.
-- **Commit Message**: 한국어 작성을 원칙으로 하며, Conventional Commits를 준수한다.
+- **Commit Message**: Conventional Commits를 준수하며, **말머리(Prefix)는 영문**으로, **제목과 내용은 한국어**로 작성한다. (예: `feat: 신규 기능 추가`, `docs: 문서 수정`)
 - **Release Policy**:
   - `0.0.x` 패치 버전 업데이트는 CHANGELOG 기록, 커밋만 수행하고 Git 태그 및 GitHub Release는 생성하지 않는다.
   - `0.x.0` 성격의 주요 기능 추가 또는 변경 시에만 Git 태그를 생성하고 GitHub Release를 배포하여 동기화한다.
