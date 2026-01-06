@@ -25,29 +25,50 @@ Vibe Coding 기반 뉴스 자동화 파이프라인.
 ```text
 today-vn-news/
 ├── README.md           # 프로젝트 가이드
-├── ContextFile.md      # 도메인 지식 및 기술 제약 (AI용)
+├── ContextFile.md      # 도메인 지식 및 기술 제약 (AI용 SSoT)
 ├── CHANGELOG.md        # 버전 관리 및 변경 이력
-├── TODO.md             # 작업 관리 (향후 과제)
-├── LICENSE             # MIT License
-├── .gitignore          # Git 제외 목록
-├── main.py             # MD 파싱 + TTS + FFmpeg 통합 실행 엔진
-├── collector.py        # Gemini CLI 기반 IT 뉴스 수집 모듈
-└── requirements.txt    # 의존성 패키지
+├── TODO.md             # 단계별 작업 관리 (Step 1~5)
+├── GEMINI.md           # AI 협업 지침 및 운영 정책
+├── main.py             # 파이프라인 통합 실행 엔트리포인트
+├── today_vn_news/      # Core 로직 패키지
+│   ├── collector.py    # Gemini CLI 기반 뉴스 수집 모듈
+│   ├── tts.py          # edge-tts 기반 음성 변환 모듈
+│   ├── engine.py       # FFmpeg 기반 영상 합성 엔진
+│   └── uploader.py     # YouTube Data API v3 업로드 모듈
+├── client_secrets.json # (Secret) Google OAuth2 자격 증명 [Git Ignored]
+├── .env                # (Secret) API 키 환경 변수 [Git Ignored]
+└── requirements.txt    # 의존성 패키지 관리
 ```
 
 ## 🚀 시작하기 (Quick Start)
 
-1. **의존성 설치:**
+### 1. 환경 설정
+
+`client_secrets.json` (유튜브 API) 및 `.env` (Gemini API 키) 파일을 프로젝트 루트에 준비합니다.
+
+### 2. 의존성 설치
 
 ```bash
 pip install -r requirements.txt
 ```
 
-1. **뉴스 처리 실행:**
+### 3. 전체 파이프라인 실행
 
 ```bash
-python main.py --file YYMMDD.md
+# 당일 뉴스 처리 (수집 -> TTS -> 합성 -> 업로드)
+python main.py
+
+# 특정 날짜 뉴스 처리
+python main.py 260106
 ```
+
+## 🛠️ 주요 기능 완료 현황
+
+- [x] **Step 1: Collection** - VietnamNet, Nhân Dân 뉴스 수집 자동화
+- [x] **Step 2: Voice** - edge-tts 기반 한국어 음성 생성 성공
+- [x] **Step 3: Video** - FFmpeg 하드웨어 가속(VideoToolbox/VAAPI) 합성 완료
+- [x] **Step 4: Deployment** - 유튜브 업로드 모듈 구현 완료 (현재 인증 대기 중)
+- [ ] **Step 5: Operations** - NAS Inotify 감시 및 자동 스케줄링 예정
 
 ## ⚖️ 라이선스
 
