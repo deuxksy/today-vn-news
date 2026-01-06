@@ -5,6 +5,7 @@
 ## 0. 운영 원칙 (Operational Root)
 
 - **최상위 지침**: 본 문서(`GEMINI.md`)는 AI의 모든 행동, 어조, 의사결정의 절대적 기준이다.
+- **활동 기록 금지**: 어떠한 경우에도 별도의 `activity.log` 파일을 생성하거나 기록하지 않는다.
 - **기술적 근거**: 모든 데이터 구조와 기술 스펙은 `ContextFile.md`를 단일 진실 공급원(SSoT)으로 삼는다.
 - **연속성 유지**: 세션 시작 시 **`CHANGELOG.md`**를 참조하여 중단된 지점부터 문맥을 복구한다.
 
@@ -30,11 +31,12 @@
 today-vn-news/
 ├── README.md           # [Human] 프로젝트 가이드 및 실행법
 ├── ContextFile.md      # [AI] 페르소나, 기술 제약, 우선순위 (AI 전용 지침)
-├── CHANGELOG.md        # [Release] 버전 관리 및 변경 이력 (독립 파일)
-├── TODO.md             # [Next] 향후 구현 과제 및 작업 관리
-├── LICENSE             # [MIT] Copyright (c) 2026 Crong
-├── .gitignore          # 리포지토리 위생 관리
-├── main.py             # [Core] MD 파서 + TTS + FFmpeg 통합 실행기
+├── today_vn_news/      # [Core] Python 패키지 소스 코드
+│   ├── __init__.py
+│   ├── collector.py    # IT 뉴스 수집 모듈
+│   ├── tts.py          # edge-tts 기반 음성 변환 모듈
+│   └── engine.py       # MD 파서 + FFmpeg 통합 실행 엔진
+├── main.py             # [Entry] 프로그램 통합 실행 포인트
 └── requirements.txt    # 의존성 관리 (edge-tts 등)
 ```
 
@@ -52,8 +54,9 @@ today-vn-news/
 
 - **GitHub Flow**: `main` 브랜치 중심의 전략을 사용한다.
 - **Commit & Push Policy**: 
-  - 커밋(Commit)은 개발 과정에서 AI가 자율적으로 수시로 수행한다.
-  - 푸시(Push) 및 릴리즈(Release) 등 원격 저장소에 영향을 주는 작업은 반드시 사용자의 명시적 승인을 얻은 후 수행한다.
+  - `git add` 와 `git commit` 포함한 정보 조회용 `git` 명령어 및 단순 시스템 조회 명령어(`ls`, `which`, `env`, `pwd` 등)는 개발 과정에서 AI가 자율적으로 수시로 수행한다.
+  - **커밋 시점**: 모든 커밋은 `TODO.md`에 정의된 특정 항목 또는 단계를 완료했을 때 수행함을 원칙으로 한다.
+  - `git push` 명령어는 사용자가 채팅창을 통해 **명시적으로 "push"를 요청한 경우에만** 수행한다. AI가 먼저 푸시 여부를 묻거나 도구를 제안하지 않는다.
   - **주의**: `git push` 명령어는 다른 명령어와 조합(`&&`, `;` 등)하여 사용하지 않고 단독으로 실행한다.
 - **Commit Message**: Conventional Commits를 준수하며, **말머리(Prefix)는 영문**으로, **제목과 내용은 한국어**로 작성한다. (예: `feat: 신규 기능 추가`, `docs: 문서 수정`)
 - **Release Policy**:

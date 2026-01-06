@@ -31,6 +31,7 @@ today-vn-news/
 ├── LICENSE             # MIT License
 ├── .gitignore          # Git 제외 목록
 ├── main.py             # MD 파싱 + TTS + FFmpeg 통합 실행 엔진
+├── collector.py        # Gemini CLI 기반 IT 뉴스 수집 모듈
 └── requirements.txt    # 의존성 패키지
 ```
 

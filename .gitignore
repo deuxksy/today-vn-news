@@ -1,12 +1,85 @@
-# Python
+# === Python ===
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+env/
+venv/
+.env
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+build/
+dist/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Media (Output & Temp)
+# === Project Data & Media (Local resources only) ===
+# We ignore the entire data directory and all media files
+data/
+outputs/
+temp/
+logs/
 *.mp3
 *.mp4
+*.mov
 *.wav
+*.avi
+*.mkv
 
-# OS
+# === macOS ===
 .DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+*.lp
+
+# === Linux ===
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# === Windows ===
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# === IDEs ===
+## JetBrains (IntelliJ, PyCharm, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+## Visual Studio Code
+.vscode/
+.history/
+*.code-workspace
+.ionide/
+
+## Others
+.project
+.pydevproject
+.settings/
+*.swp
+*.swo
+*~

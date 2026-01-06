@@ -1,17 +1,23 @@
-# 🚀 Project today-vn-news TODO
+# 🚀 today-vn-news 핵심 작업 목록 (TODO)
 
-## 1. Core Logic (Python)
-- [ ] **MD Parser**: NAS에서 `YYMMDD.md` 파일 파싱 로직 구현
-- [ ] **TTS Module**: `edge-tts` 연동 및 한국어/베트남어 음성 생성 테스트
-- [ ] **Video Engine**: FFmpeg 기반 이미지 + 오디오 합성 기본 루틴 개발
-- [ ] **Filter**: 건강(UC) 및 IT 우선순위 가중치 필터링 알고리즘 적용
+> **Goal:** 뉴스 수집부터 유튜브 업로드까지의 최소 기능 구현 (MVP)
 
-## 2. Infrastructure (Distributed)
-- [ ] **NAS (Fedora)**: `inotify` 기반 파일 업로드 감시 스크립트 작성
-- [ ] **Steam Deck (SteamOS)**: VAAPI (`h264_vaapi`) 가속 환경 검증 및 벤치마크
-- [ ] **Mac Mini (macOS)**: 개발 환경 고도화 및 VideoToolbox 테스트
+## 1단계: 뉴스 데이터 수집 (Collection)
+- [x] Gemini CLI를 사용하여 IT 뉴스 2개를 수집하고 `data/YYMMDD.md`로 저장
+- [ ] **건강/안전 뉴스 수집**: 궤양성 대장염(UC) 식단 및 호치민 대기질 정보 수집 기능 추가
+- [ ] **데이터 우선순위 엔진**: 수집된 뉴스들을 '건강 > IT > 로컬' 순으로 정렬/병합하는 로직 구현
 
-## 3. Operations
-- [ ] 자동화 파이프라인 엔드 투 엔드 연결 테스트
-- [ ] 유튜브 업로드 API 연동 또는 배포 자동화 검토
-- [ ] 에러 핸들링 및 알림 시스템 (Slack/Telegram) 연동
+## 2단계: 음성 데이터 생성 (Voice)
+- [x] `YYMMDD.md` 텍스트를 `edge-tts`를 통해 `audio.mp3`로 변환 (Voice: `ko-KR-SunHiNeural`)
+- [ ] **TTS 정제 고도화**: 마크다운 특수문자 제거 및 언어별(한/베) 최적화 보이스 적용 검토
+- [ ] **다국어 지원**: 베트남어 뉴스 섹션을 위한 베트남어 TTS 보이스 적용 테스트
+
+## 3단계: 영상 합성 (Video)
+- [x] **하드웨어 가속 검증**: Steam Deck(VAAPI) 및 Mac Mini(VideoToolbox) 인코딩 성능 테스트
+- [x] **영상 편집 자동화**: 소스 영상에서 오디오 추출/제거 및 배경음악 믹싱 로직 구현
+- [x] **최종 합성**: FFmpeg을 활용하여 정제된 음성과 영상을 병합 (하드웨어 가속 적용)
+
+## 4단계: 배포 및 운영 (Deployment)
+- [ ] **YouTube API 연동**: 생성된 영상을 유튜브 저장소에 자동 업로드
+- [ ] **인프라 설정 (NAS)**: `Inotify`를 활용하여 `data/` 폴더의 변화를 감시하고 파이프라인 트리거
+- [ ] **운영 자동화**: 주기적인 뉴스 수집 및 영상 생성을 위한 스케줄러 설정
