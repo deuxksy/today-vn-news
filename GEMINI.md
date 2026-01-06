@@ -24,7 +24,7 @@
 
 - **Architecture Guardrails**: NAS(저장), Steam Deck(배치/합성), Mac Mini(개발/렌더링)의 분산 환경을 전제로 한다.
 - **Data Flow**: 직접적인 웹 스크래핑을 금지하며, NAS에 업로드된 `YYMMDD.md` 파일을 파싱하여 TTS 및 영상을 생성한다.
-- **디렉토리 구조 (Ultra-light 7-Files)**:
+- **디렉토리 구조 (Ultra-light)**:
 
 ```text
 today-vn-news/
