@@ -51,3 +51,6 @@ today-vn-news/
 
 - **GitHub Flow**: `main` 브랜치 중심의 전략을 사용하며, 원격 리포지토리와의 동기화를 상시 유지한다.
 - **Commit Message**: 한국어 작성을 원칙으로 하며, Conventional Commits를 준수한다.
+- **Release Policy**:
+  - `0.0.x` 패치 버전 업데이트는 CHANGELOG 기록, 커밋, 태그만 수행하고 GitHub Release는 생성하지 않는다.
+  - `0.x.0` 성격의 주요 기능 추가 또는 변경 시에만 GitHub Release를 생성하여 동기화한다.
