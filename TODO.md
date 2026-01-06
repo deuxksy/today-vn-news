@@ -3,27 +3,32 @@
 > **Goal:** `ContextFile.md`의 비즈니스 로직을 완벽히 구현한 뉴스 자동화 파이프라인 완성
 
 ## 1단계: 뉴스 및 안전 데이터 수집 (Collection)
+
 - [x] **기본 IT 뉴스 수집**: Gemini CLI를 통해 ICTNews 데이터 요약 및 저장
 - [x] **안전 및 기상 관제**: 호치민 날씨, AQI(미세먼지) 수집 및 마스크 권고 로직 구현
-- [ ] **수집 대상 확대**: 7대 주요 일간지(VnExpress, Tuổi Trẻ, Thanh Niên 등) 전체로 수집 범위 확장
+- [x] **수집 대상 확대**: 7대 주요 일간지(VnExpress, Tuổi Trẻ, Thanh Niên 등) 전체로 수집 범위 확장
 - [x] **TTS 최적화 가이드라인 적용**: 에모지, 특수문자, 불필요한 영어 제거 필터링 구현
 
 ## 2단계: 음성 및 텍스트 최적화 (Voice & Text)
+
 - [x] **TTS 변환**: `edge-tts` 기반 한국어 음성 생성 (`ko-KR-SunHiNeural`)
 - [x] **텍스트 정제**: 마크다운 문법 및 특수문자 제거 로직 고도화
 - [ ] **다국어 음성 확장**: 베트남어 섹션을 위한 현지 보이스(`vi-VN-HoaiMyNeural` 등) 적용 테스트
 
 ## 3단계: 분산 인프라 기반 영상 합성 (Video)
+
 - [x] **하드웨어 가속 최적화**: Mac Mini(VideoToolbox) 및 Steam Deck(VAAPI) 옵션 구현
 - [x] **오디오 믹싱**: 원본 영상 소리 제거 및 TTS 음성 정밀 합성 (길이 동기화 포함)
 - [x] **동적 길이 조정**: TTS 오디오 길이에 맞춘 영상 소스 루프/컷 처리
 
 ## 4단계: 배포 및 보안 (Deployment & Security)
+
 - [x] **YouTube API 통합**: OAuth 2.0 기반 자동 업로드 모듈 구현 (인증 대기)
 - [x] **보안 강화**: `.env` 및 `client_secrets.json` 노출 방지 처리
 - [x] **Release 정책**: 주요 단계 완료 시 GitHub Release(`v0.x.0`) 생성 자동화
 
 ## 5단계: 운영 지연 및 자동화 (Operations)
+
 - [ ] **인프라 감시 (NAS)**: `Inotify`를 활용한 `data/` 폴더 변화 실시간 감지 및 트리거
 - [ ] **스케줄링**: Cron/Systemd를 활용한 일회성 및 정기 수집 프로세스 설정
 - [ ] **장애 복구 (Failover)**: Steam Deck 장애 시 NAS/Mac Mini가 파싱/합성 기능을 상호 보완하는 구조 설계

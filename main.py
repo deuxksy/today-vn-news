@@ -4,7 +4,7 @@ import datetime
 import os
 import sys
 from dotenv import load_dotenv
-from today_vn_news.collector import fetch_it_news
+from today_vn_news.collector import fetch_all_news
 from today_vn_news.tts import md_to_tts
 from today_vn_news.engine import synthesize_video
 from today_vn_news.uploader import upload_video
@@ -34,7 +34,7 @@ async def main():
     # 1. 뉴스 데이터 수집
     if not os.path.exists(md_path):
         print("[*] 1단계: 뉴스 데이터 수집 시작...")
-        fetch_it_news()
+        fetch_all_news()
     else:
         print(f"[*] 1단계: 마크다운 데이터가 이미 존재합니다. ({md_path})")
 
