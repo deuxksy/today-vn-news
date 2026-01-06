@@ -49,7 +49,10 @@ today-vn-news/
 
 ## 5. Git Flow & Guidelines
 
-- **GitHub Flow**: `main` 브랜치 중심의 전략을 사용하며, 원격 리포지토리와의 동기화를 상시 유지한다.
+- **GitHub Flow**: `main` 브랜치 중심의 전략을 사용한다.
+- **Commit & Push Policy**: 
+  - 커밋(Commit)은 개발 과정에서 AI가 자율적으로 수시로 수행한다.
+  - 푸시(Push) 및 릴리즈(Release) 등 원격 저장소에 영향을 주는 작업은 반드시 사용자의 명시적 승인을 얻은 후 수행한다.
 - **Commit Message**: 한국어 작성을 원칙으로 하며, Conventional Commits를 준수한다.
 - **Release Policy**:
   - `0.0.x` 패치 버전 업데이트는 CHANGELOG 기록, 커밋, 태그만 수행하고 GitHub Release는 생성하지 않는다.
