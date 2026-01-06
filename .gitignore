@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Media (Output & Temp)
+*.mp3
+*.mp4
+*.wav
+
+# Project Specific
+.context/temp/
+*.md
+!README.md
+!GEMINI.md
+!CHANGELOG.md
+!ContextFile.md
+
+# OS
+.DS_Store
