@@ -27,6 +27,7 @@ today-vn-news/
 ├── README.md           # 프로젝트 가이드
 ├── ContextFile.md      # 도메인 지식 및 기술 제약 (AI용)
 ├── CHANGELOG.md        # 버전 관리 및 변경 이력
+├── TODO.md             # 작업 관리 (향후 과제)
 ├── LICENSE             # MIT License
 ├── .gitignore          # Git 제외 목록
 ├── main.py             # MD 파싱 + TTS + FFmpeg 통합 실행 엔진

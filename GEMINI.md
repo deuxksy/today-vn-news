@@ -31,6 +31,7 @@ today-vn-news/
 ├── README.md           # [Human] 프로젝트 가이드 및 실행법
 ├── ContextFile.md      # [AI] 페르소나, 기술 제약, 우선순위 (AI 전용 지침)
 ├── CHANGELOG.md        # [Release] 버전 관리 및 변경 이력 (독립 파일)
+├── TODO.md             # [Next] 향후 구현 과제 및 작업 관리
 ├── LICENSE             # [MIT] Copyright (c) 2026 Crong
 ├── .gitignore          # 리포지토리 위생 관리
 ├── main.py             # [Core] MD 파서 + TTS + FFmpeg 통합 실행기
