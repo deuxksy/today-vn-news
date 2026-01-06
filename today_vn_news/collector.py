@@ -27,7 +27,7 @@ def fetch_it_news():
     # 데이터 소스: ICTNews (https://vietnamnet.vn/ict)
     prompt = (
         f"https://vietnamnet.vn/ict 에서 {today_full} 날짜의 베트남 IT 뉴스 중 가장 중요한 이슈 2개를 요약해줘.\n\n"
-        "추출 규칙:\n"
+        "추출 규칙 및 출력 포맷:\n"
         "- 이슈 2개로 제한.\n"
         "- 형식:\n"
         "### 제목\n\n"
@@ -35,7 +35,10 @@ def fetch_it_news():
         "- 한국어 3줄 요약 두 번째 줄\n"
         "- 한국어 3줄 요약 세 번째 줄\n\n"
         "[원문 링크]\n\n"
-        "주의: 반드시 한글 요약을 포함하고, 마크다운 ### 제목 스타일을 지켜줘."
+        "**TTS(음성 합성) 최적화 주의사항:**\n"
+        "1. 에모지(Emoji)나 특수 기호를 절대 사용하지 마세요.\n"
+        "2. 괄호 안의 영어 표기나 불필요한 외래어 사용을 자제하고 순수 한국어로만 작성하세요.\n"
+        "3. 문장은 읽기 자연스럽도록 명확하게 끝맺음 하세요."
     )
 
     print(f"[*] IT 뉴스 수집 시작... (대상일: {today_full})")
@@ -60,12 +63,18 @@ def fetch_it_news():
             print("[!] 수집된 뉴스 내용이 없습니다.")
             return False
 
-        # 5. 파일 저장 (Append 모드)
-        # 기존 파일이 있으면 하단에 추가, 없으면 새로 생성
-        file_mode = "a" if os.path.exists(output_path) else "w"
+        # 5. 파일 저장 및 헤더 관리
+        is_new_file = not os.path.exists(output_path)
+        file_mode = "a" if not is_new_file else "w"
+        
         with open(output_path, file_mode, encoding="utf-8") as f:
-            if file_mode == "a":
-                f.write("\n\n---\n\n")  # 구분선 추가
+            if is_new_file:
+                # 파일 신규 생성 시 메인 헤더 추가 (날짜 형식: YYYY년 MM월 DD일)
+                f.write(f"# 오늘의 베트남 주요 뉴스 ({now.strftime('%Y년 %m월 %d일')})\n\n")
+            else:
+                # 기존 파일에 추가 시 구분선 추가
+                f.write("\n\n---\n\n")
+            
             f.write(content)
             f.write("\n")
 

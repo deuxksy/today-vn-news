@@ -27,9 +27,13 @@ def clean_markdown(md_text: str) -> str:
     text = re.sub(r'-\s*', '', text)
     # 3. 구분선 (---) 제거
     text = re.sub(r'---', '', text)
-    # 4. 링크 ([제목](url)) 제거 - [제목]만 남기거나 혹은 [원문 링크] 제거
+    # 4. 링크 ([제목](url)) 제거 - [원문 링크] 통째로 제거
     text = re.sub(r'\[원문 링크\]\(.*\)', '', text)
-    # 5. 불필요한 공백 정리
+    # 5. 에모지 및 특수 유니코드 기호 제거
+    text = re.sub(r'[^\w\s.,!가-힣]', '', text)
+    # 6. 영어 약어 처리 (괄호 안의 영어 등 제거 - 선택 사항)
+    # text = re.sub(r'\([a-zA-Z\s]+\)', '', text) 
+    # 7. 불필요한 공백 및 빈 줄 정리
     text = "\n".join([line.strip() for line in text.splitlines() if line.strip()])
     
     return text
