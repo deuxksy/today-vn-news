@@ -14,6 +14,41 @@ Vibe Coding 기반 뉴스 자동화 파이프라인.
 | **Steam Deck** | SteamOS | 24/7 배치 서버, TTS 음성 생성, 영상 합성 | **VAAPI** |
 | **Mac Mini M4** | macOS | 로직 개발, 고해상도 최종 렌더링 가속 | **VideoToolbox** |
 
+## 🔄 시스템 아키텍처 및 데이터 흐름
+
+```mermaid
+graph TD
+    subgraph "1. 데이터 수집 (Collection)"
+        G[Gemini Research] -->|IT/건강/로컬| MD[data/YYMMDD.md]
+    end
+
+    subgraph "2. 처리 파이프라인 (main.py)"
+        MD -->|Parsing| TTS[tts.py: edge-tts]
+        TTS -->|V-Voice| MP3[data/YYMMDD.mp3]
+        
+        MP3 -->|Mixing| Engine[engine.py: FFmpeg]
+        MOV[data/YYMMDD.mov] -->|Video Source| Engine
+        
+        Engine -->|Hardware Accel| Final[data/YYMMDD_final.mp4]
+    end
+
+    subgraph "3. 배포 (Deployment)"
+        Final -->|OAuth2| UP[uploader.py: YouTube API]
+        UP --> YT((YouTube Channel))
+    end
+
+    subgraph "💻 분산 인프라"
+        NAS[N100 NAS: Inotify / Storage]
+        SD[Steam Deck: VAAPI Synth]
+        MAC[Mac Mini M4: VideoToolbox Dev]
+    end
+
+    MD -.-> NAS
+    Final -.-> NAS
+    Engine -.-> SD
+    Engine -.-> MAC
+```
+
 ## 🎯 콘텐츠 큐레이션 우선순위
 
 1. **건강 및 안전:** 궤양성 대장염 식단, 호치민 대기질 및 알레르기(오리풀).
