@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.2] - 2026-01-06
+### Changed
+- `GEMINI.md` 프로젝트 실행 가이드 업데이트 (Vibe Coding 철학 및 운영 원칙 강화).
+- Git 커밋 메시지 한국어 작성 원칙 명문화.
+
 ## [0.1.1] - 2026-01-06
 ### Changed
 - GitHub Repository Description 및 Topics 설정 완료.
