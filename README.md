@@ -41,7 +41,7 @@ today-vn-news/
 pip install -r requirements.txt
 ```
 
-2. **뉴스 처리 실행:**
+1. **뉴스 처리 실행:**
 
 ```bash
 python main.py --file YYMMDD.md
