@@ -5,6 +5,8 @@ token.pickle
 .venv
 *.so
 .Python
+__pycache__/
+*.pyc
 env/
 venv/
 .env

@@ -105,10 +105,43 @@ def fetch_source_content(source, today_str, index, total):
             return content
         else:
             print(f"  [!] {source['name']} 수집 실패 또는 내용 없음")
+            if process.stderr:
+                print(f"  [STDERR]: {process.stderr}")
             return None
     except Exception as e:
         print(f"  [!] {source['name']} 수집 중 예외 발생: {str(e)}")
         return None
+
+def check_gemini_health():
+    """Gemini API 상태 점검 (Quota/Key Validation)"""
+    print("\n[*] Gemini API 사전 점검 중...")
+    try:
+        # 가벼운 프롬프트로 상태 확인
+        process = subprocess.run(
+            ["gemini", "Hello"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=10
+        )
+        if process.returncode == 0 and process.stdout.strip():
+            print("  [OK] Gemini API 정상 동작 확인")
+            return True
+        else:
+            print("  [!] Gemini API 점검 실패")
+            if process.stderr:
+                print(f"  [STDERR]: {process.stderr.strip()}")
+            elif process.stdout:
+                 # stdout만 있는 경우 (quota 에러가 stdout으로 찍히는 경우 대비)
+                print(f"  [STDOUT]: {process.stdout.strip()[:200]}...")
+            return False
+    except subprocess.TimeoutExpired:
+        print("  [!] Gemini API 응답 시간 초과 (Timeout)")
+        return False
+    except Exception as e:
+        print(f"  [!] Gemini API 점검 중 예외 발생: {str(e)}")
+        return False
+
 
 def fetch_all_news():
     """모든 소스를 순회하며 뉴스 통합 수집"""
@@ -119,6 +152,13 @@ def fetch_all_news():
 
     if not os.path.exists("data"):
         os.makedirs("data")
+
+
+        
+    # 0. 사전 점검 (Health Check)
+    if not check_gemini_health():
+        print("[!] Gemini API 상태가 좋지 않아 수집을 중단합니다.")
+        return False
 
     # ContextFile.md 7.1~7.8 규정 순서대로 처리
     sorted_sources = SOURCES
