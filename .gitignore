@@ -1,7 +1,8 @@
-# === Python ===
-__pycache__/
-*.py[cod]
-*$py.class
+# === Security & API Keys ===
+client_secrets.json*
+token.pickle
+.env*
+.venv
 *.so
 .Python
 env/

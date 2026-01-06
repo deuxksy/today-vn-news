@@ -26,9 +26,12 @@ def get_authenticated_service():
     secrets_path = 'client_secrets.json'
 
     # 기존 토큰 로드
-    if os.path.exists(token_path):
-        with open(token_path, 'rb') as token:
-            credentials = pickle.load(token)
+    if os.path.exists(token_path) and os.path.getsize(token_path) > 0:
+        try:
+            with open(token_path, 'rb') as token:
+                credentials = pickle.load(token)
+        except (EOFError, pickle.UnpicklingError):
+            credentials = None
 
     # 토큰이 없거나 만료된 경우 인증 수행
     if not credentials or not credentials.valid:
