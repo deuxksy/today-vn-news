@@ -79,7 +79,7 @@ today-vn-news/
 
 ### 1. 환경 설정
 
-`client_secrets.json` (유튜브 API) 및 `.env` (Gemini API 키) 파일을 프로젝트 루트에 준비합니다.
+`client_secrets.json` (유튜브 API) 및 `.env` (Gemini API 키) 파일을 프로젝트 루트에 준비합니다. Gemini CLI가 시스템에 설치되어 있어야 합니다.
 
 ### 2. 의존성 설치
 
@@ -97,14 +97,20 @@ python main.py
 python main.py 260106
 ```
 
-## 🛠️ 주요 기능 완료 현황
+## 📊 주요 기능 완료 현황 (v0.4.0)
 
-- [x] **Step 1: Collection** - VietnamNet, Nhân Dân 뉴스 수집 자동화
-- [x] **Step 2: Voice** - edge-tts 기반 한국어 음성 생성 성공
-- [x] **Step 3: Video** - FFmpeg 하드웨어 가속(VideoToolbox/VAAPI) 합성 완료
-- [x] **Step 4: Deployment** - 유튜브 업로드 모듈 구현 완료 (현재 인증 대기 중)
-- [ ] **Step 5: Operations** - NAS Inotify 감시 및 자동 스케줄링 예정
+- [x] **Step 1: Collection** - 7대 일간지 및 안전/기상 데이터 수집 엔진 완성 (VnExpress 등)
+- [x] **Step 2: Voice & Optimization** - TTS 최적화(에모지 제거, 독음 변환) 및 마크다운 계층화 반영
+- [x] **Step 3: Video** - FFmpeg 하드웨어 가속(VideoToolbox/VAAPI) 합성 최적화 완료
+- [x] **Step 4: Deployment** - 유튜브 API 통합 및 보안 강화 (v0.4.0 정식 릴리즈 반영)
+- [ ] **Step 5: Operations** - NAS Inotify 감시 및 자동 스케줄링 진행 예정
+
+## 🛠️ 핵심 최적화 지침
+
+- **Zero-Noise:** 뉴스 리포트 내 AI의 메타 정보(진행 멘트 등) 자동 제거 로직 적용.
+- **SOP 순서 준수:** `ContextFile.md`에 명시된 7.1~7.8 섹션 순서대로 수집 및 정렬.
+- **Hardware Accel:** 기기별(Mac/Steam Deck) 최적화된 하드웨어 인코더 자동 선택.
 
 ## ⚖️ 라이선스
 
-MIT License - Copyright (c) 2026 Crong
+MIT License - Copyright (c) 2026 Crong (deuxksy)
