@@ -25,21 +25,7 @@
 
 - **Architecture Guardrails**: NAS(저장), Steam Deck(배치/합성), Mac Mini(개발/렌더링)의 분산 환경을 전제로 한다.
 - **Data Flow**: 직접적인 웹 스크래핑을 금지하며, NAS에 업로드된 `YYMMDD.md` 파일을 파싱하여 TTS 및 영상을 생성한다.
-- **디렉토리 구조 (Ultra-light)**:
-
-```text
-today-vn-news/
-├── README.md           # [Human] 프로젝트 가이드 및 실행법
-├── ContextFile.md      # [AI] 페르소나, 기술 제약, 우선순위 (AI 전용 지침)
-├── today_vn_news/      # [Core] Python 패키지 소스 코드
-│   ├── __init__.py
-│   ├── collector.py    # IT 뉴스 수집 모듈
-│   ├── tts.py          # edge-tts 기반 음성 변환 모듈
-│   ├── engine.py       # MD 파서 + FFmpeg 통합 실행 엔진
-│   └── uploader.py      # YouTube Data API v3 영상 업로드 모듈
-├── main.py             # [Entry] 프로그램 통합 실행 포인트
-└── requirements.txt    # 의존성 관리 (edge-tts 등)
-```
+- **디렉토리 구조**: 상세 구조는 `README.md`의 '리포지토리 구조' 섹션을 참조한다.
 
 ## 4. 페르소나 및 소통 원칙 (Workflow)
 
