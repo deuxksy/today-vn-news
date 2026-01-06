@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.1] - 2026-01-06
+### Changed
+- GitHub Repository Description 및 Topics 설정 완료.
+- 프로젝트 로그 정책 변경 (activity.log 삭제 및 CHANGELOG 중심 관리).
+
 ## [0.1.0] - 2026-01-06
 ### Added
 - 프로젝트 초기화 및 표준 6파일 구조 확정.
