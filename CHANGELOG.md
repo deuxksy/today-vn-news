@@ -1,20 +1,16 @@
 # Changelog
 
-## [0.1.17] - 2026-01-06 [Internal]
+## [0.3.0] - 2026-01-06 [GitHub]
 
 ### Added
 
-- 유튜브 업로드 모듈 (`uploader.py`) 구현: YouTube Data API v3를 활용한 자동 업로드 기능 추가.
-- 파이프라인 통합: 수집, TTS, 합성, 업로드까지 이어지는 전체 공정 통합 (`main.py`).
-
-## [0.1.16] - 2026-01-06 [Internal]
+- **3단계 (Video) 완료**: FFmpeg 하드웨어 가속 기반 영상 합성 엔진 (`engine.py`) 구현.
+- **4단계 (Deployment) 진행**: 유튜브 업로드 모듈 (`uploader.py`) 및 전체 파이프라인 통합 (`main.py`).
 
 ### Changed
 
-- 영상 합성 로직 고도화 (`engine.py`):
-    - 원본 영상의 오디오를 강제 제거하고 TTS 음성만 삽입하도록 개선.
-    - 영상 길이를 TTS 오디오 길이에 맞춤 (부족 시 루프, 초과 시 컷).
-    - `-stream_loop` 및 `-shortest` 플래그를 통한 자동 길이 동기화 구현.
+- 영상 합성 로직 고도화: 오디오 제거 및 TTS 길이 자동 동기화 기능 추가.
+- 보안 강화: `.gitignore`를 통한 기밀 파일(json, pickle, env) 차단 및 Multi-OS 지원.
 
 ## [0.1.15] - 2026-01-06 [Internal]
 
