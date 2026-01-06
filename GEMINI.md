@@ -56,5 +56,5 @@ today-vn-news/
   - **주의**: `git push` 명령어는 다른 명령어와 조합(`&&`, `;` 등)하여 사용하지 않고 단독으로 실행한다.
 - **Commit Message**: 한국어 작성을 원칙으로 하며, Conventional Commits를 준수한다.
 - **Release Policy**:
-  - `0.0.x` 패치 버전 업데이트는 CHANGELOG 기록, 커밋, 태그만 수행하고 GitHub Release는 생성하지 않는다.
-  - `0.x.0` 성격의 주요 기능 추가 또는 변경 시에만 GitHub Release를 생성하여 동기화한다.
+  - `0.0.x` 패치 버전 업데이트는 CHANGELOG 기록, 커밋만 수행하고 Git 태그 및 GitHub Release는 생성하지 않는다.
+  - `0.x.0` 성격의 주요 기능 추가 또는 변경 시에만 Git 태그를 생성하고 GitHub Release를 배포하여 동기화한다.
