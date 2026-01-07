@@ -24,10 +24,10 @@ SOURCES = [
         "prompt": (
             "NCHMF(베트남 국립기상예보센터) 정보를 바탕으로 호치민 지역의 오늘 날씨를 요약해줘.\\n"
             "- 위치: 호치민 랜드마크 2 인근\\n"
-            "- 필수 포함: 기온(최저/최고), 습도, 강수 확률\\n"
+            "- 필수 포함: 기온(최저/최고, 반드시 섭씨 기준), 습도, 강수 확률\\n"
             "- 긴급 특보: 태풍, 홍수 등 발생 시 '🚨 긴급 특보' 섹션 추가 (없으면 생략)\\n"
             "- 행동 지침: 강수 확률 70% 이상 시 '우산 준비' 문구 포함\\n"
-            "- 대상 독자: 베트남 거주 한국인"
+            "- **알림**: 이 섹션은 실시간 관제 정보이므로 'Empty String Policy'를 무시하고 최신 정보를 항상 제공하세요. 모든 온도는 섭씨(도)로 표기하세요."
         )
     },
     {
@@ -38,7 +38,7 @@ SOURCES = [
             "IGP-VAST(베트남 지질연구소) 정보를 바탕으로 베트남 및 인근 지역의 최근 지진 발생 여부를 확인해줘.\\n"
             "- 규칙: 최근 24시간 이내 지진이 없으면 '최근 지진 발생 없음'으로 간단히 표시\\n"
             "- 지진 발생 시: 규모, 진원지, 쓰나미 위험 여부 포함\\n"
-            "- 대상 독자: 베트남 거주 한국인"
+            "- **알림**: 이 섹션은 실시간 관제 정보이므로 'Empty String Policy'를 무시하고 최신 상태를 항상 보고하세요."
         )
     },
     {
@@ -49,7 +49,7 @@ SOURCES = [
             "IQAir(Ho Chi Minh City) 정보를 바탕으로 호치민의 오늘 공기질을 요약해줘.\\n"
             "- 필수 포함: AQI 지수, PM2.5, PM10\\n"
             "- 행동 지침: AQI 100 초과 시 '마스크 착용 권고 및 실외 활동 자제' 문구 포함\\n"
-            "- 대상 독자: 베트남 거주 한국인"
+            "- **알림**: 이 섹션은 실시간 관제 정보이므로 'Empty String Policy'를 무시하고 최신 정보를 항상 제공하세요."
         )
     },
     
@@ -97,10 +97,12 @@ SOURCES = [
 COMMON_INSTRUCTIONS = """
 
 **출력 규칙 (최우선 지침):**
-1. **Empty String Policy**: 만약 대상 기준일(오늘)에 해당하는 새로운 기사가 없다면, 어떠한 설명도 없이 반드시 '공백'만 반환하세요.
-2. **No Meta-Talk**: '검색을 시작하겠습니다' 등 로봇의 진행 과정이나 인사말을 절대 포함하지 마세요. 오직 뉴스 본문만 출력합니다.
-3. **Hierarchy**: 매체명은 ## (Level 2), 기사 제목은 ### (Level 3) 헤더를 사용하세요.
-4. **Style**: 한국어 3줄 요약(평어체 리스트) + [원문 링크] 구조를 유지하세요.
+1. **Empty String Policy**: (뉴스 매체 및 지진 정보 한정) 만약 대상 기준일(오늘)에 해당하는 새로운 소식이 전혀 없다면, 단 한 글자도 출력하지 말고 반드시 **빈 문자열(empty string)**만 반환하세요. "발표된 내용이 없습니다" 같은 설명도 절대 하지 마세요.
+2. **Safety/Weather Exception**: 날씨 및 공기질 정보는 항상 최신 데이터를 찾아 보고하세요.
+3. **No Meta-Talk**: 인사말, 진행 상황, '검색 결과입니다' 등의 메타 정보를 절대 포함하지 마세요.
+4. **Hierarchy**: 매체명은 ## (Level 2), 기사 제목은 ### (Level 3) 헤더를 사용하세요.
+5. **Style**: 한국어 3줄 요약(평어체 리스트) + [원문 링크] 구조를 필수로 유지하세요.
+6. **Audience**: 모든 내용은 베트남 거주 한국인을 대상으로 친절하고 명확하게 요약하세요.
 
 **TTS(음성 합성) 최적화 가이드:**
 - 에모지 및 특수 문자(°C, % 등) 사용 절대 금지.
@@ -122,10 +124,11 @@ def fetch_source_content(source, today_str, index, total):
         
         api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={api_key}"
         payload = {
-            "contents": [{"parts": [{"text": prompt}]}]
+            "contents": [{"parts": [{"text": prompt}]}],
+            "tools": [{"google_search": {}}]
         }
         
-        response = requests.post(api_url, json=payload, timeout=30)
+        response = requests.post(api_url, json=payload, timeout=60)
         
         if response.status_code == 200:
             result = response.json()
