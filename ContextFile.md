@@ -33,8 +33,9 @@
 - **TTS:** edge-tts
 - **Video:** FFmpeg
 
-## 4. 데이터 수집 (Collector)
+## 4. 데이터 수집 (Collector) 세부 명세
 
+**핵심 변경점 (v0.6.0)**: 모든 데이터는 **YAML** 구조로 저장되며, `collector.py`는 `google-genai` SDK를 사용합니다.
 모든 데이터는 Gemini를 통해 정제되며, **TTS 최적화(특수문자/영어 제거)**를 거쳐 `data/` 폴더의 YAML 파일에 Append 됩니다.
 
 ### 4.1 안전 및 기상 관제

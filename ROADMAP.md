@@ -1,19 +1,18 @@
 # 🚀 today-vn-news 장기 로드맵 (ROADMAP)
 
 > **Goal:** `ContextFile.md`의 비즈니스 로직을 완벽히 구현한 뉴스 자동화 파이프라인 완성  
-> **단기 작업 진행 상황**: `docs/task.md` 참조
 
 ## 1단계: 뉴스 및 안전 데이터 수집 (Collection)
 
-- [x] **기본 IT 뉴스 수집**: Gemini CLI를 통해 ICTNews 데이터 요약 및 저장
-- [x] **안전 및 기상 관제**: 호치민 날씨, AQI(미세먼지) 수집 및 마스크 권고 로직 구현
-- [ ] **수집 대상**:  
-  - [ ] **NCHMF - 호치민 지역 특화 기상 정보**
-  - [ ] **IGP-VAST - 지진 및 쓰나미 속보 섹션**
-  - [ ] **IQAir - 공기질 정보(Ho Chi Minh City)**
-  - [ ] **Nhân Dân - 정부 공식 입장**
-  - [ ] **Sức khỏe & Đời sống - 건강 관련 이슈**
-  - [ ] **Tuổi Trẻ - 시정 소식**
+- [x] **기본 IT 뉴스 수집**: Google GenAI SDK를 통해 ICTNews 데이터 요약 및 YAML 저장
+- [x] **안전 및 기상 관제**: 호치민 날씨, AQI(미세먼지) 수집 및 마스크 권고 로직 구현 (Gemma-3-27b)
+- [x] **수집 대상**:  
+  - [x] **NCHMF - 호치민 지역 특화 기상 정보**
+  - [x] **IGP-VAST - 지진 및 쓰나미 속보 섹션**
+  - [x] **IQAir - 공기질 정보(Ho Chi Minh City)**
+  - [x] **Nhân Dân - 정부 공식 입장**
+  - [x] **Sức khỏe & Đời sống - 건강 관련 이슈**
+  - [x] **Tuổi Trẻ - 시정 소식**
 - [x] **TTS 최적화 가이드라인 적용**: 에모지, 특수문자, 불필요한 영어 제거 필터링 구현
 
 ## 2단계: 음성 및 텍스트 최적화 (Voice & Text)

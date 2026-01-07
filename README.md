@@ -4,7 +4,7 @@ Vibe Coding 기반 뉴스 자동화 파이프라인.
 
 ## 📋 프로젝트 개요
 
-베트남 현지 7대 일간지 뉴스 수집(MD) 및 분산 인프라 기반 영상 제작 자동화 시스템. 사용자 건강(UC) 및 전문 분야(IT) 중심 큐레이션 제공.
+베트남 현지 4대 핵심 소스(안전/정부/보건/로컬) 뉴스 수집(YAML) 및 분산 인프라 기반 영상 제작 자동화 시스템. 사용자 건강(UC) 및 전문 분야(IT) 중심 큐레이션 제공.
 
 ## 🏗️ 분산 아키텍처 (Distributed Infrastructure)
 
@@ -19,17 +19,17 @@ Vibe Coding 기반 뉴스 자동화 파이프라인.
 ```mermaid
 graph TD
     subgraph "1. 데이터 수집 (Collection)"
-        G[Gemini Research] -->|IT/건강/로컬| MD[data/YYMMDD.md]
+        G[Gemma-3-27b-it] -->|Google GenAI SDK| YAML[data/YYYYMMDD_HHMM.yaml]
     end
 
     subgraph "2. 처리 파이프라인 (main.py)"
-        MD -->|Parsing| TTS[tts.py: edge-tts]
-        TTS -->|V-Voice| MP3[data/YYMMDD.mp3]
+        YAML -->|Parsing| TTS[tts.py: edge-tts]
+        TTS -->|V-Voice| MP3[data/YYYYMMDD_HHMM.mp3]
         
         MP3 -->|Mixing| Engine[engine.py: FFmpeg]
-        MOV[data/YYMMDD.mov] -->|Video Source| Engine
+        MOV[data/YYYYMMDD_HHMM.mov] -->|Video Source| Engine
         
-        Engine -->|Hardware Accel| Final[data/YYMMDD_final.mp4]
+        Engine -->|Hardware Accel| Final[data/YYYYMMDD_HHMM_final.mp4]
     end
 
     subgraph "3. 배포 (Deployment)"
@@ -62,14 +62,11 @@ today-vn-news/
 ├── README.md           # 프로젝트 가이드
 ├── ContextFile.md      # 도메인 지식 및 기술 제약 (AI용 SSoT)
 ├── GEMINI.md           # AI 협업 지침 및 운영 정책
-├── docs/               # 문서 보관소
-│   ├── ROADMAP.md      # 장기 로드맵 (Step 1~5)
-│   ├── task.md         # 단기 작업 관리 (AI 전용)
-│   └── walkthroughs/   # 주요 버전별 상세 구현 기록
+├── ROADMAP.md          # 장기 로드맵 (Step 1~5)
 ├── main.py             # 파이프라인 통합 실행 엔트리포인트
 ├── today_vn_news/      # Core 로직 패키지
-│   ├── collector.py    # Gemini API 기반 뉴스 수집 모듈
-│   ├── tts.py          # edge-tts 기반 음성 변환 모듈
+│   ├── collector.py    # Google GenAI SDK 기반 뉴스 수집 (YAML)
+│   ├── tts.py          # edge-tts 기반 음성 변환 (YAML Parsing)
 │   ├── engine.py       # FFmpeg 기반 영상 합성 엔진
 │   └── uploader.py     # YouTube Data API v3 업로드 모듈
 ├── client_secrets.json # (Secret) Google OAuth2 자격 증명 [Git Ignored]
@@ -77,7 +74,7 @@ today-vn-news/
 └── requirements.txt    # 의존성 패키지 관리
 ```
 
-## � 시작하기 (Quick Start)
+## 🚀 시작하기 (Quick Start)
 
 ### 1. 환경 설정
 
@@ -93,18 +90,18 @@ pip install -r requirements.txt
 
 ```bash
 # 당일 뉴스 처리 (수집 -> TTS -> 합성 -> 업로드)
-python main.py
+python3 main.py
 
-# 특정 날짜 뉴스 처리
-python main.py 260106
+# 특정 날짜 데이터 재생성 (날짜 포맷: YYYYMMDD_HHMM)
+python3 main.py 20260107_1609
 ```
 
-## 📊 주요 기능 완료 현황 (v0.5.0)
+## 📊 주요 기능 완료 현황 (v0.6.0)
 
-- [x] **Step 1: Collection** - Gemini API 직접 호출 기반 수집 엔진 완성 (v0.5.0)
-- [x] **Step 2: Voice & Optimization** - TTS 최적화(에모지 제거, 독음 변환) 및 마크다운 계층화 반영
-- [x] **Step 3: Video** - FFmpeg 하드웨어 가속(VideoToolbox/VAAPI) 합성 최적화 완료
-- [x] **Step 4: Deployment** - 유튜브 API 통합 및 보안 강화 (v0.4.0)
+- [x] **Step 1: Collection** - Google GenAI SDK 기반 YAML 데이터 수집 (Gemma-3-27b)
+- [x] **Step 2: Voice & Optimization** - YAML 파싱 기반 TTS 음성 최적화
+- [x] **Step 3: Video** - FFmpeg 하드웨어 가속(VideoToolbox/VAAPI) 합성 최적화
+- [x] **Step 4: Deployment** - 유튜브 API 통합 및 보안 강화
 - [ ] **Step 5: Operations** - NAS Inotify 감시 및 자동 스케줄링 진행 예정
 
 ## �📖 문서 시스템 및 협업 가이드
@@ -117,10 +114,8 @@ python main.py 260106
 graph TB
     A[GEMINI.md] -->|AI 행동 규칙| B[개발 작업]
     C[ContextFile.md] -->|비즈니스 요구사항| B
-    D[docs/ROADMAP.md] -->|장기 계획| B
-    E[docs/task.md] -->|단기 작업| B
-    B -->|상세 기록| G[docs/walkthroughs]
-    G -->|기술적 맥락| H[GitHub Release]
+    D[ROADMAP.md] -->|장기 계획| B
+    B -->|기술적 맥락| H[GitHub Release]
 ```
 
 ### 주요 문서 역할 (핵심 설정 파일 보호 정책)
@@ -129,9 +124,7 @@ graph TB
 
 1.  **GEMINI.md (AI 운영 매뉴얼)**: AI의 작업 방식, Git 정책 및 Vibe Coding 철학 정의. **(수정 시 사용자 승인 필수)**
 2.  **ContextFile.md (비즈니스 SSoT)**: 도메인 지식 및 기술 스펙의 단일 진실 공급원. **(수정 시 사용자 승인 필수)**
-3.  **docs/ROADMAP.md (장기 로드맵)**: 파이프라인 단계별 마일스톤 관리. **(수정 시 사용자 승인 필수)**
-4.  **docs/task.md (단기 작업)**: 현재 세션의 세부 체크리스트 (AI 자동 관리).
-5.  **docs/walkthroughs (구현 상세)**: 주요 마이너 버전(`v0.x.0`)의 기술적 맥락 및 검증 결과. (CHANGELOG 대체)
+3.  **ROADMAP.md (장기 로드맵)**: 파이프라인 단계별 마일스톤 관리. **(수정 시 사용자 승인 필수)**
 
 ## 🛠️ 핵심 최적화 지침
 
