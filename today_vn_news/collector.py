@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-import requests
-import json
+from google import genai
+from google.genai import types
 import datetime
 import os
 import sys
 import yaml
 
 """
-베트남 뉴스 및 안전 정보 통합 수집 모듈 (Gemini API Direct Call)
-- 목적: Gemini API를 직접 호출하여 안전/기상 정보 및 주요 뉴스 수집
+베트남 뉴스 및 안전 정보 통합 수집 모듈 (Google GenAI SDK)
+- 목적: Google GenAI SDK를 사용하여 안전/기상 정보 및 주요 뉴스 수집
 - 대상 청중: 베트남 거주 한국인
 - 출력 형식: YAML (data/YYYYMMDD_HHMM.yaml)
 - 상세 사양: ContextFile.md 4장 참조
@@ -128,74 +128,47 @@ SOURCES = [
 ]
 
 
-def fetch_source_content(source, today_str, index, total):
-    """Gemini API를 직접 호출하여 개별 소스 뉴스 수집 (YAML 형식)"""
+def fetch_source_content(client, source, today_str, index, total):
+    """Google GenAI SDK를 사용하여 개별 소스 뉴스 수집 (YAML 형식)"""
     prompt = f"{source['prompt']}\\n대상 기준일: {today_str}"
     
     print(f"[{index}/{total}] {source['name']} 수집 중...")
     try:
-        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            print(f"  [!] API 키가 설정되지 않았습니다.")
-            return None
+        response = client.models.generate_content(
+            model="gemma-3-27b-it",
+            contents=prompt
+        )
         
-        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key={api_key}"
-        payload = {
-            "contents": [{"parts": [{"text": prompt}]}]
-        }
-        
-        response = requests.post(api_url, json=payload, timeout=60)
-        
-        if response.status_code == 200:
-            result = response.json()
-            if "candidates" in result and len(result["candidates"]) > 0:
-                content = result["candidates"][0]["content"]["parts"][0]["text"].strip()
-                print(f"  [OK] {source['name']} 수집 완료")
-                return content
-            else:
-                print(f"  [!] {source['name']} 응답에 내용이 없음")
-                return None
+        if response.text:
+            content = response.text.strip()
+            print(f"  [OK] {source['name']} 수집 완료")
+            return content
         else:
-            print(f"  [!] {source['name']} API 오류: {response.status_code}")
-            error_detail = response.json() if response.text else {}
-            print(f"  [ERROR]: {error_detail}")
+            print(f"  [!] {source['name']} 응답에 내용이 없음")
             return None
-    except requests.Timeout:
-        print(f"  [!] {source['name']} 응답 시간 초과 (60s)")
-        return None
+            
     except Exception as e:
         print(f"  [!] {source['name']} 수집 중 예외 발생: {str(e)}")
         return None
 
 
-def check_gemini_health():
-    """Gemini API 상태 점검 (직접 API 호출)"""
-    print("\\n[*] Gemini API 사전 점검 중...")
+def check_gemini_health(client):
+    """GenAI SDK 상태 점검"""
+    print("\\n[*] GenAI SDK 사전 점검 중...")
     try:
-        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            print("  [!] API 키가 없습니다.")
-            return False
+        response = client.models.generate_content(
+            model="gemma-3-27b-it",
+            contents="1+1"
+        )
         
-        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key={api_key}"
-        payload = {"contents": [{"parts": [{"text": "1+1"}]}]}
-        
-        response = requests.post(api_url, json=payload, timeout=10)
-        
-        if response.status_code == 200 and '"text":' in response.text:
-            print("  [OK] Gemini API 정상 동작 확인")
+        if response.text:
+            print("  [OK] GenAI SDK 정상 동작 확인")
             return True
         else:
-            print("  [!] Gemini API 점검 실패")
-            if response.text:
-                error = response.json() if response.text else {}
-                print(f"  [ERROR]: {error}")
+            print("  [!] GenAI SDK 점검 실패")
             return False
-    except requests.Timeout:
-        print("  [!] Gemini API 응답 시간 초과 (Timeout)")
-        return False
     except Exception as e:
-        print(f"  [!] Gemini API 점검 중 예외 발생: {str(e)}")
+        print(f"  [!] GenAI SDK 점검 중 예외 발생: {str(e)}")
         return False
 
 
@@ -209,9 +182,17 @@ def fetch_all_news():
     if not os.path.exists("data"):
         os.makedirs("data")
 
+    # GenAI 클라이언트 초기화
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        print("[!] API 키가 설정되지 않았습니다. GEMINI_API_KEY 또는 GOOGLE_API_KEY 환경 변수를 확인하세요.")
+        return False
+    
+    client = genai.Client(api_key=api_key)
+
     # 0. 사전 점검 (Health Check)
-    if not check_gemini_health():
-        print("[!] Gemini API 상태가 좋지 않아 수집을 중단합니다.")
+    if not check_gemini_health(client):
+        print("[!] GenAI SDK 상태가 좋지 않아 수집을 중단합니다.")
         return False
 
     # 우선순위별 정렬 (P0 → P1 → P2)
@@ -234,7 +215,7 @@ def fetch_all_news():
     collected_count = 0
     
     for i, src in enumerate(sorted_sources, 1):
-        content = fetch_source_content(src, today_display, i, total_sources)
+        content = fetch_source_content(client, src, today_display, i, total_sources)
         if content:
             # YAML 파싱 시도
             try:
