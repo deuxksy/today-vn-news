@@ -6,7 +6,7 @@ import os
 import sys
 from dotenv import load_dotenv
 from today_vn_news.collector import fetch_all_news
-from today_vn_news.tts import md_to_tts
+from today_vn_news.tts import yaml_to_tts
 from today_vn_news.engine import synthesize_video
 from today_vn_news.uploader import upload_video
 
@@ -29,29 +29,29 @@ async def main():
         # 인자 없이 실행 시 현재 시각으로 자동 생성 (YYMMDD-HHMM)
         yymmdd_hhmm = datetime.datetime.now().strftime("%y%m%d-%H%M")
     
-    md_path = f"data/{yymmdd_hhmm}.md"
+    yaml_path = f"data/{yymmdd_hhmm}.yaml"
     mov_path = f"data/{yymmdd_hhmm}.mov"
     mp3_path = f"data/{yymmdd_hhmm}.mp3"
     final_video = f"data/{yymmdd_hhmm}_final.mp4"
 
     # 1. 뉴스 데이터 수집
-    if not os.path.exists(md_path):
+    if not os.path.exists(yaml_path):
         print("[*] 1단계: 뉴스 데이터 수집 시작...")
         if not fetch_all_news():
             print("\n[!] 1단계: 수집 실패로 인해 파이프라인을 중단합니다.")
             sys.exit(1)
     else:
-        print(f"[*] 1단계: 마크다운 데이터가 이미 존재합니다. ({md_path})")
+        print(f"[*] 1단계: YAML 데이터가 이미 존재합니다. ({yaml_path})")
     
     # 수집 후 파일 존재 여부 재확인 (혹시 함수에서 True를 반환했지만 파일이 없을 경우 대비)
-    if not os.path.exists(md_path):
-        print(f"\n[!] 1단계: 결과 파일({md_path})이 없어 파이프라인을 중단합니다.")
+    if not os.path.exists(yaml_path):
+        print(f"\n[!] 1단계: 결과 파일({yaml_path})이 없어 파이프라인을 중단합니다.")
         sys.exit(1)
 
     # 2. TTS 음성 변환 (MP3 생성)
     if not os.path.exists(mp3_path):
         print("\n[*] 2단계: TTS 음성 변환 시작...")
-        await md_to_tts(md_path)
+        await yaml_to_tts(yaml_path)
     else:
         print(f"\n[*] 2단계: 음성 파일이 이미 존재합니다. ({mp3_path})")
 
