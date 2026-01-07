@@ -62,8 +62,8 @@ today-vn-news/
 ├── README.md           # 프로젝트 가이드
 ├── ContextFile.md      # 도메인 지식 및 기술 제약 (AI용 SSoT)
 ├── GEMINI.md           # AI 협업 지침 및 운영 정책
-├── CHANGELOG.md        # 버전 관리 및 변경 이력
 ├── docs/               # 문서 보관소
+│   ├── CHANGELOG.md    # 버전 관리 및 변경 이력
 │   ├── ROADMAP.md      # 장기 로드맵 (Step 1~5)
 │   ├── task.md         # 단기 작업 관리 (AI 전용)
 │   └── walkthroughs/   # 주요 버전별 상세 구현 기록
@@ -120,7 +120,7 @@ graph TB
     C[ContextFile.md] -->|비즈니스 요구사항| B
     D[docs/ROADMAP.md] -->|장기 계획| B
     E[docs/task.md] -->|단기 작업| B
-    B -->|구현 완료| F[CHANGELOG.md]
+    B -->|구현 완료| F[docs/CHANGELOG.md]
     B -->|상세 기록| G[docs/walkthroughs]
     F -->|버전 요약| H[GitHub Release]
     G -->|기술적 맥락| H
@@ -132,7 +132,7 @@ graph TB
 2.  **ContextFile.md (비즈니스 SSoT)**: 도메인 지식 및 기술 스펙의 단일 진실 공급원. **(수정 시 사용자 승인 필수)**
 3.  **docs/ROADMAP.md (장기 로드맵)**: 파이프라인 단계별 마일스톤 관리.
 4.  **docs/task.md (단기 작업)**: 현재 세션의 세부 체크리스트 (AI 자동 관리).
-5.  **CHANGELOG.md (과거 히스토리)**: 모든 커밋과 버전별 변경 사항의 공식 기록.
+5.  **docs/CHANGELOG.md (과거 히스토리)**: 모든 커밋과 버전별 변경 사항의 공식 기록.
 6.  **docs/walkthroughs (구현 상세)**: 주요 마이너 버전(`v0.x.0`)의 기술적 맥락 및 검증 결과.
 
 ## 🛠️ 핵심 최적화 지침
