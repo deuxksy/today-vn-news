@@ -22,11 +22,11 @@ SOURCES = [
         "name": "긴급 특보 및 날씨 정보",
         "priority": 0,
         "prompt": (
-            "NCHMF(베트남 국립기상예보센터) 정보를 바탕으로 호치민 지역의 오늘 날씨를 요약해줘.\\n"
-            "- 위치: 호치민 랜드마크 2 인근\\n"
-            "- 필수 포함: 기온(최저/최고, 반드시 섭씨 기준), 습도, 강수 확률\\n"
-            "- 긴급 특보: 태풍, 홍수 등 발생 시 '🚨 긴급 특보' 섹션 추가 (없으면 생략)\\n"
-            "- 행동 지침: 강수 확률 70% 이상 시 '우산 준비' 문구 포함\\n"
+            "NCHMF(베트남 국립기상예보센터) 정보를 바탕으로 호치민 지역의 오늘 날씨를 요약해줘.\n"
+            "- 위치: 호치민 랜드마크 2 인근\n"
+            "- 필수 포함: 기온(최저/최고, 반드시 섭씨 기준), 습도, 강수 확률\n"
+            "- 긴급 특보: 태풍, 홍수 등 발생 시 '🚨 긴급 특보' 섹션 추가 (없으면 생략)\n"
+            "- 행동 지침: 강수 확률 70% 이상 시 '우산 준비' 문구 포함\n"
             "- **알림**: 이 섹션은 실시간 관제 정보이므로 'Empty String Policy'를 무시하고 최신 정보를 항상 제공하세요. 모든 온도는 섭씨(도)로 표기하세요."
         )
     },
@@ -35,9 +35,9 @@ SOURCES = [
         "name": "지진 정보",
         "priority": 0,
         "prompt": (
-            "IGP-VAST(베트남 지질연구소) 정보를 바탕으로 베트남 및 인근 지역의 최근 지진 발생 여부를 확인해줘.\\n"
-            "- 규칙: 최근 24시간 이내 지진이 없으면 '최근 지진 발생 없음'으로 간단히 표시\\n"
-            "- 지진 발생 시: 규모, 진원지, 쓰나미 위험 여부 포함\\n"
+            "IGP-VAST(베트남 지질연구소) 정보를 바탕으로 베트남 및 인근 지역의 최근 지진 발생 여부를 확인해줘.\n"
+            "- 규칙: 최근 24시간 이내 지진이 없으면 '최근 지진 발생 없음'으로 간단히 표시\n"
+            "- 지진 발생 시: 규모, 진원지, 쓰나미 위험 여부 포함\n"
             "- **알림**: 이 섹션은 실시간 관제 정보이므로 'Empty String Policy'를 무시하고 최신 상태를 항상 보고하세요."
         )
     },
@@ -46,9 +46,9 @@ SOURCES = [
         "name": "공기질 정보",
         "priority": 0,
         "prompt": (
-            "IQAir(Ho Chi Minh City) 정보를 바탕으로 호치민의 오늘 공기질을 요약해줘.\\n"
-            "- 필수 포함: AQI 지수, PM2.5, PM10\\n"
-            "- 행동 지침: AQI 100 초과 시 '마스크 착용 권고 및 실외 활동 자제' 문구 포함\\n"
+            "IQAir(Ho Chi Minh City) 정보를 바탕으로 호치민의 오늘 공기질을 요약해줘.\n"
+            "- 필수 포함: AQI 지수, PM2.5, PM10\n"
+            "- 행동 지침: AQI 100 초과 시 '마스크 착용 권고 및 실외 활동 자제' 문구 포함\n"
             "- **알림**: 이 섹션은 실시간 관제 정보이므로 'Empty String Policy'를 무시하고 최신 정보를 항상 제공하세요."
         )
     },
@@ -59,9 +59,9 @@ SOURCES = [
         "name": "Nhân Dân (정부 기관지)",
         "priority": 1,
         "prompt": (
-            "https://nhandan.vn/ 에서 오늘 발표된 베트남 정부의 주요 신규 정책, 법령 또는 행정 공고를 요약해줘.\\n"
-            "- 규칙: 비자, 거주증 등 한국인에게 영향을 줄 수 있는 정보 우선 수집\\n"
-            "- 최소 1~2개 수집\\n"
+            "https://nhandan.vn/ 에서 오늘 발표된 베트남 정부의 주요 신규 정책, 법령 또는 행정 공고를 요약해줘.\n"
+            "- 규칙: 비자, 거주증 등 한국인에게 영향을 줄 수 있는 정보 우선 수집\n"
+            "- 최소 1~2개 수집\n"
             "- 대상 독자: 베트남 거주 한국인"
         )
     },
@@ -72,9 +72,9 @@ SOURCES = [
         "name": "Sức khỏe & Đời sống (건강/위생)",
         "priority": 0,
         "prompt": (
-            "https://suckhoedoisong.vn/ 에서 오늘의 식품 위생 위반, 알레르기 유발 정보, 질병 주의보를 수집해줘.\\n"
-            "- 규칙: 식중독, 대기질 악화, 전염병 정보 등 건강 관련 이슈를 **최소 2개 이상** 상세히 수집\\n"
-            "- 특히 궤양성 대장염, 알레르기 관련 정보가 있으면 우선 포함\\n"
+            "https://suckhoedoisong.vn/ 에서 오늘의 식품 위생 위반, 알레르기 유발 정보, 질병 주의보를 수집해줘.\n"
+            "- 규칙: 식중독, 대기질 악화, 전염병 정보 등 건강 관련 이슈를 **최소 2개 이상** 상세히 수집\n"
+            "- 특히 궤양성 대장염, 알레르기 관련 정보가 있으면 우선 포함\n"
             "- 대상 독자: 베트남 거주 한국인"
         )
     },
@@ -85,9 +85,9 @@ SOURCES = [
         "name": "Tuổi Trẻ (로컬/시정)",
         "priority": 2,
         "prompt": (
-            "https://tuoitre.vn/ 의 'TP.HCM' 섹션에서 호치민 시정 소식 및 생활 밀착형 정보를 요약해줘.\\n"
-            "- 규칙: 교통 통제, 주요 이벤트, 한국인 거주 지역(2군, 7군 등) 관련 뉴스 우선\\n"
-            "- 최소 2개 수집\\n"
+            "https://tuoitre.vn/ 의 'TP.HCM' 섹션에서 호치민 시정 소식 및 생활 밀착형 정보를 요약해줘.\n"
+            "- 규칙: 교통 통제, 주요 이벤트, 한국인 거주 지역(2군, 7군 등) 관련 뉴스 우선\n"
+            "- 최소 2개 수집\n"
             "- 대상 독자: 베트남 거주 한국인"
         )
     }
@@ -113,7 +113,7 @@ COMMON_INSTRUCTIONS = """
 
 def fetch_source_content(source, today_str, index, total):
     """Gemini API를 직접 호출하여 개별 소스 뉴스 수집"""
-    prompt = f"매체명: {source['name']}\\n\\n{source['prompt']}\\n대상 기준일: {today_str}{COMMON_INSTRUCTIONS}"
+    prompt = f"매체명: {source['name']}\n\n{source['prompt']}\n대상 기준일: {today_str}{COMMON_INSTRUCTIONS}"
     
     print(f"[{index}/{total}] {source['name']} 수집 중...")
     try:
@@ -153,7 +153,7 @@ def fetch_source_content(source, today_str, index, total):
 
 def check_gemini_health():
     """Gemini API 상태 점검 (직접 API 호출)"""
-    print("\\n[*] Gemini API 사전 점검 중...")
+    print("\n[*] Gemini API 사전 점검 중...")
     try:
         api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         if not api_key:
@@ -201,17 +201,17 @@ def fetch_all_news():
     sorted_sources = sorted(SOURCES, key=lambda x: x['priority'])
     total_sources = len(sorted_sources)
     
-    print(f"\\n[*] {today_display} 베트남 뉴스 통합 수집 시작 (총 {total_sources}개 소스)")
+    print(f"\n[*] {today_display} 베트남 뉴스 통합 수집 시작 (총 {total_sources}개 소스)")
     print("-" * 50)
     
-    final_md = [f"# 오늘의 베트남 주요 뉴스 ({today_display})\\n\\n"]
+    final_md = [f"# 오늘의 베트남 주요 뉴스 ({today_display})\n\n"]
     collected_count = 0
     
     for i, src in enumerate(sorted_sources, 1):
         content = fetch_source_content(src, today_display, i, total_sources)
         if content:
             final_md.append(content)
-            final_md.append("\\n\\n---\\n\\n")
+            final_md.append("\n\n---\n\n")
             collected_count += 1
     
     print("-" * 50)
@@ -220,7 +220,7 @@ def fetch_all_news():
         return False
 
     # 마지막 구분선 제거
-    if final_md[-1] == "\\n\\n---\\n\\n":
+    if final_md[-1] == "\n\n---\n\n":
         final_md.pop()
 
     with open(output_path, "w", encoding="utf-8") as f:
