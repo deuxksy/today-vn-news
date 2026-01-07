@@ -61,12 +61,15 @@ graph TD
 today-vn-news/
 ├── README.md           # 프로젝트 가이드
 ├── ContextFile.md      # 도메인 지식 및 기술 제약 (AI용 SSoT)
-├── CHANGELOG.md        # 버전 관리 및 변경 이력
-├── TODO.md             # 단계별 작업 관리 (Step 1~5)
 ├── GEMINI.md           # AI 협업 지침 및 운영 정책
+├── CHANGELOG.md        # 버전 관리 및 변경 이력
+├── docs/               # 문서 보관소
+│   ├── ROADMAP.md      # 장기 로드맵 (Step 1~5)
+│   ├── task.md         # 단기 작업 관리 (AI 전용)
+│   └── walkthroughs/   # 주요 버전별 상세 구현 기록
 ├── main.py             # 파이프라인 통합 실행 엔트리포인트
 ├── today_vn_news/      # Core 로직 패키지
-│   ├── collector.py    # Gemini CLI 기반 뉴스 수집 모듈
+│   ├── collector.py    # Gemini API 기반 뉴스 수집 모듈
 │   ├── tts.py          # edge-tts 기반 음성 변환 모듈
 │   ├── engine.py       # FFmpeg 기반 영상 합성 엔진
 │   └── uploader.py     # YouTube Data API v3 업로드 모듈
@@ -75,11 +78,11 @@ today-vn-news/
 └── requirements.txt    # 의존성 패키지 관리
 ```
 
-## 🚀 시작하기 (Quick Start)
+## � 시작하기 (Quick Start)
 
 ### 1. 환경 설정
 
-`client_secrets.json` (유튜브 API) 및 `.env` (Gemini API 키) 파일을 프로젝트 루트에 준비합니다. Gemini CLI가 시스템에 설치되어 있어야 합니다.
+`client_secrets.json` (유튜브 API) 및 `.env` (Gemini API 키) 파일을 프로젝트 루트에 준비합니다.
 
 ### 2. 의존성 설치
 
@@ -97,18 +100,45 @@ python main.py
 python main.py 260106
 ```
 
-## 📊 주요 기능 완료 현황 (v0.4.0)
+## 📊 주요 기능 완료 현황 (v0.5.0)
 
-- [x] **Step 1: Collection** - 7대 일간지 및 안전/기상 데이터 수집 엔진 완성 (VnExpress 등)
+- [x] **Step 1: Collection** - Gemini API 직접 호출 기반 수집 엔진 완성 (v0.5.0)
 - [x] **Step 2: Voice & Optimization** - TTS 최적화(에모지 제거, 독음 변환) 및 마크다운 계층화 반영
 - [x] **Step 3: Video** - FFmpeg 하드웨어 가속(VideoToolbox/VAAPI) 합성 최적화 완료
-- [x] **Step 4: Deployment** - 유튜브 API 통합 및 보안 강화 (v0.4.0 정식 릴리즈 반영)
+- [x] **Step 4: Deployment** - 유튜브 API 통합 및 보안 강화 (v0.4.0)
 - [ ] **Step 5: Operations** - NAS Inotify 감시 및 자동 스케줄링 진행 예정
+
+## �📖 문서 시스템 및 협업 가이드
+
+프로젝트의 지속 가능성과 AI 협업 효율을 위해 다음과 같은 문서 체계를 운용합니다.
+
+### 문서 관계도
+
+```mermaid
+graph TB
+    A[GEMINI.md] -->|AI 행동 규칙| B[개발 작업]
+    C[ContextFile.md] -->|비즈니스 요구사항| B
+    D[docs/ROADMAP.md] -->|장기 계획| B
+    E[docs/task.md] -->|단기 작업| B
+    B -->|구현 완료| F[CHANGELOG.md]
+    B -->|상세 기록| G[docs/walkthroughs]
+    F -->|버전 요약| H[GitHub Release]
+    G -->|기술적 맥락| H
+```
+
+### 주요 문서 역할
+
+1.  **GEMINI.md (AI 운영 매뉴얼)**: AI의 작업 방식, Git 정책 및 Vibe Coding 철학 정의.
+2.  **ContextFile.md (비즈니스 SSoT)**: 도메인 지식 및 기술 스펙의 단일 진실 공급원. **(수정 시 사용자 승인 필수)**
+3.  **docs/ROADMAP.md (장기 로드맵)**: 파이프라인 단계별 마일스톤 관리.
+4.  **docs/task.md (단기 작업)**: 현재 세션의 세부 체크리스트 (AI 자동 관리).
+5.  **CHANGELOG.md (과거 히스토리)**: 모든 커밋과 버전별 변경 사항의 공식 기록.
+6.  **docs/walkthroughs (구현 상세)**: 주요 마이너 버전(`v0.x.0`)의 기술적 맥락 및 검증 결과.
 
 ## 🛠️ 핵심 최적화 지침
 
 - **Zero-Noise:** 뉴스 리포트 내 AI의 메타 정보(진행 멘트 등) 자동 제거 로직 적용.
-- **SOP 순서 준수:** `ContextFile.md`에 명시된 4.1~4.8 섹션 순서대로 수집 및 정렬.
+- **SOP 순서 준수:** `ContextFile.md`에 명시된 주요 섹션 순서대로 수집 및 정렬.
 - **Hardware Accel:** 기기별(Mac/Steam Deck) 최적화된 하드웨어 인코더 자동 선택.
 
 ## ⚖️ 라이선스
