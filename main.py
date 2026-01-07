@@ -34,38 +34,45 @@ async def main():
     # 1. 뉴스 데이터 수집
     if not os.path.exists(md_path):
         print("[*] 1단계: 뉴스 데이터 수집 시작...")
-        fetch_all_news()
+        if not fetch_all_news():
+            print("\n[!] 1단계: 수집 실패로 인해 파이프라인을 중단합니다.")
+            sys.exit(1)
     else:
         print(f"[*] 1단계: 마크다운 데이터가 이미 존재합니다. ({md_path})")
+    
+        # 수집 후 파일 존재 여부 재확인 (혹시 함수에서 True를 반환했지만 파일이 없을 경우 대비)
+        if not os.path.exists(md_path):
+            print(f"\n[!] 1단계: 결과 파일({md_path})이 없어 파이프라인을 중단합니다.")
+            sys.exit(1)
 
-    # 2. TTS 음성 변환 (MP3 생성)
-    if not os.path.exists(mp3_path):
-        print("\n[*] 2단계: TTS 음성 변환 시작...")
-        await md_to_tts(md_path)
-    else:
-        print(f"\n[*] 2단계: 음성 파일이 이미 존재합니다. ({mp3_path})")
-
-    # 3. 영상 합성 (MP4 생성)
-    if not os.path.exists(final_video):
-        if os.path.exists(mov_path):
-            print("\n[*] 3단계: 영상 합성(FFmpeg) 시작...")
-            synthesize_video(yymmdd)
+        # 2. TTS 음성 변환 (MP3 생성)
+        if not os.path.exists(mp3_path):
+            print("\n[*] 2단계: TTS 음성 변환 시작...")
+            await md_to_tts(md_path)
         else:
-            print(f"\n[!] 3단계: 베이스 영상({mov_path})이 없어 합성을 건너뜁니다.")
-    else:
-        print(f"\n[*] 3단계: 최종 영상이 이미 존재합니다. ({final_video})")
+            print(f"\n[*] 2단계: 음성 파일이 이미 존재합니다. ({mp3_path})")
 
-    # 4. 유튜브 업로드 (인증 완료 시까지 주석 처리)
-    # 4. 유튜브 업로드
-    if os.path.exists(final_video):
-        print("\n[*] 4단계: 유튜브 업로드 시작...")
-        success = upload_video(yymmdd)
-        if success:
-            print("\n🎉 모든 파이프라인 작업이 성공적으로 완료되었습니다!")
+        # 3. 영상 합성 (MP4 생성)
+        if not os.path.exists(final_video):
+            if os.path.exists(mov_path):
+                print("\n[*] 3단계: 영상 합성(FFmpeg) 시작...")
+                synthesize_video(yymmdd)
+            else:
+                print(f"\n[!] 3단계: 베이스 영상({mov_path})이 없어 합성을 건너뜁니다.")
         else:
-            print("\n⚠️ 유튜브 업로드 단계에서 문제가 발생했습니다.")
-    else:
-        print("\n[!] 4단계: 업로드할 최종 영상이 없어 종료합니다.")
+            print(f"\n[*] 3단계: 최종 영상이 이미 존재합니다. ({final_video})")
+
+        # 4. 유튜브 업로드 (인증 완료 시까지 주석 처리)
+        # 4. 유튜브 업로드
+        if os.path.exists(final_video):
+            print("\n[*] 4단계: 유튜브 업로드 시작...")
+            success = upload_video(yymmdd)
+            if success:
+                print("\n🎉 모든 파이프라인 작업이 성공적으로 완료되었습니다!")
+            else:
+                print("\n⚠️ 유튜브 업로드 단계에서 문제가 발생했습니다.")
+        else:
+            print("\n[!] 4단계: 업로드할 최종 영상이 없어 종료합니다.")
 
     print("=" * 40)
 
