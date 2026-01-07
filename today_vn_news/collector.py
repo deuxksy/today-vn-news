@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import subprocess
+import requests
+import json
 import datetime
 import os
 import sys
@@ -88,54 +89,68 @@ COMMON_INSTRUCTIONS = """
 """
 
 def fetch_source_content(source, today_str, index, total):
-    """Gemini CLI를 호출하여 개별 소스 뉴스 수집"""
+    """Gemini API를 직접 호출하여 개별 소스 뉴스 수집"""
     prompt = f"매체명: {source['name']}\n\n{source['prompt']}\n대상 기준일: {today_str}{COMMON_INSTRUCTIONS}"
     
     print(f"[{index}/{total}] {source['name']} 수집 중...")
     try:
-        process = subprocess.run(
-            ["gemini", prompt],
-            capture_output=True,
-            text=True,
-            encoding="utf-8"
-        )
-        if process.returncode == 0 and process.stdout.strip():
-            content = process.stdout.strip()
-            print(f"  [OK] {source['name']} 수집 완료")
-            return content
-        else:
-            print(f"  [!] {source['name']} 수집 실패 또는 내용 없음")
-            if process.stderr:
-                print(f"  [STDERR]: {process.stderr}")
+        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            print(f"  [!] API 키가 설정되지 않았습니다.")
             return None
+        
+        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={api_key}"
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}]
+        }
+        
+        response = requests.post(api_url, json=payload, timeout=30)
+        
+        if response.status_code == 200:
+            result = response.json()
+            if "candidates" in result and len(result["candidates"]) > 0:
+                content = result["candidates"][0]["content"]["parts"][0]["text"].strip()
+                print(f"  [OK] {source['name']} 수집 완료")
+                return content
+            else:
+                print(f"  [!] {source['name']} 응답에 내용이 없음")
+                return None
+        else:
+            print(f"  [!] {source['name']} API 오류: {response.status_code}")
+            error_detail = response.json() if response.text else {}
+            print(f"  [ERROR]: {error_detail}")
+            return None
+    except requests.Timeout:
+        print(f"  [!] {source['name']} 응답 시간 초과 (30s)")
+        return None
     except Exception as e:
         print(f"  [!] {source['name']} 수집 중 예외 발생: {str(e)}")
         return None
 
 def check_gemini_health():
-    """Gemini API 상태 점검 (Quota/Key Validation)"""
+    """Gemini API 상태 점검 (직접 API 호출)"""
     print("\n[*] Gemini API 사전 점검 중...")
     try:
-        # 가벼운 프롬프트로 상태 확인
-        process = subprocess.run(
-            ["gemini", "Hello"],
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            timeout=10
-        )
-        if process.returncode == 0 and process.stdout.strip():
+        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            print("  [!] API 키가 없습니다.")
+            return False
+        
+        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={api_key}"
+        payload = {"contents": [{"parts": [{"text": "1+1"}]}]}
+        
+        response = requests.post(api_url, json=payload, timeout=10)
+        
+        if response.status_code == 200 and '"text":' in response.text:
             print("  [OK] Gemini API 정상 동작 확인")
             return True
         else:
             print("  [!] Gemini API 점검 실패")
-            if process.stderr:
-                print(f"  [STDERR]: {process.stderr.strip()}")
-            elif process.stdout:
-                 # stdout만 있는 경우 (quota 에러가 stdout으로 찍히는 경우 대비)
-                print(f"  [STDOUT]: {process.stdout.strip()[:200]}...")
+            if response.text:
+                error = response.json() if response.text else {}
+                print(f"  [ERROR]: {error}")
             return False
-    except subprocess.TimeoutExpired:
+    except requests.Timeout:
         print("  [!] Gemini API 응답 시간 초과 (Timeout)")
         return False
     except Exception as e:

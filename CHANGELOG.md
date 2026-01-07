@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.0] - 2026-01-07 [GitHub]
+
+### Changed
+
+- **아키텍처 개선**: `gemini` CLI 방식에서 직접 API 호출 방식으로 전환하여 성능 및 비용 효율성 대폭 향상.
+  - 응답 시간: 180초 → 10초 (18배 개선)
+  - 토큰 사용량: 99% 절감 (프로젝트 컨텍스트 자동 로딩 제거)
+- **모델 변경**: `gemini-1.5-flash` → `gemini-2.0-flash-exp`
+- **수집 모듈 리팩토링**: `collector.py`의 `fetch_source_content`와 `check_gemini_health`를 `requests` 라이브러리 기반으로 재작성.
+
+### Added
+
+- `requests` 라이브러리 의존성 추가 (`requirements.txt`)
+- API 직접 호출 기반 헬스 체크 (`tests/debug_gemini.py`)
+
 ## [0.4.1] - 2026-01-06 [Internal]
 
 ### Changed
