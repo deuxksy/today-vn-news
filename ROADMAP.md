@@ -1,6 +1,7 @@
-# 🚀 today-vn-news 핵심 작업 목록 (TODO)
+# 🚀 today-vn-news 장기 로드맵 (ROADMAP)
 
-> **Goal:** `ContextFile.md`의 비즈니스 로직을 완벽히 구현한 뉴스 자동화 파이프라인 완성
+> **Goal:** `ContextFile.md`의 비즈니스 로직을 완벽히 구현한 뉴스 자동화 파이프라인 완성  
+> **단기 작업 진행 상황**: `task.md` 참조
 
 ## 1단계: 뉴스 및 안전 데이터 수집 (Collection)
 
