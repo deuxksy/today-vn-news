@@ -8,60 +8,58 @@
 
 - 직접적인 웹 스크래핑을 수행하지 않으며, 'Gemini Deep Research'를 통해 생성된 `YYMMDD.md` 마크다운 파일을 유일한 입력 데이터로 사용한다.
 
-### 1.2 주요 뉴스 소스 (7대 일간지)
+### 1.2 주요 안전 및 기상정보 소스
 
 - NCHMF, IGP-VAST, IQAir(Ho Chi Minh City).
 
-### 1.3 주요 뉴스 소스 (7대 일간지)
+### 1.3 주요 뉴스 소스
 
-- Nhân Dân, Sức khỏe & Đời sống, VnExpress, Tuổi Trẻ, Thanh Niên, ICTNews, The Saigon Times, .
+- Nhân Dân, Sức khỏe & Đời sống, Tuổi Trẻ.
+
+### 1.4 대상 청중 (Target Audience)
+
+- **주요 타겟:** 베트남에 거주하거나 베트남 소식에 관심이 있는 **한국인**.
+- **콘텐츠 원칙:** 모든 정보는 한국인의 시각에서 유용해야 하며, 번역 및 요약 톤앤매너는 한국어 사용자의 정서와 가독성을 최우선으로 한다.
 
 ## 2. 콘텐츠 큐레이션 및 로직 우선순위
 
-데이터 파싱 및 TTS/영상 생성 시 다음 우선순위를 엄격히 준수한다.
+### 2.1 안전 및 기상 관제 (Safety & Weather)
 
-### 안전 및 기상 관제 (Safety & Weather)
+#### 2.1.1 긴급 특보 및 날씨 정보 (Emergency & Weather - Always)
 
-#### 긴급 특보 (Emergency - Conditional)
+- **내용:** 태풍, 지진, 홍수 정보 와 현재 날씨 정보
+- **출처:** NCHMF
 
-- **내용:** 태풍, 지진, 대형 화재 등 발생 시에만 `🚨 [긴급 특보]` 섹션으로 최상단 노출.
-- **출처:** NCHMF, IGP-VAST, VnExpress 속보.
+#### 2.1.2 지진정보 (Earthquake - Always)
 
-#### 통합 날씨 및 공기질 (Weather & Air Quality - Always)
+- **내용:** 지진 정보
+- **출처:** IGP-VAST
 
-- **이 섹션은 매일 반드시 포함하며, 날씨 정보 내에 공기질 지표를 통합한다.**
-- **날씨 지표:** 호치민 기준 기온(최저/최고), 습도, 강수 확률.
-- **공기질 지표:** AQI(지수), PM2.5(초미세먼지), PM10(미세먼지).
-- **행동 지침:** AQI 수치가 '나쁨' 이상일 경우 마스크 착용 권고 문구 자동 생성.
-- **출처:** NCHMF, IQAir(Ho Chi Minh City) 또는 Gemini 실시간 브라우징.
+#### 2.1.3 공기질 정보 (Air Quality - Always)
 
-### IT 및 경제 (Professional)
+- **내용:** 공기질 정보
+  - **공기질 지표:** AQI(지수), PM2.5(초미세먼지), PM10(미세먼지).
+  - **행동 지침:** AQI 수치가 '나쁨' 이상일 경우 마스크 착용 권고 문구 자동 생성.
+- **출처:** NCHMF, IQAir(Ho Chi Minh City).
 
-- **키워드:** Java, Spring, AWS, Cloud, 호치민 개발자 채용 동향.
-- **로직:** 베트남 내 IT 기술 시장의 흐름을 요약하여 중반부 배치.
+<!-- ### 2.2 주요 정부 와 정치 뉴스
+ - **키워드:** :
 
-### 로컬 뉴스 (Local/Social)
+### 2.3 주요 경제 뉴스
 
-- **대상:** 호치민 시정 소식, 주요 교통 통제, 랜드마크 2 등 주요 지역 이벤트.
-- **로직:** 생활 밀착형 정보를 후반부 배치.
+### 2.4 주요 로컬 뉴스 -->
 
 ## 3. 인프라 및 기술 스펙 (Distributed Infrastructure)
 
-### 3.1 기기별 역할 정의
+### 3.1 핵심 기술 스택
 
-- **N100 NAS (Fedora):** `Inotify`를 통한 파일 감시 및 원시 데이터 저장.
-- **Steam Deck (SteamOS):** `edge-tts` 기반 음성 생성 및 `FFmpeg` 하드웨어 가속(`h264_vaapi`) 합성.
-- **Mac Mini M4 (macOS):** 고해상도 렌더링 가속 테스트(`h264_videotoolbox`) 및 로직 고도화 개발.
+- **Language:** Python 3
+- **TTS:** edge-tts
+- **Video:** FFmpeg
 
-### 3.2 핵심 기술 스택
+## 4. 데이터 수집 모듈 상세 명세 (Gemini CLI Wrapper)
 
-- **Language:** Python 3.10+
-- **TTS:** edge-tts (Voice: `vi-VN-HoaiMyNeural` 또는 `vi-VN-NamMinhNeural`)
-- **Video:** FFmpeg (VAAPI/VideoToolbox 기반 하드웨어 인코딩)
-
-## 4. 일간지별 데이터 수집 모듈 상세 명세 (Gemini CLI Wrapper)
-
-모든 데이터는 Gemini CLI를 통해 정제되며, **TTS 최적화(특수문자/영어 제거)**를 거쳐 `/mnt/nas/data/{YYMMDD}.md` 파일에 Append 됩니다.
+모든 데이터는 Gemini를 통해 정제되며, **TTS 최적화(특수문자/영어 제거)**를 거쳐 `data/{YYMMDD}.md` 파일에 Append 됩니다.
 
 ### 4.1 안전 및 기상 관제 (Safety & Weather)
 
@@ -95,20 +93,20 @@
 - **TTS 최적화:** '궤양성 대장염' 등 사용자 맞춤형 키워드 강조, 의학 전문 용어 순화.
 - **가중치**: Critical (P0)
 
-### 4.4 VnExpress (종합 속보)
+### 4.4 Tuổi Trẻ (로컬/시정)
+
+- **목적:** 호치민(HCMC) 중심의 시정 소식, 주요 도로 통제 이벤트 수집.
+- **데이터 소스:** [Tuổi Trẻ](https://tuoitre.vn/)
+- **추출 규칙:** 'TP.HCM' 섹션 내 생활 밀착형 정보 2개.
+- **TTS 최적화:** 베트남어 성조가 포함된 거리명 등을 한국어 독음으로 변환 (예: Quận 1 -> 1군).
+- **가중치**: Normal (P2)
+
+<!-- ### 4.4 VnExpress (종합 속보)
 
 - **목적:** 베트남 최대 뉴스 포털로서 가장 빠른 전국구 이슈 및 글로벌 경제 뉴스 수집.
 - **데이터 소스:** [의심스러운 링크 삭제됨]
 - **추출 규칙:** 당일 조회수 및 중요도가 높은 메인 이슈 2개.
 - **TTS 최적화:** 기사 서두의 지역명(예: 하노이, 호치민) 및 날짜 정보 간소화.
-- **가중치**: Normal (P2)
-
-### 4.5 Tuổi Trẻ (로컬/시정)
-
-- **목적:** 호치민(HCMC) 중심의 시정 소식, 주요 도로 통제, 랜드마크 2 인근 이벤트 수집.
-- **데이터 소스:** [Tuổi Trẻ](https://tuoitre.vn/)
-- **추출 규칙:** 'TP.HCM' 섹션 내 생활 밀착형 정보 2개.
-- **TTS 최적화:** 베트남어 성조가 포함된 거리명 등을 한국어 독음으로 변환 (예: Quận 1 -> 1군).
 - **가중치**: Normal (P2)
 
 ### 4.6 Thanh Niên (사회/청년)
@@ -133,4 +131,4 @@
 - **데이터 소스:** [The Saigon Times](https://thesaigontimes.vn/)
 - **추출 규칙:** 사용자 자산 관리에 영향을 줄 수 있는 주요 경제 지표 1~2개.
 - **TTS 최적화:** 통화 단위(VND, USD) 및 퍼센트(%) 단위를 한국어 읽기 방식으로 교정.
-- **가중치**: Normal (P2)
+- **가중치**: Normal (P2) -->
