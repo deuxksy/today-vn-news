@@ -23,14 +23,16 @@ async def main():
     
     # 기본 대상일 설정
     if len(sys.argv) > 1:
-        yymmdd = sys.argv[1]
+        # 명령줄 인자로 날짜 지정 시 (YYMMDD 또는 YYMMDD-HHMM 형식 모두 지원)
+        yymmdd_hhmm = sys.argv[1]
     else:
-        yymmdd = datetime.datetime.now().strftime("%y%m%d")
+        # 인자 없이 실행 시 현재 시각으로 자동 생성 (YYMMDD-HHMM)
+        yymmdd_hhmm = datetime.datetime.now().strftime("%y%m%d-%H%M")
     
-    md_path = f"data/{yymmdd}.md"
-    mov_path = f"data/{yymmdd}.mov"
-    mp3_path = f"data/{yymmdd}.mp3"
-    final_video = f"data/{yymmdd}_final.mp4"
+    md_path = f"data/{yymmdd_hhmm}.md"
+    mov_path = f"data/{yymmdd_hhmm}.mov"
+    mp3_path = f"data/{yymmdd_hhmm}.mp3"
+    final_video = f"data/{yymmdd_hhmm}_final.mp4"
 
     # 1. 뉴스 데이터 수집
     if not os.path.exists(md_path):

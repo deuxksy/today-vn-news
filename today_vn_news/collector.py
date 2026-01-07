@@ -182,9 +182,9 @@ def check_gemini_health():
 def fetch_all_news():
     """모든 소스를 순회하며 뉴스 통합 수집"""
     now = datetime.datetime.now()
-    yymmdd = now.strftime("%y%m%d")
-    today_display = now.strftime("%Y년 %m월 %d일")
-    output_path = f"data/{yymmdd}.md"
+    yymmdd_hhmm = now.strftime("%y%m%d-%H%M")
+    today_display = now.strftime("%Y년 %m월 %d일 %H:%M")
+    output_path = f"data/{yymmdd_hhmm}.md"
 
     if not os.path.exists("data"):
         os.makedirs("data")
