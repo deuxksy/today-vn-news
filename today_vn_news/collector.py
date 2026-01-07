@@ -139,10 +139,9 @@ def fetch_source_content(source, today_str, index, total):
             print(f"  [!] API 키가 설정되지 않았습니다.")
             return None
         
-        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={api_key}"
+        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key={api_key}"
         payload = {
-            "contents": [{"parts": [{"text": prompt}]}],
-            "tools": [{"google_search": {}}]
+            "contents": [{"parts": [{"text": prompt}]}]
         }
         
         response = requests.post(api_url, json=payload, timeout=60)
@@ -178,7 +177,7 @@ def check_gemini_health():
             print("  [!] API 키가 없습니다.")
             return False
         
-        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={api_key}"
+        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key={api_key}"
         payload = {"contents": [{"parts": [{"text": "1+1"}]}]}
         
         response = requests.post(api_url, json=payload, timeout=10)

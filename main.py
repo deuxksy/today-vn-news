@@ -26,8 +26,8 @@ async def main():
         # 명령줄 인자로 날짜 지정 시 (YYMMDD 또는 YYMMDD-HHMM 형식 모두 지원)
         yymmdd_hhmm = sys.argv[1]
     else:
-        # 인자 없이 실행 시 현재 시각으로 자동 생성 (YYMMDD-HHMM)
-        yymmdd_hhmm = datetime.datetime.now().strftime("%y%m%d-%H%M")
+        # 인자 없이 실행 시 현재 시각으로 자동 생성 (YYYYMMDD_HHMM)
+        yymmdd_hhmm = datetime.datetime.now().strftime("%Y%m%d_%H%M")
     
     yaml_path = f"data/{yymmdd_hhmm}.yaml"
     mov_path = f"data/{yymmdd_hhmm}.mov"
@@ -59,7 +59,7 @@ async def main():
     if not os.path.exists(final_video):
         if os.path.exists(mov_path):
             print("\n[*] 3단계: 영상 합성(FFmpeg) 시작...")
-            synthesize_video(yymmdd)
+            synthesize_video(yymmdd_hhmm)
         else:
             print(f"\n[!] 3단계: 베이스 영상({mov_path})이 없어 합성을 건너뜁니다.")
     else:
@@ -68,7 +68,7 @@ async def main():
     # 4. 유튜브 업로드
     if os.path.exists(final_video):
         print("\n[*] 4단계: 유튜브 업로드 시작...")
-        success = upload_video(yymmdd)
+        success = upload_video(yymmdd_hhmm)
         if success:
             print("\n🎉 모든 파이프라인 작업이 성공적으로 완료되었습니다!")
         else:
