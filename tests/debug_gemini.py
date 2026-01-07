@@ -17,7 +17,8 @@ print("Running Gemini API Health Check via curl (JSON)...")
 try:
     # curl 명령어로 직접 API 호출 (최소 토큰 사용)
     # 1+1 계산 요청
-    api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={google_key}"
+    # Flash 모델 사용 (gemini-2.0-flash-exp)
+    api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={google_key}"
     payload = '{"contents":[{"parts":[{"text":"1+1"}]}]}'
     
     res = subprocess.run(
