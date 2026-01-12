@@ -13,6 +13,10 @@ from today_vn_news.uploader import upload_video
 # .env 파일 로드
 load_dotenv()
 
+# 로그 및 데이터 디렉토리 생성
+os.makedirs("logs", exist_ok=True)
+os.makedirs("data", exist_ok=True)
+
 async def main():
     """
     🇻🇳 오늘의 베트남 뉴스 실행 엔트리포인트 (Full Pipeline)
@@ -31,13 +35,14 @@ async def main():
     
     yaml_path = f"data/{yymmdd_hhmm}.yaml"
     mov_path = f"data/{yymmdd_hhmm}.mov"
+    mp4_path = f"data/{yymmdd_hhmm}.mp4"
     mp3_path = f"data/{yymmdd_hhmm}.mp3"
     final_video = f"data/{yymmdd_hhmm}_final.mp4"
 
     # 1. 뉴스 데이터 수집
     if not os.path.exists(yaml_path):
         print("[*] 1단계: 뉴스 데이터 수집 시작...")
-        if not fetch_all_news():
+        if not fetch_all_news(yymmdd_hhmm):
             print("\n[!] 1단계: 수집 실패로 인해 파이프라인을 중단합니다.")
             sys.exit(1)
     else:
@@ -57,11 +62,12 @@ async def main():
 
     # 3. 영상 합성 (MP4 생성)
     if not os.path.exists(final_video):
-        if os.path.exists(mov_path):
+        default_bg = "assets/default_bg.png"
+        if os.path.exists(mov_path) or os.path.exists(mp4_path) or os.path.exists(default_bg):
             print("\n[*] 3단계: 영상 합성(FFmpeg) 시작...")
             synthesize_video(yymmdd_hhmm)
         else:
-            print(f"\n[!] 3단계: 베이스 영상({mov_path})이 없어 합성을 건너뜁니다.")
+            print(f"\n[!] 3단계: 베이스 영상(.mov, .mp4) 또는 기본 배경 이미지({default_bg})가 없어 합성을 건너뜁니다.")
     else:
         print(f"\n[*] 3단계: 최종 영상이 이미 존재합니다. ({final_video})")
 
