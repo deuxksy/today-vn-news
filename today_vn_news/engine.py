@@ -39,12 +39,29 @@ def synthesize_video(base_name: str, data_dir: str = "data"):
     - 원본 영상의 소리는 제거하고 TTS 음성만 삽입
     - 영상의 길이를 TTS 음성 길이에 정확히 맞춤 (부족하면 루프, 길면 컷)
     """
-    video_in = os.path.join(data_dir, f"{base_name}.mov")
+    video_mov = os.path.join(data_dir, f"{base_name}.mov")
+    video_mp4 = os.path.join(data_dir, f"{base_name}.mp4")
     audio_in = os.path.join(data_dir, f"{base_name}.mp3")
     video_out = os.path.join(data_dir, f"{base_name}_final.mp4")
 
-    if not os.path.exists(video_in) or not os.path.exists(audio_in):
-        print(f"[!] 필수 입력 파일이 없습니다. (Video: {os.path.exists(video_in)}, Audio: {os.path.exists(audio_in)})")
+    # MOV 또는 MP4 중 존재하는 파일 선택
+    video_in = video_mov if os.path.exists(video_mov) else video_mp4
+    
+    # 기본 이미지 경로
+    default_img = "assets/default_bg.png"
+    using_image = False
+
+    if not os.path.exists(video_in):
+        if os.path.exists(default_img):
+            print(f"[*] 영상을 찾을 수 없어 기본 이미지({default_img})를 사용합니다.")
+            video_in = default_img
+            using_image = True
+        else:
+            print(f"[!] 영상이나 기본 이미지({default_img})가 없습니다. 합성이 불가능합니다.")
+            return False
+
+    if not os.path.exists(audio_in):
+        print(f"[!] 필수 오디오 파일이 없습니다: {audio_in}")
         return False
 
     encoder, input_flags, output_flags = get_hw_encoder_config()
@@ -52,33 +69,30 @@ def synthesize_video(base_name: str, data_dir: str = "data"):
     print(f"[*] 사용 인코더: {encoder}")
     if input_flags:
         print(f"[*] 가속 옵션: {' '.join(input_flags)} {' '.join(output_flags)}")
-    print("[*] 오디오 제거 및 TTS 길이 맞춤 설정 적용 중...")
-
-    # FFmpeg 명령어 구성
-    # -stream_loop -1: 영상이 오디오보다 짧을 경우 무한 루프
-    # -i video_in: 영상 입력
-    # -i audio_in: 음성 입력
-    # -map 0:v:0: 첫 번째 입력(영상)의 비디오만 사용 (원본 소리 제거)
-    # -map 1:a:0: 두 번째 입력(음성)의 오디오만 사용
-    # -shortest: 입력 중 가장 짧은 스트림(여기서는 오디오)이 끝나면 종료
-    # -fflags +genpts: 루프 시 타임스탬프 재생성
-    cmd = [
-        "ffmpeg", "-y"
-    ]
     
-    # Add Hardware Device Flags (e.g. -vaapi_device ...)
+    # FFmpeg 명령어 구성
+    cmd = ["ffmpeg", "-y"]
     cmd.extend(input_flags)
     
+    if using_image:
+        # 이미지일 경우: 1프레임 이미지를 무한 루프
+        cmd.extend(["-loop", "1", "-i", video_in])
+    else:
+        # 영상일 경우: 루프 설정
+        cmd.extend(["-stream_loop", "-1", "-i", video_in])
+        
     cmd.extend([
-        "-stream_loop", "-1",    # 영상 무한 루프 설정
-        "-i", video_in,
         "-i", audio_in,
-        "-map", "0:v:0",         # 비디오만 맵핑 (오디오 제거 효과)
-        "-map", "1:a:0",         # TTS 오디오 맵핑
+        "-map", "0:v:0",         # 비디오(또는 루프되는 이미지)
+        "-map", "1:a:0",         # TTS 오디오
         "-c:v", encoder
     ])
     
-    # Add Output Filters (e.g. -vf format=nv12,hwupload)
+    # 이미지일 경우 추가적인 비디오 필터 (픽셀 포맷 보정 등)
+    if using_image:
+        # yuv420p는 대부분의 플레이어 및 유튜브 호환성을 위함
+        cmd.extend(["-pix_fmt", "yuv420p", "-r", "30"])
+    
     cmd.extend(output_flags)
     
     cmd.extend([
