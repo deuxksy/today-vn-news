@@ -19,6 +19,7 @@
 
 - **가독성 및 주석**: 15년 차 엔지니어답게 군더더기 없는 코드를 작성하되, 핵심 로직에는 반드시 **한국어 주석**을 상세히 단다.
 - **Dependency Minimal**: 불필요한 라이브러리 도입을 지양하고 시스템 기본 도구(FFmpeg, Bash 등)를 최대한 활용한다.
+- **Environment Management**: Python 패키지 및 가상환경 관리는 **uv**를 기본으로 사용한다. (`pyproject.toml` 중심 관리)
 
 ## 3. 시스템 아키텍처 및 환경 정의 (Distributed Arch)
 

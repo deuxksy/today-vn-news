@@ -63,6 +63,7 @@ today-vn-news/
 ├── ContextFile.md      # 도메인 지식 및 기술 제약 (AI용 SSoT)
 ├── GEMINI.md           # AI 협업 지침 및 운영 정책
 ├── ROADMAP.md          # 장기 로드맵 (Step 1~5)
+├── pyproject.toml      # uv 기반 프로젝트 설정 및 의존성
 ├── main.py             # 파이프라인 통합 실행 엔트리포인트
 ├── today_vn_news/      # Core 로직 패키지
 │   ├── collector.py    # Google GenAI SDK 기반 뉴스 수집 (YAML)
@@ -70,8 +71,7 @@ today-vn-news/
 │   ├── engine.py       # FFmpeg 기반 영상 합성 엔진
 │   └── uploader.py     # YouTube Data API v3 업로드 모듈
 ├── client_secrets.json # (Secret) Google OAuth2 자격 증명 [Git Ignored]
-├── .env                # (Secret) API 키 환경 변수 [Git Ignored]
-└── requirements.txt    # 의존성 패키지 관리
+└── .env                # (Secret) API 키 환경 변수 [Git Ignored]
 ```
 
 ## 🚀 시작하기 (Quick Start)
@@ -83,17 +83,17 @@ today-vn-news/
 ### 2. 의존성 설치
 
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
 ### 3. 전체 파이프라인 실행
 
 ```bash
 # 당일 뉴스 처리 (수집 -> TTS -> 합성 -> 업로드)
-python3 main.py
+uv run main.py
 
 # 특정 날짜 데이터 재생성 (날짜 포맷: YYYYMMDD_HHMM)
-python3 main.py 20260107_1609
+uv run main.py 20260112
 ```
 
 ## 📊 주요 기능 완료 현황 (v0.6.0)
