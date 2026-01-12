@@ -50,7 +50,14 @@ def get_authenticated_service():
             
             flow = InstalledAppFlow.from_client_secrets_file(secrets_path, SCOPES)
             # 서버 환경이나 원격 환경을 고려하여 open_browser=False 설정
-            credentials = flow.run_local_server(port=8080, open_browser=False)
+            try:
+                credentials = flow.run_local_server(port=58080, open_browser=False)
+            except OSError as e:
+                if e.errno == 48:
+                    print("\n[!] 에러: 58080 포트가 이미 사용 중입니다.")
+                    print("    'lsof -ti :58080 | xargs kill -9' 명령어로 기존 프로세스를 종료 후 다시 시도해 주세요.\n")
+                    sys.exit(1)
+                raise e
 
         # 토큰 저장
         with open(token_path, 'wb') as token:
