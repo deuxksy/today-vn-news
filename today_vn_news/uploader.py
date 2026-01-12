@@ -14,8 +14,14 @@ YouTube 업로드 모듈 (YouTube Data API v3 Wrapper)
 - 필요 파일: client_secrets.json (OAuth2 자격 증명)
 """
 
-# YouTube Data API v3 scope
-SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
+# YouTube Data API v3 scopes
+SCOPES = [
+    'https://www.googleapis.com/auth/youtube.upload',
+    'https://www.googleapis.com/auth/youtube'
+]
+
+# 기본 재생 목록 ID (오늘의 베트남 뉴스)
+DEFAULT_PLAYLIST_ID = "PLzMxB6D1eypIA_JNasD_MNISMEUtMbHvK"
 
 def get_authenticated_service():
     """
@@ -43,13 +49,39 @@ def get_authenticated_service():
                 return None
             
             flow = InstalledAppFlow.from_client_secrets_file(secrets_path, SCOPES)
-            credentials = flow.run_local_server(port=0)
+            # 서버 환경이나 원격 환경을 고려하여 open_browser=False 설정
+            credentials = flow.run_local_server(port=8080, open_browser=False)
 
         # 토큰 저장
         with open(token_path, 'wb') as token:
             pickle.dump(credentials, token)
 
     return build('youtube', 'v3', credentials=credentials)
+
+def add_video_to_playlist(youtube, video_id, playlist_id):
+    """
+    영상을 특정 재생 목록에 추가
+    """
+    print(f"[*] 재생 목록에 추가 중: {playlist_id}")
+    try:
+        request = youtube.playlistItems().insert(
+            part="snippet",
+            body={
+                "snippet": {
+                    "playlistId": playlist_id,
+                    "resourceId": {
+                        "kind": "youtube#video",
+                        "videoId": video_id
+                    }
+                }
+            }
+        )
+        response = request.execute()
+        print(f"[+] 재생 목록 추가 완료! Item ID: {response.get('id')}")
+        return True
+    except Exception as e:
+        print(f"[!] 재생 목록 추가 중 오류 발생: {str(e)}")
+        return False
 
 def upload_video(yymmdd: str, data_dir: str = "data"):
     """
@@ -102,7 +134,13 @@ def upload_video(yymmdd: str, data_dir: str = "data"):
         if status:
             print(f"[*] 업로드 진행 중: {int(status.progress() * 100)}%")
 
-    print(f"[+] 업로드 완료! Video ID: {response.get('id')}")
+    video_id = response.get('id')
+    print(f"[+] 업로드 완료! Video ID: {video_id}")
+
+    # 재생 목록에 추가
+    if video_id:
+        add_video_to_playlist(youtube, video_id, DEFAULT_PLAYLIST_ID)
+
     return True
 
 if __name__ == "__main__":
