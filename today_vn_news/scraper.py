@@ -312,7 +312,7 @@ def scrape_weather_hochiminh() -> Dict[str, str]:
         }
         
         # NCHMF 호치민 날씨 페이지
-        url = "https://www.nchmf.gov.vn/en/portal/portal/hcm-weather"
+        url = "https://nchmf.gov.vn/kttvsiteE/vi-VN/1/vung-tau-tp-ho-chi-minh-w31.html"
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         
@@ -324,34 +324,46 @@ def scrape_weather_hochiminh() -> Dict[str, str]:
         rain_chance = ""
         condition = ""
         
-        # 온도 찾기
+        # 디버깅: HTML 구조 확인
+        print(f"  [DEBUG] NCHMF 페이지 구조 분석 중...")
+        
+        # 온도 찾기 (다양한 선택자 시도)
         temp_element = soup.find('span', class_='temp') or \
                      soup.find('div', class_='temperature') or \
-                     soup.select_one('.weather-temp, .temp-value')
+                     soup.select_one('.weather-temp, .temp-value') or \
+                     soup.find(text=re.compile(r'\d+.*°[CF]?'))
         if temp_element:
-            temp = temp_element.get_text(strip=True)
+            temp = temp_element.get_text(strip=True) if hasattr(temp_element, 'get_text') else str(temp_element)
+            print(f"  [DEBUG] 온도: {temp}")
         
         # 습도 찾기
         humidity_element = soup.find('span', class_='humidity') or \
                         soup.find('div', class_='humidity') or \
-                        soup.select_one('.humidity-value')
+                        soup.select_one('.humidity-value') or \
+                        soup.find(text=re.compile(r'습도|humidity'))
         if humidity_element:
-            humidity = humidity_element.get_text(strip=True)
+            humidity = humidity_element.get_text(strip=True) if hasattr(humidity_element, 'get_text') else str(humidity_element)
+            print(f"  [DEBUG] 습도: {humidity}")
         
         # 강수 확률 찾기
         rain_element = soup.find('span', class_='rain') or \
                      soup.find('div', class_='rain-chance') or \
-                     soup.select_one('.rain-probability')
+                     soup.select_one('.rain-probability') or \
+                     soup.find(text=re.compile(r'강수|rain'))
         if rain_element:
-            rain_chance = rain_element.get_text(strip=True)
+            rain_chance = rain_element.get_text(strip=True) if hasattr(rain_element, 'get_text') else str(rain_element)
+            print(f"  [DEBUG] 강수: {rain_chance}")
         
         # 날씨 상태 찾기
         condition_element = soup.find('span', class_='weather') or \
                          soup.find('div', class_='weather-desc') or \
-                         soup.select_one('.weather-condition')
+                         soup.select_one('.weather-condition') or \
+                         soup.find(text=re.compile(r'맑음|흐림|비|cloudy|rainy|sunny'))
         if condition_element:
-            condition = condition_element.get_text(strip=True)
+            condition = condition_element.get_text(strip=True) if hasattr(condition_element, 'get_text') else str(condition_element)
+            print(f"  [DEBUG] 상태: {condition}")
         
+        print(f"  [DEBUG] 수집된 데이터: temp={temp}, humidity={humidity}, rain={rain_chance}, condition={condition}")
         print(f"  [OK] NCHMF 기상 정보 수집 완료")
         return {
             'temp': temp,
@@ -533,12 +545,15 @@ def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str,
     safety_items = []
     
     # 기상 정보
-    if weather_data and (weather_data['temp'] or weather_data['condition']):
-        temp_str = weather_data['temp'] if weather_data['temp'] else 'N/A'
-        humidity_str = weather_data['humidity'] if weather_data['humidity'] else 'N/A'
-        rain_str = weather_data['rain_chance'] if weather_data['rain_chance'] else 'N/A'
-        condition_str = weather_data['condition'] if weather_data['condition'] else 'N/A'
+    if weather_data:
+        temp_str = weather_data['temp'].strip() if weather_data['temp'] else 'N/A'
+        # 불필요한 콜론 제거
+        temp_str = temp_str.lstrip(':').strip()
         
+        humidity_str = weather_data['humidity'].strip() if weather_data['humidity'] else 'N/A'
+        rain_str = weather_data['rain_chance'].strip() if weather_data['rain_chance'] else 'N/A'
+        condition_str = weather_data['condition'].strip() if weather_data['condition'] else 'N/A'
+    
         safety_items.append({
             'name': '기상',
             'source': 'NCHMF',
@@ -551,12 +566,19 @@ def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str,
         })
         print(f"  [INFO] 기상 정보 추가됨: {condition_str}, {temp_str}")
     
-    # 공기질 정보
-    if air_data and (air_data['aqi'] or air_data['status']):
-        aqi_str = air_data['aqi'] if air_data['aqi'] else 'N/A'
-        status_str = air_data['status'] if air_data['status'] else 'N/A'
-        pm25_str = air_data['pm25'] if air_data['pm25'] else 'N/A'
-        pm10_str = air_data['pm10'] if air_data['pm10'] else 'N/A'
+    # 공기질 정보 (데이터가 비어있더라도 시도)
+    if air_data:
+        aqi_str = air_data['aqi'].strip() if air_data['aqi'] else 'N/A'
+        status_str = air_data['status'].strip() if air_data['status'] else 'N/A'
+        pm25_str = air_data['pm25'].strip() if air_data['pm25'] else 'N/A'
+        pm10_str = air_data['pm10'].strip() if air_data['pm10'] else 'N/A'
+        
+        # 모든 데이터가 비어있더라도 기본값으로 추가
+        if not aqi_str and not status_str and not pm25_str and not pm10_str:
+            aqi_str = 'N/A'
+            status_str = 'N/A'
+            pm25_str = 'N/A'
+            pm10_str = 'N/A'
         
         safety_items.append({
             'name': '공기',
@@ -589,6 +611,8 @@ def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str,
             'url': 'https://www.nchmf.gov.vn/'
         })
         print(f"  [INFO] 안전 데이터가 없어 플레이스홀더 추가됨")
+    else:
+        print(f"  [INFO] 안전 데이터 {len(safety_items)}개 추가됨")
     
     scraped_data = {
         "안전 및 기상 관제": safety_items,
