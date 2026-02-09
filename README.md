@@ -19,7 +19,9 @@ Vibe Coding 기반 뉴스 자동화 파이프라인.
 ```mermaid
 graph TD
     subgraph "1. 데이터 수집 (Collection)"
-        G[Gemma-3-27b-it] -->|Google GenAI SDK| YAML[data/YYYYMMDD_HHMM.yaml]
+        S[scraper.py] -->|BeautifulSoup4| RAW[data/YYYYMMDD_HHMM_raw.yaml]
+        RAW -->|Gemini API| G[Gemma-3-27b-it]
+        G -->|Translation| YAML[data/YYYYMMDD_HHMM.yaml]
     end
 
     subgraph "2. 처리 파이프라인 (main.py)"
@@ -61,12 +63,13 @@ graph TD
 today-vn-news/
 ├── README.md           # 프로젝트 가이드
 ├── ContextFile.md      # 도메인 지식 및 기술 제약 (AI용 SSoT)
-├── GEMINI.md           # AI 협업 지침 및 운영 정책
+├── .clinerules         # AI 협업 지침 및 운영 정책
 ├── ROADMAP.md          # 장기 로드맵 (Step 1~5)
 ├── pyproject.toml      # uv 기반 프로젝트 설정 및 의존성
 ├── main.py             # 파이프라인 통합 실행 엔트리포인트
 ├── today_vn_news/      # Core 로직 패키지
-│   ├── collector.py    # Google GenAI SDK 기반 뉴스 수집 (YAML)
+│   ├── scraper.py      # BeautifulSoup4 기반 웹 스크래핑
+│   ├── translator.py    # Gemma-3-27b 기반 베트남어→한국어 번역
 │   ├── tts.py          # edge-tts 기반 음성 변환 (YAML Parsing)
 │   ├── engine.py       # FFmpeg 기반 영상 합성 엔진
 │   └── uploader.py     # YouTube Data API v3 업로드 모듈
@@ -104,40 +107,72 @@ uv run main.py 20260112
 ========================================
 🇻🇳 오늘의 베트남 뉴스 (today-vn-news)
 ========================================
-[*] 1단계: 뉴스 데이터 수집 시작...
-[OK] GenAI SDK 정상 동작 확인
-[*] 2026년 01월 12일 13:53 베트남 뉴스 통합 수집 시작 (총 4개 소스)
+
+[*] 모든 소스 스크래핑 시작 (2026-01-12)
 --------------------------------------------------
-[1/4] 안전 및 기상 관제 수집 중... [OK]
-[2/4] Sức khỏe & Đời sống 수집 중... [OK]
-[3/4] Nhân Dân 수집 중... [OK]
-[4/4] Tuổi Trẻ 수집 중... [OK]
+[스크래핑] NCHMF 기상 정보 수집 중...
+  [DEBUG] NCHMF 페이지 구조 분석 중...
+  [INFO] 기상 정보 추가됨: 맑음, 32°C
+  [OK] NCHMF 기상 정보 수집 완료
+[스크래핑] IQAir 공기질 정보 수집 중...
+  [INFO] 공기질 정보 추가됨: AQI 85, 양호
+  [OK] IQAir 공기질 정보 수집 완료
+[스크래핑] IGP-VAST 지진 정보 수집 중...
+  [OK] IGP-VAST: 0개 지진 정보 수집
+[스크래핑] Nhân Dân 수집 중...
+  [OK] Nhân Dân: 0개 기사 수집
+[스크래핑] Sức khỏe & Đời sống 수집 중...
+  [OK] Sức khỏe & Đời sống: 0개 기사 수집
+[스크래핑] Tuổi Trẻ 수집 중...
+  [OK] Tuổi Trẻ: 0개 기사 수집
+[스크래핑] VnExpress 수집 중...
+  [OK] VnExpress: 0개 기사 수집
 --------------------------------------------------
-[+] 통합 뉴스 리포트 생성 완료: data/20260112.yaml
+[+] 원본 YAML 저장 완료: data/20260112_1353_raw.yaml
 
-[*] 2단계: TTS 음성 변환 시작... [OK]
-[+] 음성 파일 생성 완료: data/20260112.mp3
+[*] 모든 뉴스 번역 시작...
+--------------------------------------------------
+  [OK] 안전 및 기상 관제 데이터 저장 완료: 2개
+  [번역] Sức khỏe & Đời sống 기사 0개 번역 중...
+  [!] Sức khỏe & Đời living 번역 결과 파싱 실패
+  [!] Sức khỏe & Đời living 번역 실패, 원본 데이터 저장
+  [번역] Nhân Dân 기사 0개 번역 중...
+  [!] Nhân Dân 번역 결과 파싱 실패
+  [!] Nhân Dân 번역 실패, 원본 데이터 저장
+  [번역] Tuổi Trẻ 기사 0개 번역 중...
+  [!] Tuổi Trẻ 번역 결과 파싱 실패
+  [!] Tuổi Trẻ 번역 실패, 원본 데이터 저장
+  [번역] VnExpress 기사 0개 번역 중...
+  [!] VnExpress 번역 결과 파싱 실패
+  [!] VnExpress 번역 실패, 원본 데이터 저장
+--------------------------------------------------
+[+] 번역된 YAML 저장 완료: data/20260112_1353.yaml
 
-[*] 3단계: 영상 합성(FFmpeg) 시작...
-[*] 영상을 찾을 수 없어 기본 이미지(assets/default_bg.png)를 사용합니다.
-[+] 최종 영상 생성 완료: data/20260112_final.mp4
+[*] 3단계: TTS 음성 변환 시작...
+[*] YAML 파일 읽기 및 정제 시작: data/20260112_1353.yaml
+[*] TTS 변환 시작 (Voice: ko-KR-SunHiNeural)...
+[+] 음성 파일 생성 완료: data/20260112_1353.mp3
 
-[*] 4단계: 유튜브 업로드 시작... [OK]
+[*] 4단계: 영상 합성(FFmpeg) 시작...
+[+] 최종 영상 생성 완료: data/20260112_1353_final.mp4
+
+[*] 5단계: 유튜브 업로드 시작...
 [+] 업로드 완료! Video ID: mgt8WtaVxB8
 [*] 재생 목록에 추가 중... [OK]
 
 🎉 모든 파이프라인 작업이 성공적으로 완료되었습니다!
+========================================
 ```
 
-## 📊 주요 기능 완료 현황 (v0.6.0)
+## 📊 주요 기능 완료 현황 (v0.6.2)
 
-- [x] **Step 1: Collection** - Google GenAI SDK 기반 YAML 데이터 수집 (Gemma-3-27b)
+- [x] **Step 1: Collection** - BeautifulSoup4 기반 스크래핑 + Gemma-3-27b 번역
 - [x] **Step 2: Voice & Optimization** - YAML 파싱 기반 TTS 음성 최적화
 - [x] **Step 3: Video** - FFmpeg 하드웨어 가속(VideoToolbox/VAAPI) 합성 최적화
 - [x] **Step 4: Deployment** - 유튜브 API 통합 및 보안 강화
 - [ ] **Step 5: Operations** - NAS Inotify 감시 및 자동 스케줄링 진행 예정
 
-## �📖 문서 시스템 및 협업 가이드
+## 📖 문서 시스템 및 협업 가이드
 
 프로젝트의 지속 가능성과 AI 협업 효율을 위해 다음과 같은 문서 체계를 운용합니다.
 
@@ -145,7 +180,7 @@ uv run main.py 20260112
 
 ```mermaid
 graph TB
-    A[GEMINI.md] -->|AI 행동 규칙| B[개발 작업]
+    A[.clinerules] -->|AI 행동 규칙| B[개발 작업]
     C[ContextFile.md] -->|비즈니스 요구사항| B
     D[ROADMAP.md] -->|장기 계획| B
     B -->|기술적 맥락| H[GitHub Release]
@@ -155,7 +190,7 @@ graph TB
 
 아래 **1, 2, 3번 파일**은 프로젝트의 근간이 되는 설정으로, AI가 수정을 제안할 수 있으나 **반드시 사용자의 명시적 승인 후**에만 변경할 수 있습니다.
 
-1. **GEMINI.md (AI 운영 매뉴얼)**: AI의 작업 방식, Git 정책 및 Vibe Coding 철학 정의. **(수정 시 사용자 승인 필수)**
+1. **.clinerules (AI 운영 매뉴얼)**: AI의 작업 방식, Git 정책 및 Vibe Coding 철학 정의. **(수정 시 사용자 승인 필수)**
 2. **ContextFile.md (비즈니스 SSoT)**: 도메인 지식 및 기술 스펙의 단일 진실 공급원. **(수정 시 사용자 승인 필수)**
 3. **ROADMAP.md (장기 로드맵)**: 파이프라인 단계별 마일스톤 관리. **(수정 시 사용자 승인 필수)**
 
@@ -167,4 +202,4 @@ graph TB
 
 ## ⚖️ 라이선스
 
-MIT License - Copyright (c) 2026 Crong (deuxksy)
+MIT License - Copyright (c) 2026 Crong
