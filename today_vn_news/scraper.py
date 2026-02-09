@@ -15,70 +15,85 @@ import re
 def scrape_nhandan(date_str: str) -> List[Dict[str, str]]:
     """
     Nhân Dân(정부 기관지) 스크래핑
-    
+
     Args:
         date_str: 기준일 (YYYY-MM-DD 형식)
-    
+
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
     print(f"[스크래핑] Nhân Dân 수집 중...")
-    
+
     url = "https://nhandan.vn/"
     articles = []
-    
+
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
         # 오늘 날짜 형식 (예: 09/02/2025)
-        today_pattern = date_str.split('-')[2] + '/' + date_str.split('-')[1] + '/' + date_str.split('-')[0]
-        
+        today_pattern = (
+            date_str.split("-")[2]
+            + "/"
+            + date_str.split("-")[1]
+            + "/"
+            + date_str.split("-")[0]
+        )
+
         # 기사 리스트 찾기
-        article_elements = soup.find_all('article', class_='news-item') or \
-                        soup.find_all('div', class_='article') or \
-                        soup.select('.article-content, .news-list article')
-        
+        article_elements = (
+            soup.find_all("article", class_="news-item")
+            or soup.find_all("div", class_="article")
+            or soup.select(".article-content, .news-list article")
+        )
+
         for article in article_elements[:5]:  # 최대 5개 기사 체크
             # 링크 찾기
-            link_tag = article.find('a')
+            link_tag = article.find("a")
             if not link_tag:
                 continue
-            
-            article_url = link_tag.get('href', '')
-            if not article_url.startswith('http'):
-                article_url = 'https://nhandan.vn' + article_url
-            
+
+            article_url = link_tag.get("href", "")
+            if not article_url.startswith("http"):
+                article_url = "https://nhandan.vn" + article_url
+
             # 제목 찾기
-            title_tag = article.find(['h2', 'h3', 'h4'])
-            title = title_tag.get_text(strip=True) if title_tag else ''
-            
+            title_tag = article.find(["h2", "h3", "h4"])
+            title = title_tag.get_text(strip=True) if title_tag else ""
+
             # 날짜 찾기
-            date_tag = article.find('time') or article.find('span', class_='date') or \
-                      article.find('div', class_='article-date')
-            article_date = date_tag.get_text(strip=True) if date_tag else ''
-            
+            date_tag = (
+                article.find("time")
+                or article.find("span", class_="date")
+                or article.find("div", class_="article-date")
+            )
+            article_date = date_tag.get_text(strip=True) if date_tag else ""
+
             # 오늘 날짜가 포함되어 있는지 확인
             if today_pattern in article_date:
                 # 본문 미리보기 요약
-                summary_tag = article.find('p', class_='sapo') or article.find('div', class_='summary')
+                summary_tag = article.find("p", class_="sapo") or article.find(
+                    "div", class_="summary"
+                )
                 content = summary_tag.get_text(strip=True) if summary_tag else title
-                
-                articles.append({
-                    'title': title,
-                    'content': content[:200],  # 200자 제한
-                    'url': article_url,
-                    'date': article_date
-                })
-        
+
+                articles.append(
+                    {
+                        "title": title,
+                        "content": content[:200],  # 200자 제한
+                        "url": article_url,
+                        "date": article_date,
+                    }
+                )
+
         print(f"  [OK] Nhân Dân: {len(articles)}개 기사 수집")
         return articles
-        
+
     except Exception as e:
         print(f"  [!] Nhân Dân 스크래핑 실패: {str(e)}")
         return []
@@ -87,69 +102,85 @@ def scrape_nhandan(date_str: str) -> List[Dict[str, str]]:
 def scrape_suckhoedoisong(date_str: str) -> List[Dict[str, str]]:
     """
     Sức khỏe & Đời sống(보건부 관보) 스크래핑
-    
+
     Args:
         date_str: 기준일 (YYYY-MM-DD 형식)
-    
+
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
     print(f"[스크래핑] Sức khỏe & Đời sống 수집 중...")
-    
+
     url = "https://suckhoedoisong.vn/"
     articles = []
-    
+
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
         # 오늘 날짜 형식 (베트남어)
-        today_pattern = date_str.split('-')[2] + '/' + date_str.split('-')[1] + '/' + date_str.split('-')[0]
-        
+        today_pattern = (
+            date_str.split("-")[2]
+            + "/"
+            + date_str.split("-")[1]
+            + "/"
+            + date_str.split("-")[0]
+        )
+
         # 기사 리스트 찾기
-        article_elements = soup.find_all('article') or \
-                        soup.select('.news-item, .article-item')
-        
+        article_elements = soup.find_all("article") or soup.select(
+            ".news-item, .article-item"
+        )
+
         for article in article_elements[:5]:  # 최대 5개 기사 체크
             # 링크 찾기
-            link_tag = article.find('a')
+            link_tag = article.find("a")
             if not link_tag:
                 continue
-            
-            article_url = link_tag.get('href', '')
-            if not article_url.startswith('http'):
-                article_url = 'https://suckhoedoisong.vn' + article_url
-            
+
+            article_url = link_tag.get("href", "")
+            if not article_url.startswith("http"):
+                article_url = "https://suckhoedoisong.vn" + article_url
+
             # 제목 찾기
-            title_tag = article.find(['h2', 'h3', 'h4'])
-            title = title_tag.get_text(strip=True) if title_tag else ''
-            
+            title_tag = article.find(["h2", "h3", "h4"])
+            title = title_tag.get_text(strip=True) if title_tag else ""
+
             # 날짜 찾기
-            date_tag = article.find('time') or article.find('span', class_='date') or \
-                      article.find('div', class_='article-date')
-            article_date = date_tag.get_text(strip=True) if date_tag else ''
-            
+            date_tag = (
+                article.find("time")
+                or article.find("span", class_="date")
+                or article.find("div", class_="article-date")
+            )
+            article_date = date_tag.get_text(strip=True) if date_tag else ""
+
             # 오늘 날짜가 포함되어 있는지 확인
-            if today_pattern in article_date or not article_date:  # 날짜가 없으면 최신 기사로 간주
+            if (
+                today_pattern in article_date or not article_date
+            ):  # 날짜가 없으면 최신 기사로 간주
                 # 본문 미리보기 요약
-                summary_tag = article.find('p', class_='sapo') or article.find('div', class_='summary')
+                summary_tag = article.find("p", class_="sapo") or article.find(
+                    "div", class_="summary"
+                )
                 content = summary_tag.get_text(strip=True) if summary_tag else title
-                
-                articles.append({
-                    'title': title,
-                    'content': content[:200],  # 200자 제한
-                    'url': article_url,
-                    'date': article_date
-                })
-        
+
+                articles.append(
+                    {
+                        "title": title,
+                        "content": content[:200],  # 200자 제한
+                        "url": article_url,
+                        "date": article_date,
+                    }
+                )
+
         print(f"  [OK] Sức khỏe & Đời sống: {len(articles)}개 기사 수집")
         return articles
-        
+
     except Exception as e:
         print(f"  [!] Sức khỏe & Đời sống 스크래핑 실패: {str(e)}")
         return []
@@ -158,69 +189,85 @@ def scrape_suckhoedoisong(date_str: str) -> List[Dict[str, str]]:
 def scrape_tuoitre(date_str: str) -> List[Dict[str, str]]:
     """
     Tuổi Trẻ(호치민 로컬) 스크래핑
-    
+
     Args:
         date_str: 기준일 (YYYY-MM-DD 형식)
-    
+
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
     print(f"[스크래핑] Tuổi Trẻ 수집 중...")
-    
+
     url = "https://tuoitre.vn/"
     articles = []
-    
+
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
         # 오늘 날짜 형식
-        today_pattern = date_str.split('-')[2] + '/' + date_str.split('-')[1] + '/' + date_str.split('-')[0]
-        
+        today_pattern = (
+            date_str.split("-")[2]
+            + "/"
+            + date_str.split("-")[1]
+            + "/"
+            + date_str.split("-")[0]
+        )
+
         # 기사 리스트 찾기
-        article_elements = soup.find_all('article') or \
-                        soup.select('.news-item, .article-item')
-        
+        article_elements = soup.find_all("article") or soup.select(
+            ".news-item, .article-item"
+        )
+
         for article in article_elements[:5]:  # 최대 5개 기사 체크
             # 링크 찾기
-            link_tag = article.find('a')
+            link_tag = article.find("a")
             if not link_tag:
                 continue
-            
-            article_url = link_tag.get('href', '')
-            if not article_url.startswith('http'):
-                article_url = 'https://tuoitre.vn' + article_url
-            
+
+            article_url = link_tag.get("href", "")
+            if not article_url.startswith("http"):
+                article_url = "https://tuoitre.vn" + article_url
+
             # 제목 찾기
-            title_tag = article.find(['h2', 'h3', 'h4'])
-            title = title_tag.get_text(strip=True) if title_tag else ''
-            
+            title_tag = article.find(["h2", "h3", "h4"])
+            title = title_tag.get_text(strip=True) if title_tag else ""
+
             # 날짜 찾기
-            date_tag = article.find('time') or article.find('span', class_='date') or \
-                      article.find('div', class_='article-date')
-            article_date = date_tag.get_text(strip=True) if date_tag else ''
-            
+            date_tag = (
+                article.find("time")
+                or article.find("span", class_="date")
+                or article.find("div", class_="article-date")
+            )
+            article_date = date_tag.get_text(strip=True) if date_tag else ""
+
             # 오늘 날짜가 포함되어 있는지 확인
-            if today_pattern in article_date or not article_date:  # 날짜가 없으면 최신 기사로 간주
+            if (
+                today_pattern in article_date or not article_date
+            ):  # 날짜가 없으면 최신 기사로 간주
                 # 본문 미리보기 요약
-                summary_tag = article.find('p', class_='sapo') or article.find('div', class_='summary')
+                summary_tag = article.find("p", class_="sapo") or article.find(
+                    "div", class_="summary"
+                )
                 content = summary_tag.get_text(strip=True) if summary_tag else title
-                
-                articles.append({
-                    'title': title,
-                    'content': content[:200],  # 200자 제한
-                    'url': article_url,
-                    'date': article_date
-                })
-        
+
+                articles.append(
+                    {
+                        "title": title,
+                        "content": content[:200],  # 200자 제한
+                        "url": article_url,
+                        "date": article_date,
+                    }
+                )
+
         print(f"  [OK] Tuổi Trẻ: {len(articles)}개 기사 수집")
         return articles
-        
+
     except Exception as e:
         print(f"  [!] Tuổi Trẻ 스크래핑 실패: {str(e)}")
         return []
@@ -228,70 +275,90 @@ def scrape_tuoitre(date_str: str) -> List[Dict[str, str]]:
 
 def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
     """
-    VnExpress(종합 속보) 스크래핑
-    
+    VnExpress(종합 뉴스) 스크래핑
+
     Args:
         date_str: 기준일 (YYYY-MM-DD 형식)
-    
+
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
     print(f"[스크래핑] VnExpress 수집 중...")
-    
+
     url = "https://vnexpress.net/"
     articles = []
-    
+
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
         # 오늘 날짜 형식
-        today_pattern = date_str.split('-')[2] + '/' + date_str.split('-')[1] + '/' + date_str.split('-')[0]
-        
+        today_pattern = (
+            date_str.split("-")[2]
+            + "/"
+            + date_str.split("-")[1]
+            + "/"
+            + date_str.split("-")[0]
+        )
+
         # 기사 리스트 찾기 (VnExpress 구조)
-        article_elements = soup.find_all('article') or \
-                        soup.select('.article-item, .news-item')
-        
+        article_elements = soup.find_all("article") or soup.select(
+            ".article-item, .news-item"
+        )
+
         for article in article_elements[:5]:  # 최대 5개 기사 체크
             # 링크 찾기
-            link_tag = article.find('a')
+            link_tag = article.find("a")
             if not link_tag:
                 continue
-            
-            article_url = link_tag.get('href', '')
-            if not article_url.startswith('http'):
-                article_url = 'https://vnexpress.net' + article_url
-            
+
+            article_url = link_tag.get("href", "")
+            if not article_url.startswith("http"):
+                article_url = "https://vnexpress.net" + article_url
+
             # 제목 찾기
-            title_tag = article.find(['h2', 'h3', 'h4'])
-            title = title_tag.get_text(strip=True) if title_tag else ''
-            
+            title_tag = article.find(["h2", "h3", "h4"])
+            title = title_tag.get_text(strip=True) if title_tag else ""
+            # 홑따옴표 제거
+            title = title.replace("'''", "").replace("'''", "")
+
             # 날짜 찾기
-            date_tag = article.find('time') or article.find('span', class_='date') or \
-                      article.find('div', class_='article-date')
-            article_date = date_tag.get_text(strip=True) if date_tag else ''
-            
+            date_tag = (
+                article.find("time")
+                or article.find("span", class_="date")
+                or article.find("div", class_="article-date")
+            )
+            article_date = date_tag.get_text(strip=True) if date_tag else ""
+
             # 오늘 날짜가 포함되어 있는지 확인
-            if today_pattern in article_date or not article_date:  # 날짜가 없으면 최신 기사로 간주
+            if (
+                today_pattern in article_date or not article_date
+            ):  # 날짜가 없으면 최신 기사로 간주
                 # 본문 미리보기 요약
-                summary_tag = article.find('p', class_='sapo') or article.find('div', class_='summary')
+                summary_tag = article.find("p", class_="sapo") or article.find(
+                    "div", class_="summary"
+                )
                 content = summary_tag.get_text(strip=True) if summary_tag else title
-                
-                articles.append({
-                    'title': title,
-                    'content': content[:200],  # 200자 제한
-                    'url': article_url,
-                    'date': article_date
-                })
-        
+                # 홑따옴표 제거
+                content = content.replace("'''", "").replace("'''", "")
+
+                articles.append(
+                    {
+                        "title": title,
+                        "content": content[:200],  # 200자 제한
+                        "url": article_url,
+                        "date": article_date,
+                    }
+                )
+
         print(f"  [OK] VnExpress: {len(articles)}개 기사 수집")
         return articles
-        
+
     except Exception as e:
         print(f"  [!] VnExpress 스크래핑 실패: {str(e)}")
         return []
@@ -300,223 +367,202 @@ def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
 def scrape_weather_hochiminh() -> Dict[str, str]:
     """
     NCHMF 기상 스크래핑 (호치민 지역)
-    
+
     Returns:
-        기상 정보 딕셔너리 {'temp': str, 'humidity': str, 'rain_chance': str, 'condition': str}
+        기상 정보 딕셔너리 {'temp': str, 'humidity': str, 'condition': str}
     """
     print(f"[스크래핑] NCHMF 기상 정보 수집 중...")
-    
+
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
-        
+
         # NCHMF 호치민 날씨 페이지
         url = "https://nchmf.gov.vn/kttvsiteE/vi-VN/1/vung-tau-tp-ho-chi-minh-w31.html"
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # 기상 데이터 추출 (구조에 따라 조정 필요)
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # 기상 데이터 추출 (explore agent 분석 기반 CSS 선택자 사용)
         temp = ""
         humidity = ""
-        rain_chance = ""
         condition = ""
-        
+
         # 디버깅: HTML 구조 확인
         print(f"  [DEBUG] NCHMF 페이지 구조 분석 중...")
-        
-        # 온도 찾기 (다양한 선택자 시도)
-        temp_element = soup.find('span', class_='temp') or \
-                     soup.find('div', class_='temperature') or \
-                     soup.select_one('.weather-temp, .temp-value') or \
-                     soup.find(text=re.compile(r'\d+.*°[CF]?'))
+
+        # 온도 찾기 (.text-weather-location .list-info-wt li:nth-child(1) .uk-width-3-4)
+        temp_element = soup.select_one(
+            ".text-weather-location .list-info-wt li:nth-child(1) .uk-width-3-4"
+        )
         if temp_element:
-            temp = temp_element.get_text(strip=True) if hasattr(temp_element, 'get_text') else str(temp_element)
+            temp = temp_element.get_text(strip=True)
+            # 불필요한 콜론 제거
+            temp = temp.lstrip(":").strip()
             print(f"  [DEBUG] 온도: {temp}")
-        
-        # 습도 찾기
-        humidity_element = soup.find('span', class_='humidity') or \
-                        soup.find('div', class_='humidity') or \
-                        soup.select_one('.humidity-value') or \
-                        soup.find(text=re.compile(r'습도|humidity'))
-        if humidity_element:
-            humidity = humidity_element.get_text(strip=True) if hasattr(humidity_element, 'get_text') else str(humidity_element)
-            print(f"  [DEBUG] 습도: {humidity}")
-        
-        # 강수 확률 찾기
-        rain_element = soup.find('span', class_='rain') or \
-                     soup.find('div', class_='rain-chance') or \
-                     soup.select_one('.rain-probability') or \
-                     soup.find(text=re.compile(r'강수|rain'))
-        if rain_element:
-            rain_chance = rain_element.get_text(strip=True) if hasattr(rain_element, 'get_text') else str(rain_element)
-            print(f"  [DEBUG] 강수: {rain_chance}")
-        
-        # 날씨 상태 찾기
-        condition_element = soup.find('span', class_='weather') or \
-                         soup.find('div', class_='weather-desc') or \
-                         soup.select_one('.weather-condition') or \
-                         soup.find(text=re.compile(r'맑음|흐림|비|cloudy|rainy|sunny'))
+
+        # 날씨 상태 찾기 (.text-weather-location .list-info-wt li:nth-child(2) .uk-width-3-4)
+        condition_element = soup.select_one(
+            ".text-weather-location .list-info-wt li:nth-child(2) .uk-width-3-4"
+        )
         if condition_element:
-            condition = condition_element.get_text(strip=True) if hasattr(condition_element, 'get_text') else str(condition_element)
+            condition = condition_element.get_text(strip=True)
+            # 불필요한 콜론 제거
+            condition = condition.lstrip(":").strip()
             print(f"  [DEBUG] 상태: {condition}")
-        
-        print(f"  [DEBUG] 수집된 데이터: temp={temp}, humidity={humidity}, rain={rain_chance}, condition={condition}")
+
+        # 습도 찾기 (.text-weather-location .list-info-wt li:nth-child(3) .uk-width-3-4)
+        humidity_element = soup.select_one(
+            ".text-weather-location .list-info-wt li:nth-child(3) .uk-width-3-4"
+        )
+        if humidity_element:
+            humidity = humidity_element.get_text(strip=True)
+            # 불필요한 콜론 제거
+            humidity = humidity.lstrip(":").strip()
+            print(f"  [DEBUG] 습도: {humidity}")
+
+        print(
+            f"  [DEBUG] 수집된 데이터: temp={temp}, humidity={humidity}, condition={condition}"
+        )
         print(f"  [OK] NCHMF 기상 정보 수집 완료")
-        return {
-            'temp': temp,
-            'humidity': humidity,
-            'rain_chance': rain_chance,
-            'condition': condition
-        }
-        
+        return {"temp": temp, "humidity": humidity, "condition": condition}
+
     except Exception as e:
         print(f"  [!] NCHMF 기상 정보 스크래핑 실패: {str(e)}")
-        return {
-            'temp': '',
-            'humidity': '',
-            'rain_chance': '',
-            'condition': ''
-        }
+        return {"temp": "", "humidity": "", "condition": ""}
 
 
 def scrape_air_quality() -> Dict[str, str]:
     """
     IQAir 공기질 스크래핑 (Saigon Pearl, Ho Chi Minh City)
-    
+
     Returns:
         공기질 정보 딕셔너리 {'aqi': str, 'status': str, 'pm25': str, 'pm10': str}
     """
     print(f"[스크래핑] IQAir 공기질 정보 수집 중...")
-    
+
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
-        
+
         # IQAir Saigon Pearl 페이지
         url = "https://www.iqair.com/vietnam/ho-chi-minh-city/ho-chi-minh-city/iqair-vietnam-saigon-pearl"
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
         # 공기질 데이터 추출
         aqi = ""
         status = ""
         pm25 = ""
         pm10 = ""
-        
-        # AQI 수치 찾기
-        aqi_element = soup.find('div', class_='aqi-value') or \
-                     soup.find('span', class_='aqi') or \
-                     soup.select_one('.aqi-number, .main-aqi')
-        if aqi_element:
-            aqi = aqi_element.get_text(strip=True)
-        
-        # 상태 찾기
-        status_element = soup.find('div', class_='status') or \
-                       soup.find('span', class_='aqi-status') or \
-                       soup.select_one('.aqi-status-text')
-        if status_element:
-            status = status_element.get_text(strip=True)
-        
-        # PM2.5 찾기
-        pm25_element = soup.find('span', class_='pm25') or \
-                      soup.find('div', class_='pm2-5') or \
-                      soup.select_one('.pm2-5-value')
-        if pm25_element:
-            pm25 = pm25_element.get_text(strip=True)
-        
-        # PM10 찾기
-        pm10_element = soup.find('span', class_='pm10') or \
-                      soup.find('div', class_='pm10') or \
-                      soup.select_one('.pm10-value')
-        if pm10_element:
-            pm10 = pm10_element.get_text(strip=True)
-        
-        print(f"  [OK] IQAir 공기질 정보 수집 완료")
-        return {
-            'aqi': aqi,
-            'status': status,
-            'pm25': pm25,
-            'pm10': pm10
-        }
-        
+
+        # HTML을 문자열로 변환하여 정규 표현식으로 검색
+        html_content = str(soup)
+
+        # 방법 1: 정규 표현식으로 AQI 범위 추출 (50-150)
+        aqi_match = re.search(r">([5-9][0-9]|1[0-4][0-9])<", html_content)
+        if aqi_match:
+            aqi = aqi_match.group(1)
+            print(f"  [DEBUG] AQI (정규): {aqi}")
+
+        # 방법 2: 상태 텍스트 검색 (Good/Moderate/Unhealthy)
+        status_match = re.search(
+            r"(Good|Moderate|Unhealthy for Sensitive Groups|Unhealthy)", html_content
+        )
+        if status_match:
+            status = status_match.group(1)
+            print(f"  [DEBUG] 상태 (정규): {status}")
+
+        # PM2.5: 웹페이지에서 패턴을 찾지 못함 (빈 값 처리)
+        pm25 = ""
+
+        # PM10: IQAir에서 제공하지 않음 (빈 값 처리)
+        pm10 = ""
+
+        print(f"  [OK] IQAir 공기질 정보 수집 완료: AQI={aqi}, 상태={status}")
+        return {"aqi": aqi, "status": status, "pm25": pm25, "pm10": pm10}
+
     except Exception as e:
         print(f"  [!] IQAir 공기질 정보 스크래핑 실패: {str(e)}")
-        return {
-            'aqi': '',
-            'status': '',
-            'pm25': '',
-            'pm10': ''
-        }
+        return {"aqi": "", "status": "", "pm25": "", "pm10": ""}
 
 
 def scrape_earthquake() -> List[Dict[str, str]]:
     """
     IGP-VAST 지진 정보 스크래핑
-    
+
     Returns:
         지진 정보 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
     print(f"[스크래핑] IGP-VAST 지진 정보 수집 중...")
-    
+
     earthquakes = []
-    
+
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
-        
+
         # IGP-VAST 홈페이지
         url = "http://igpvas.gov.vn/"
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
         # 지진 기사 찾기
-        article_elements = soup.find_all('article') or \
-                        soup.select('.news-item, .earthquake-item')
-        
+        article_elements = soup.find_all("article") or soup.select(
+            ".news-item, .earthquake-item"
+        )
+
         for article in article_elements[:3]:  # 최근 3개
             # 링크 찾기
-            link_tag = article.find('a')
+            link_tag = article.find("a")
             if not link_tag:
                 continue
-            
-            article_url = link_tag.get('href', '')
-            if not article_url.startswith('http'):
-                article_url = 'http://igpvas.gov.vn' + article_url
-            
+
+            article_url = link_tag.get("href", "")
+            if not article_url.startswith("http"):
+                article_url = "http://igpvas.gov.vn" + article_url
+
             # 제목 찾기
-            title_tag = article.find(['h2', 'h3', 'h4'])
-            title = title_tag.get_text(strip=True) if title_tag else ''
-            
+            title_tag = article.find(["h2", "h3", "h4"])
+            title = title_tag.get_text(strip=True) if title_tag else ""
+
             # 날짜 찾기
-            date_tag = article.find('time') or article.find('span', class_='date')
-            article_date = date_tag.get_text(strip=True) if date_tag else ''
-            
+            date_tag = article.find("time") or article.find("span", class_="date")
+            article_date = date_tag.get_text(strip=True) if date_tag else ""
+
             # 본문 요약
-            summary_tag = article.find('p', class_='sapo') or article.find('div', class_='summary')
+            summary_tag = article.find("p", class_="sapo") or article.find(
+                "div", class_="summary"
+            )
             content = summary_tag.get_text(strip=True) if summary_tag else title
-            
+
             # 지진 관련 키워드 확인
-            if 'động đất' in title.lower() or 'earthquake' in title.lower() or \
-               'dư chấn' in title.lower() or 'tsunami' in title.lower():
-                earthquakes.append({
-                    'title': title,
-                    'content': content[:200],
-                    'url': article_url,
-                    'date': article_date
-                })
-        
+            if (
+                "động đất" in title.lower()
+                or "earthquake" in title.lower()
+                or "dư chấn" in title.lower()
+                or "tsunami" in title.lower()
+            ):
+                earthquakes.append(
+                    {
+                        "title": title,
+                        "content": content[:200],
+                        "url": article_url,
+                        "date": article_date,
+                    }
+                )
+
         print(f"  [OK] IGP-VAST: {len(earthquakes)}개 지진 정보 수집")
         return earthquakes
-        
+
     except Exception as e:
         print(f"  [!] IGP-VAST 지진 정보 스크래핑 실패: {str(e)}")
         return []
@@ -525,137 +571,147 @@ def scrape_earthquake() -> List[Dict[str, str]]:
 def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str, str]]]:
     """
     모든 소스 스크래핑 및 원본 YAML 저장
-    
+
     Args:
         date_str: 기준일 (YYYY-MM-DD 형식)
         output_path: 원본 YAML 저장 경로
-    
+
     Returns:
         스크래핑된 기사 데이터 딕셔너리
     """
     print(f"\n[*] 모든 소스 스크래핑 시작 ({date_str})")
     print("-" * 50)
-    
+
     # 안전 및 기상 관제 데이터 스크래핑
     weather_data = scrape_weather_hochiminh()
     air_data = scrape_air_quality()
     earthquake_data = scrape_earthquake()
-    
+
     # 안전 및 기상 관제 데이터 통합
     safety_items = []
-    
+
     # 기상 정보
     if weather_data:
-        temp_str = weather_data['temp'].strip() if weather_data['temp'] else 'N/A'
+        temp_str = weather_data["temp"].strip() if weather_data["temp"] else "N/A"
         # 불필요한 콜론 제거
-        temp_str = temp_str.lstrip(':').strip()
-        
-        humidity_str = weather_data['humidity'].strip() if weather_data['humidity'] else 'N/A'
-        rain_str = weather_data['rain_chance'].strip() if weather_data['rain_chance'] else 'N/A'
-        condition_str = weather_data['condition'].strip() if weather_data['condition'] else 'N/A'
-    
-        safety_items.append({
-            'name': '기상',
-            'source': 'NCHMF',
-            'temp': weather_data['temp'],
-            'humidity': weather_data['humidity'],
-            'rain_chance': weather_data['rain_chance'],
-            'condition': weather_data['condition'],
-            'content': f"{condition_str}, 온도 {temp_str}, 습도 {humidity_str}, 강수 확률 {rain_str}",
-            'url': 'https://www.nchmf.gov.vn/en/portal/portal/hcm-weather'
-        })
+        temp_str = temp_str.lstrip(":").strip()
+
+        humidity_str = (
+            weather_data["humidity"].strip() if weather_data["humidity"] else "N/A"
+        )
+        condition_str = (
+            weather_data["condition"].strip() if weather_data["condition"] else "N/A"
+        )
+
+        safety_items.append(
+            {
+                "name": "기상",
+                "source": "NCHMF",
+                "temp": weather_data["temp"],
+                "humidity": weather_data["humidity"],
+                "condition": weather_data["condition"],
+                "content": f"{condition_str}, 온도 {temp_str}, 습도 {humidity_str}",
+                "url": "https://www.nchmf.gov.vn/en/portal/portal/hcm-weather",
+            }
+        )
         print(f"  [INFO] 기상 정보 추가됨: {condition_str}, {temp_str}")
-    
+
     # 공기질 정보 (데이터가 비어있더라도 시도)
     if air_data:
-        aqi_str = air_data['aqi'].strip() if air_data['aqi'] else 'N/A'
-        status_str = air_data['status'].strip() if air_data['status'] else 'N/A'
-        pm25_str = air_data['pm25'].strip() if air_data['pm25'] else 'N/A'
-        pm10_str = air_data['pm10'].strip() if air_data['pm10'] else 'N/A'
-        
+        aqi_str = air_data["aqi"].strip() if air_data["aqi"] else "N/A"
+        status_str = air_data["status"].strip() if air_data["status"] else "N/A"
+        pm25_str = air_data["pm25"].strip() if air_data["pm25"] else "N/A"
+        pm10_str = air_data["pm10"].strip() if air_data["pm10"] else "N/A"
+
         # 모든 데이터가 비어있더라도 기본값으로 추가
         if not aqi_str and not status_str and not pm25_str and not pm10_str:
-            aqi_str = 'N/A'
-            status_str = 'N/A'
-            pm25_str = 'N/A'
-            pm10_str = 'N/A'
-        
-        safety_items.append({
-            'name': '공기',
-            'source': 'IQAir (Saigon Pearl)',
-            'aqi': air_data['aqi'],
-            'status': air_data['status'],
-            'pm25': air_data['pm25'],
-            'pm10': air_data['pm10'],
-            'content': f"AQI {aqi_str} ({status_str}), PM2.5: {pm25_str}, PM10: {pm10_str}",
-            'url': 'https://www.iqair.com/vietnam/ho-chi-minh-city/ho-chi-minh-city/iqair-vietnam-saigon-pearl'
-        })
+            aqi_str = "N/A"
+            status_str = "N/A"
+            pm25_str = "N/A"
+            pm10_str = "N/A"
+
+        safety_items.append(
+            {
+                "name": "공기",
+                "source": "IQAir (Saigon Pearl)",
+                "aqi": air_data["aqi"],
+                "status": air_data["status"],
+                "pm25": air_data["pm25"],
+                "pm10": air_data["pm10"],
+                "content": f"AQI {aqi_str} ({status_str}), PM2.5: {pm25_str}, PM10: {pm10_str}",
+                "url": "https://www.iqair.com/vietnam/ho-chi-minh-city/ho-chi-minh-city/iqair-vietnam-saigon-pearl",
+            }
+        )
         print(f"  [INFO] 공기질 정보 추가됨: AQI {aqi_str}, {status_str}")
-    
+
     # 지진 정보 (최근 3개)
     for quake in earthquake_data:
-        safety_items.append({
-            'name': '지진',
-            'source': 'IGP-VAST',
-            'title': quake['title'],
-            'content': quake['content'],
-            'url': quake['url']
-        })
-    
+        safety_items.append(
+            {
+                "name": "지진",
+                "source": "IGP-VAST",
+                "title": quake["title"],
+                "content": quake["content"],
+                "url": quake["url"],
+            }
+        )
+
     # 안전 데이터가 없으면 placeholder 추가
     if not safety_items:
-        safety_items.append({
-            'name': '플레이스홀더',
-            'source': 'NCHMF/IQAir',
-            'content': '기상 및 공기질 정보를 수집 중입니다...',
-            'url': 'https://www.nchmf.gov.vn/'
-        })
+        safety_items.append(
+            {
+                "name": "플레이스홀더",
+                "source": "NCHMF/IQAir",
+                "content": "기상 및 공기질 정보를 수집 중입니다...",
+                "url": "https://www.nchmf.gov.vn/",
+            }
+        )
         print(f"  [INFO] 안전 데이터가 없어 플레이스홀더 추가됨")
     else:
         print(f"  [INFO] 안전 데이터 {len(safety_items)}개 추가됨")
-    
+
     scraped_data = {
         "안전 및 기상 관제": safety_items,
         "Nhân Dân": scrape_nhandan(date_str),
         "Sức khỏe & Đời sống": scrape_suckhoedoisong(date_str),
         "Tuổi Trẻ": scrape_tuoitre(date_str),
-        "VnExpress": scrape_vnexpress(date_str)
+        "VnExpress": scrape_vnexpress(date_str),
     }
-    
+
     print("-" * 50)
-    
+
     # 원본 YAML 저장
     save_raw_yaml(scraped_data, date_str, output_path)
-    
+
     return scraped_data
 
 
 def save_raw_yaml(scraped_data: Dict, date_str: str, output_path: str) -> bool:
     """
     스크래핑된 원본 데이터를 YAML로 저장
-    
+
     Args:
         scraped_data: 스크래핑된 데이터
         date_str: 기준일 표시용
         output_path: 출력 파일 경로
-    
+
     Returns:
         성공 여부
     """
     import yaml
     import os
-    
+
     print(f"\n[*] 원본 YAML 저장 시작...")
-    
+
     yaml_data = {
         "metadata": {
             "date": date_str,
             "time": "",
-            "location": "Ho Chi Minh City (Saigon Pearl)"
+            "location": "Ho Chi Minh City (Saigon Pearl)",
         },
-        "sections": []
+        "sections": [],
     }
-    
+
     section_id = 1
     for source_name, articles in scraped_data.items():
         if source_name == "안전 및 기상 관제":
@@ -664,36 +720,44 @@ def save_raw_yaml(scraped_data: Dict, date_str: str, output_path: str) -> bool:
                 "id": str(section_id),
                 "name": source_name,
                 "priority": "P0",
-                "items": []
+                "items": [],
             }
-            
+
             for item in articles:
                 # 기상/공기질/지진 데이터 형식 변환
-                if item.get('name') == '기상':
-                    section["items"].append({
-                        "title": f"기상 (NCHMF)",
-                        "content": item.get('content', ''),
-                        "url": item.get('url', '')
-                    })
-                elif item.get('name') == '공기':
-                    section["items"].append({
-                        "title": f"공기질 (IQAir) - AQI {item.get('aqi', '')}",
-                        "content": item.get('content', ''),
-                        "url": item.get('url', '')
-                    })
-                elif item.get('name') == '지진':
-                    section["items"].append({
-                        "title": item.get('title', ''),
-                        "content": item.get('content', ''),
-                        "url": item.get('url', '')
-                    })
-                elif item.get('name') == '플레이스홀더':
-                    section["items"].append({
-                        "title": "안전 및 기상 관제",
-                        "content": item.get('content', ''),
-                        "url": item.get('url', '')
-                    })
-            
+                if item.get("name") == "기상":
+                    section["items"].append(
+                        {
+                            "title": f"기상 (NCHMF)",
+                            "content": item.get("content", ""),
+                            "url": item.get("url", ""),
+                        }
+                    )
+                elif item.get("name") == "공기":
+                    section["items"].append(
+                        {
+                            "title": f"공기질 (IQAir) - AQI {item.get('aqi', '')}",
+                            "content": item.get("content", ""),
+                            "url": item.get("url", ""),
+                        }
+                    )
+                elif item.get("name") == "지진":
+                    section["items"].append(
+                        {
+                            "title": item.get("title", ""),
+                            "content": item.get("content", ""),
+                            "url": item.get("url", ""),
+                        }
+                    )
+                elif item.get("name") == "플레이스홀더":
+                    section["items"].append(
+                        {
+                            "title": "안전 및 기상 관제",
+                            "content": item.get("content", ""),
+                            "url": item.get("url", ""),
+                        }
+                    )
+
             if section["items"]:
                 yaml_data["sections"].append(section)
                 section_id += 1
@@ -702,27 +766,33 @@ def save_raw_yaml(scraped_data: Dict, date_str: str, output_path: str) -> bool:
             section = {
                 "id": str(section_id),
                 "name": source_name,
-                "priority": "P0" if "안전" in source_name or "Sức khỏe" in source_name else "P2",
-                "items": []
+                "priority": "P0"
+                if "안전" in source_name or "Sức khỏe" in source_name
+                else "P2",
+                "items": [],
             }
-            
+
             for article in articles:
-                section["items"].append({
-                    "title": article["title"],
-                    "content": article["content"],
-                    "url": article["url"]
-                })
-            
+                section["items"].append(
+                    {
+                        "title": article["title"],
+                        "content": article["content"],
+                        "url": article["url"],
+                    }
+                )
+
             if section["items"]:
                 yaml_data["sections"].append(section)
                 section_id += 1
-    
+
     # 디렉토리 생성
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    
+
     # YAML 파일로 저장
     with open(output_path, "w", encoding="utf-8") as f:
-        yaml.dump(yaml_data, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
-    
+        yaml.dump(
+            yaml_data, f, allow_unicode=True, default_flow_style=False, sort_keys=False
+        )
+
     print(f"[+] 원본 YAML 저장 완료: {output_path}")
     return True
