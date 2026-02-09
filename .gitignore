@@ -2,6 +2,7 @@
 client_secrets.json*
 token.pickle
 .env*
+!.env.example
 .venv
 *.so
 .Python
