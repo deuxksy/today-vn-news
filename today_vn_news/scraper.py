@@ -272,250 +272,250 @@ def scrape_tuoitre(date_str: str) -> List[Dict[str, str]]:
         print(f"  [!] Tuổi Trẻ 스크래핑 실패: {str(e)}")
         return []
 
-    def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
-        """
-        VietnamNet(종합 뉴스) 스크래핑
-        - 시사, 뉴스, 경제, 비즈니스 카테고리 우선 필터링
-        - 기술, 건강 카테고리 제외
+def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
+    """
+    VietnamNet(종합 뉴스) 스크래핑
+    - 시사, 뉴스, 경제, 비즈니스 카테고리 우선 필터링
+    - 기술, 건강 카테고리 제외
 
-        Args:
-            date_str: 기준일 (YYYY-MM-DD 형식)
+    Args:
+        date_str: 기준일 (YYYY-MM-DD 형식)
 
-        Returns:
-            기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
-        """
-        print(f"[스크래핑] VietnamNet 종합 뉴스 수집 중...")
+    Returns:
+        기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
+    """
+    print(f"[스크래핑] VietnamNet 종합 뉴스 수집 중...")
 
-        url = "https://vietnamnet.vn/"
-        articles = []
+    url = "https://vietnamnet.vn/"
+    articles = []
 
-        try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-            }
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
 
-            soup = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(response.text, "html.parser")
 
-            # 오늘 날짜 형식
-            today_pattern = (
-                date_str.split("-")[2]
-                + "/"
-                + date_str.split("-")[1]
-                + "/"
-                + date_str.split("-")[0]
+        # 오늘 날짜 형식
+        today_pattern = (
+            date_str.split("-")[2]
+            + "/"
+            + date_str.split("-")[1]
+            + "/"
+            + date_str.split("-")[0]
+        )
+
+        # 카테고리 필터링 설정
+        # 우선 카테고리 (포함)
+        priority_categories = [
+            "/thoi-su/",  # 시사
+            "/the-gioi/",  # 세계 뉴스
+            "/kinh-doanh/",  # 경제/비즈니스
+            "/tai-chinh/",  # 재무/경제
+        ]
+
+        # 제외 카테고리
+        skip_categories = [
+            "/cntt/",  # 기술
+            "/cong-nghe/",  # 기술
+            "/suc-khoe/",  # 건강
+            "/doi-song/",  # 생활
+            "/thong-tin-truyen-thong/",  # 정보통신 (별도 섹션 존재)
+        ]
+
+        # 기사 리스트 찾기
+        article_elements = soup.find_all("article") or soup.select(
+            ".news-item, .article-item, .story"
+        )
+
+        for article in article_elements[:10]:  # 최대 10개 체크 후 필터링
+            # 링크 찾기
+            link_tag = article.find("a")
+            if not link_tag:
+                continue
+
+            article_url = link_tag.get("href", "")
+            if not article_url.startswith("http"):
+                article_url = "https://vietnamnet.vn" + article_url
+
+            # 카테고리 필터링
+            # 1. 우선 카테고리가 포함된 경우 수집
+            # 2. 우선 카테고리가 없더라도 제외 카테고리가 아니면 수집
+            in_priority = any(cat in article_url for cat in priority_categories)
+            in_skip = any(cat in article_url for cat in skip_categories)
+
+            if in_skip:
+                continue
+
+            if not in_priority:
+                # 우선 카테고리가 아니면 스킵 (우선 카테고리 우선)
+                continue
+
+            # 제목 찾기
+            title_tag = article.find(["h2", "h3", "h4"])
+            title = title_tag.get_text(strip=True) if title_tag else ""
+
+            # 날짜 찾기
+            date_tag = (
+                article.find("time")
+                or article.find("span", class_="date")
+                or article.find("div", class_="article-date")
             )
+            article_date = date_tag.get_text(strip=True) if date_tag else ""
 
-            # 카테고리 필터링 설정
-            # 우선 카테고리 (포함)
-            priority_categories = [
-                "/thoi-su/",  # 시사
-                "/the-gioi/",  # 세계 뉴스
-                "/kinh-doanh/",  # 경제/비즈니스
-                "/tai-chinh/",  # 재무/경제
-            ]
-
-            # 제외 카테고리
-            skip_categories = [
-                "/cntt/",  # 기술
-                "/cong-nghe/",  # 기술
-                "/suc-khoe/",  # 건강
-                "/doi-song/",  # 생활
-                "/thong-tin-truyen-thong/",  # 정보통신 (별도 섹션 존재)
-            ]
-
-            # 기사 리스트 찾기
-            article_elements = soup.find_all("article") or soup.select(
-                ".news-item, .article-item, .story"
-            )
-
-            for article in article_elements[:10]:  # 최대 10개 체크 후 필터링
-                # 링크 찾기
-                link_tag = article.find("a")
-                if not link_tag:
-                    continue
-
-                article_url = link_tag.get("href", "")
-                if not article_url.startswith("http"):
-                    article_url = "https://vietnamnet.vn" + article_url
-
-                # 카테고리 필터링
-                # 1. 우선 카테고리가 포함된 경우 수집
-                # 2. 우선 카테고리가 없더라도 제외 카테고리가 아니면 수집
-                in_priority = any(cat in article_url for cat in priority_categories)
-                in_skip = any(cat in article_url for cat in skip_categories)
-
-                if in_skip:
-                    continue
-
-                if not in_priority:
-                    # 우선 카테고리가 아니면 스킵 (우선 카테고리 우선)
-                    continue
-
-                # 제목 찾기
-                title_tag = article.find(["h2", "h3", "h4"])
-                title = title_tag.get_text(strip=True) if title_tag else ""
-
-                # 날짜 찾기
-                date_tag = (
-                    article.find("time")
-                    or article.find("span", class_="date")
-                    or article.find("div", class_="article-date")
+            # 오늘 날짜가 포함되어 있는지 확인
+            if (
+                today_pattern in article_date or not article_date
+            ):  # 날짜가 없으면 최신 기사로 간주
+                # 본문 미리보기 요약
+                summary_tag = article.find("p", class_="sapo") or article.find(
+                    "div", class_="summary"
                 )
-                article_date = date_tag.get_text(strip=True) if date_tag else ""
+                content = summary_tag.get_text(strip=True) if summary_tag else title
 
-                # 오늘 날짜가 포함되어 있는지 확인
-                if (
-                    today_pattern in article_date or not article_date
-                ):  # 날짜가 없으면 최신 기사로 간주
-                    # 본문 미리보기 요약
-                    summary_tag = article.find("p", class_="sapo") or article.find(
-                        "div", class_="summary"
-                    )
-                    content = summary_tag.get_text(strip=True) if summary_tag else title
+                articles.append(
+                    {
+                        "title": title,
+                        "content": content[:200],  # 200자 제한
+                        "url": article_url,
+                        "date": article_date,
+                    }
+                )
 
-                    articles.append(
-                        {
-                            "title": title,
-                            "content": content[:200],  # 200자 제한
-                            "url": article_url,
-                            "date": article_date,
-                        }
-                    )
+                if len(articles) >= 2:  # 최대 2개 제한
+                    break
 
-                    if len(articles) >= 2:  # 최대 2개 제한
-                        break
+        print(f"  [OK] VietnamNet 종합 뉴스: {len(articles)}개 기사 수집")
+        return articles
 
-            print(f"  [OK] VietnamNet 종합 뉴스: {len(articles)}개 기사 수집")
-            return articles
+    except Exception as e:
+        print(f"  [!] VietnamNet 종합 뉴스 스크래핑 실패: {str(e)}")
+        return []
 
-        except Exception as e:
-            print(f"  [!] VietnamNet 종합 뉴스 스크래핑 실패: {str(e)}")
-            return []
+def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
+    """
+    VnExpress(종합 뉴스) 스크래핑
+    - 시사, 뉴스, 경제, 비즈니스 카테고리 우선 필터링
+    - 기술, 건강 카테고리 제외
 
-    def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
-        """
-        VnExpress(종합 뉴스) 스크래핑
-        - 시사, 뉴스, 경제, 비즈니스 카테고리 우선 필터링
-        - 기술, 건강 카테고리 제외
+    Args:
+        date_str: 기준일 (YYYY-MM-DD 형식)
 
-        Args:
-            date_str: 기준일 (YYYY-MM-DD 형식)
+    Returns:
+        기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
+    """
+    print(f"[스크래핑] VnExpress 수집 중...")
 
-        Returns:
-            기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
-        """
-        print(f"[스크래핑] VnExpress 수집 중...")
+    url = "https://vnexpress.net/"
+    articles = []
 
-        url = "https://vnexpress.net/"
-        articles = []
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
 
-        try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-            }
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
 
-            soup = BeautifulSoup(response.text, "html.parser")
+        # 오늘 날짜 형식
+        today_pattern = (
+            date_str.split("-")[2]
+            + "/"
+            + date_str.split("-")[1]
+            + "/"
+            + date_str.split("-")[0]
+        )
 
-            # 오늘 날짜 형식
-            today_pattern = (
-                date_str.split("-")[2]
-                + "/"
-                + date_str.split("-")[1]
-                + "/"
-                + date_str.split("-")[0]
+        # 카테고리 필터링 설정
+        # 우선 카테고리 (포함)
+        priority_categories = [
+            "/thoi-su/",  # 시사
+            "/the-gioi/",  # 세계 뉴스
+            "/kinh-doanh/",  # 경제/비즈니스
+        ]
+
+        # 제외 카테고리
+        skip_categories = [
+            "/khoa-hoc-cong-nghe/",  # 과학기술
+            "/suc-khoe/",  # 건강
+            "/doi-song/",  # 생활
+        ]
+
+        # 기사 리스트 찾기 (VnExpress 구조)
+        article_elements = soup.find_all("article") or soup.select(
+            ".article-item, .news-item"
+        )
+
+        for article in article_elements[:10]:  # 최대 10개 체크 후 필터링
+            # 링크 찾기
+            link_tag = article.find("a")
+            if not link_tag:
+                continue
+
+            article_url = link_tag.get("href", "")
+            if not article_url.startswith("http"):
+                article_url = "https://vnexpress.net" + article_url
+
+            # 카테고리 필터링
+            # 1. 우선 카테고리가 포함된 경우 수집
+            # 2. 우선 카테고리가 없더라도 제외 카테고리가 아니면 수집
+            in_priority = any(cat in article_url for cat in priority_categories)
+            in_skip = any(cat in article_url for cat in skip_categories)
+
+            if in_skip:
+                continue
+
+            if not in_priority:
+                # 우선 카테고리가 아니면 스킵 (우선 카테고리 우선)
+                continue
+
+            # 제목 찾기
+            title_tag = article.find(["h2", "h3", "h4"])
+            title = title_tag.get_text(strip=True) if title_tag else ""
+            # 홑따옴표 제거
+            title = title.replace("'''", "").replace("'''", "")
+
+            # 날짜 찾기
+            date_tag = (
+                article.find("time")
+                or article.find("span", class_="date")
+                or article.find("div", class_="article-date")
             )
+            article_date = date_tag.get_text(strip=True) if date_tag else ""
 
-            # 카테고리 필터링 설정
-            # 우선 카테고리 (포함)
-            priority_categories = [
-                "/thoi-su/",  # 시사
-                "/the-gioi/",  # 세계 뉴스
-                "/kinh-doanh/",  # 경제/비즈니스
-            ]
-
-            # 제외 카테고리
-            skip_categories = [
-                "/khoa-hoc-cong-nghe/",  # 과학기술
-                "/suc-khoe/",  # 건강
-                "/doi-song/",  # 생활
-            ]
-
-            # 기사 리스트 찾기 (VnExpress 구조)
-            article_elements = soup.find_all("article") or soup.select(
-                ".article-item, .news-item"
-            )
-
-            for article in article_elements[:10]:  # 최대 10개 체크 후 필터링
-                # 링크 찾기
-                link_tag = article.find("a")
-                if not link_tag:
-                    continue
-
-                article_url = link_tag.get("href", "")
-                if not article_url.startswith("http"):
-                    article_url = "https://vnexpress.net" + article_url
-
-                # 카테고리 필터링
-                # 1. 우선 카테고리가 포함된 경우 수집
-                # 2. 우선 카테고리가 없더라도 제외 카테고리가 아니면 수집
-                in_priority = any(cat in article_url for cat in priority_categories)
-                in_skip = any(cat in article_url for cat in skip_categories)
-
-                if in_skip:
-                    continue
-
-                if not in_priority:
-                    # 우선 카테고리가 아니면 스킵 (우선 카테고리 우선)
-                    continue
-
-                # 제목 찾기
-                title_tag = article.find(["h2", "h3", "h4"])
-                title = title_tag.get_text(strip=True) if title_tag else ""
+            # 오늘 날짜가 포함되어 있는지 확인
+            if (
+                today_pattern in article_date or not article_date
+            ):  # 날짜가 없으면 최신 기사로 간주
+                # 본문 미리보기 요약
+                summary_tag = article.find("p", class_="sapo") or article.find(
+                    "div", class_="summary"
+                )
+                content = summary_tag.get_text(strip=True) if summary_tag else title
                 # 홑따옴표 제거
-                title = title.replace("'''", "").replace("'''", "")
+                content = content.replace("'''", "").replace("'''", "")
 
-                # 날짜 찾기
-                date_tag = (
-                    article.find("time")
-                    or article.find("span", class_="date")
-                    or article.find("div", class_="article-date")
+                articles.append(
+                    {
+                        "title": title,
+                        "content": content[:200],  # 200자 제한
+                        "url": article_url,
+                        "date": article_date,
+                    }
                 )
-                article_date = date_tag.get_text(strip=True) if date_tag else ""
 
-                # 오늘 날짜가 포함되어 있는지 확인
-                if (
-                    today_pattern in article_date or not article_date
-                ):  # 날짜가 없으면 최신 기사로 간주
-                    # 본문 미리보기 요약
-                    summary_tag = article.find("p", class_="sapo") or article.find(
-                        "div", class_="summary"
-                    )
-                    content = summary_tag.get_text(strip=True) if summary_tag else title
-                    # 홑따옴표 제거
-                    content = content.replace("'''", "").replace("'''", "")
+                if len(articles) >= 2:  # 최대 2개 제한
+                    break
 
-                    articles.append(
-                        {
-                            "title": title,
-                            "content": content[:200],  # 200자 제한
-                            "url": article_url,
-                            "date": article_date,
-                        }
-                    )
+        print(f"  [OK] VnExpress: {len(articles)}개 기사 수집")
+        return articles
 
-                    if len(articles) >= 2:  # 최대 2개 제한
-                        break
-
-            print(f"  [OK] VnExpress: {len(articles)}개 기사 수집")
-            return articles
-
-        except Exception as e:
-            print(f"  [!] VnExpress 스크래핑 실패: {str(e)}")
-            return []
+    except Exception as e:
+        print(f"  [!] VnExpress 스크래핑 실패: {str(e)}")
+        return []
 
 
 def scrape_weather_hochiminh() -> Dict[str, str]:
@@ -645,305 +645,305 @@ def scrape_air_quality() -> Dict[str, str]:
         print(f"  [!] IQAir 공기질 정보 스크래핑 실패: {str(e)}")
         return {"aqi": "", "status": "", "pm25": "", "pm10": ""}
 
-    def scrape_thanhnien(date_str: str) -> List[Dict[str, str]]:
-        """
-        Thanh Niên(사회/청년) 스크래핑
-        - 시사, 뉴스, 경제, 비즈니스 카테고리 우선 필터링
+def scrape_thanhnien(date_str: str) -> List[Dict[str, str]]:
+    """
+    Thanh Niên(사회/청년) 스크래핑
+    - 시사, 뉴스, 경제, 비즈니스 카테고리 우선 필터링
 
-        Args:
-            date_str: 기준일 (YYYY-MM-DD 형식)
+    Args:
+        date_str: 기준일 (YYYY-MM-DD 형식)
 
-        Returns:
-            기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
-        """
-        print(f"[스크래핑] Thanh Niên 수집 중...")
+    Returns:
+        기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
+    """
+    print(f"[스크래핑] Thanh Niên 수집 중...")
 
-        url = "https://thanhnien.vn/"
-        articles = []
+    url = "https://thanhnien.vn/"
+    articles = []
 
-        try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-            }
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
 
-            soup = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(response.text, "html.parser")
 
-            # 오늘 날짜 형식
-            today_pattern = (
-                date_str.split("-")[2]
-                + "/"
-                + date_str.split("-")[1]
-                + "/"
-                + date_str.split("-")[0]
+        # 오늘 날짜 형식
+        today_pattern = (
+            date_str.split("-")[2]
+            + "/"
+            + date_str.split("-")[1]
+            + "/"
+            + date_str.split("-")[0]
+        )
+
+        # 카테고리 필터링 설정
+        # 우선 카테고리 (포함)
+        priority_categories = [
+            "/thoi-su/",  # 시사
+            "/the-gioi/",  # 세계 뉴스
+            "/kinh-te/",  # 경제/비즈니스
+        ]
+
+        # 기사 리스트 찾기
+        article_elements = soup.find_all("article") or soup.select(
+            ".news-item, .article-item, .story"
+        )
+
+        for article in article_elements[:10]:  # 최대 10개 체크 후 필터링
+            # 링크 찾기
+            link_tag = article.find("a")
+            if not link_tag:
+                continue
+
+            article_url = link_tag.get("href", "")
+            if not article_url.startswith("http"):
+                article_url = "https://thanhnien.vn" + article_url
+
+            # 카테고리 필터링
+            # 우선 카테고리가 포함된 경우만 수집
+            in_priority = any(cat in article_url for cat in priority_categories)
+
+            if not in_priority:
+                # 우선 카테고리가 아니면 스킵 (우선 카테고리 우선)
+                continue
+
+            # 제목 찾기
+            title_tag = article.find(["h2", "h3", "h4"])
+            title = title_tag.get_text(strip=True) if title_tag else ""
+            # 자극적인 문장 부호 제거 (TTS 최적화)
+            title = re.sub(r"!{2,}", "!", title).replace("??", "?")
+
+            # 날짜 찾기
+            date_tag = (
+                article.find("time")
+                or article.find("span", class_="date")
+                or article.find("div", class_="article-date")
             )
+            article_date = date_tag.get_text(strip=True) if date_tag else ""
 
-            # 카테고리 필터링 설정
-            # 우선 카테고리 (포함)
-            priority_categories = [
-                "/thoi-su/",  # 시사
-                "/the-gioi/",  # 세계 뉴스
-                "/kinh-te/",  # 경제/비즈니스
-            ]
-
-            # 기사 리스트 찾기
-            article_elements = soup.find_all("article") or soup.select(
-                ".news-item, .article-item, .story"
-            )
-
-            for article in article_elements[:10]:  # 최대 10개 체크 후 필터링
-                # 링크 찾기
-                link_tag = article.find("a")
-                if not link_tag:
-                    continue
-
-                article_url = link_tag.get("href", "")
-                if not article_url.startswith("http"):
-                    article_url = "https://thanhnien.vn" + article_url
-
-                # 카테고리 필터링
-                # 우선 카테고리가 포함된 경우만 수집
-                in_priority = any(cat in article_url for cat in priority_categories)
-
-                if not in_priority:
-                    # 우선 카테고리가 아니면 스킵 (우선 카테고리 우선)
-                    continue
-
-                # 제목 찾기
-                title_tag = article.find(["h2", "h3", "h4"])
-                title = title_tag.get_text(strip=True) if title_tag else ""
+            # 오늘 날짜가 포함되어 있는지 확인
+            if (
+                today_pattern in article_date or not article_date
+            ):  # 날짜가 없으면 최신 기사로 간주
+                # 본문 미리보기 요약
+                summary_tag = article.find("p", class_="sapo") or article.find(
+                    "div", class_="summary"
+                )
+                content = summary_tag.get_text(strip=True) if summary_tag else title
                 # 자극적인 문장 부호 제거 (TTS 최적화)
-                title = re.sub(r"!{2,}", "!", title).replace("??", "?")
+                content = re.sub(r"!{2,}", "!", content).replace("??", "?")
 
-                # 날짜 찾기
-                date_tag = (
-                    article.find("time")
-                    or article.find("span", class_="date")
-                    or article.find("div", class_="article-date")
+                articles.append(
+                    {
+                        "title": title,
+                        "content": content[:200],  # 200자 제한
+                        "url": article_url,
+                        "date": article_date,
+                    }
                 )
-                article_date = date_tag.get_text(strip=True) if date_tag else ""
 
-                # 오늘 날짜가 포함되어 있는지 확인
-                if (
-                    today_pattern in article_date or not article_date
-                ):  # 날짜가 없으면 최신 기사로 간주
-                    # 본문 미리보기 요약
-                    summary_tag = article.find("p", class_="sapo") or article.find(
-                        "div", class_="summary"
-                    )
-                    content = summary_tag.get_text(strip=True) if summary_tag else title
-                    # 자극적인 문장 부호 제거 (TTS 최적화)
-                    content = re.sub(r"!{2,}", "!", content).replace("??", "?")
+                if len(articles) >= 2:  # 최대 2개 제한
+                    break
 
-                    articles.append(
-                        {
-                            "title": title,
-                            "content": content[:200],  # 200자 제한
-                            "url": article_url,
-                            "date": article_date,
-                        }
-                    )
+        print(f"  [OK] Thanh Niên: {len(articles)}개 기사 수집")
+        return articles
 
-                    if len(articles) >= 2:  # 최대 2개 제한
-                        break
+    except Exception as e:
+        print(f"  [!] Thanh Niên 스크래핑 실패: {str(e)}")
+        return []
 
-            print(f"  [OK] Thanh Niên: {len(articles)}개 기사 수집")
-            return articles
+def scrape_vietnamnet_ttt(date_str: str) -> List[Dict[str, str]]:
+    """
+    VietnamNet 정보통신(Thông tin và Truyền thông) 스크래핑
 
-        except Exception as e:
-            print(f"  [!] Thanh Niên 스크래핑 실패: {str(e)}")
-            return []
+    Args:
+        date_str: 기준일 (YYYY-MM-DD 형식)
 
-    def scrape_vietnamnet_ttt(date_str: str) -> List[Dict[str, str]]:
-        """
-        VietnamNet 정보통신(Thông tin và Truyền thông) 스크래핑
+    Returns:
+        기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
+    """
+    print(f"[스크래핑] VietnamNet 정보통신 수집 중...")
 
-        Args:
-            date_str: 기준일 (YYYY-MM-DD 형식)
+    url = "https://vietnamnet.vn/thong-tin-truyen-thong"
+    articles = []
 
-        Returns:
-            기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
-        """
-        print(f"[스크래핑] VietnamNet 정보통신 수집 중...")
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
 
-        url = "https://vietnamnet.vn/thong-tin-truyen-thong"
-        articles = []
+        soup = BeautifulSoup(response.text, "html.parser")
 
-        try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-            }
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
+        # 오늘 날짜 형식
+        today_pattern = (
+            date_str.split("-")[2]
+            + "/"
+            + date_str.split("-")[1]
+            + "/"
+            + date_str.split("-")[0]
+        )
 
-            soup = BeautifulSoup(response.text, "html.parser")
+        # 기사 리스트 찾기
+        article_elements = soup.find_all("article") or soup.select(
+            ".news-item, .article-item, .story"
+        )
 
-            # 오늘 날짜 형식
-            today_pattern = (
-                date_str.split("-")[2]
-                + "/"
-                + date_str.split("-")[1]
-                + "/"
-                + date_str.split("-")[0]
+        for article in article_elements[:5]:  # 최대 5개 기사 체크
+            # 링크 찾기
+            link_tag = article.find("a")
+            if not link_tag:
+                continue
+
+            article_url = link_tag.get("href", "")
+            if not article_url.startswith("http"):
+                article_url = "https://vietnamnet.vn" + article_url
+
+            # 제목 찾기
+            title_tag = article.find(["h2", "h3", "h4"])
+            title = title_tag.get_text(strip=True) if title_tag else ""
+
+            # 날짜 찾기
+            date_tag = (
+                article.find("time")
+                or article.find("span", class_="date")
+                or article.find("div", class_="article-date")
             )
+            article_date = date_tag.get_text(strip=True) if date_tag else ""
 
-            # 기사 리스트 찾기
-            article_elements = soup.find_all("article") or soup.select(
-                ".news-item, .article-item, .story"
-            )
-
-            for article in article_elements[:5]:  # 최대 5개 기사 체크
-                # 링크 찾기
-                link_tag = article.find("a")
-                if not link_tag:
-                    continue
-
-                article_url = link_tag.get("href", "")
-                if not article_url.startswith("http"):
-                    article_url = "https://vietnamnet.vn" + article_url
-
-                # 제목 찾기
-                title_tag = article.find(["h2", "h3", "h4"])
-                title = title_tag.get_text(strip=True) if title_tag else ""
-
-                # 날짜 찾기
-                date_tag = (
-                    article.find("time")
-                    or article.find("span", class_="date")
-                    or article.find("div", class_="article-date")
+            # 오늘 날짜가 포함되어 있는지 확인
+            if (
+                today_pattern in article_date or not article_date
+            ):  # 날짜가 없으면 최신 기사로 간주
+                # 본문 미리보기 요약
+                summary_tag = article.find("p", class_="sapo") or article.find(
+                    "div", class_="summary"
                 )
-                article_date = date_tag.get_text(strip=True) if date_tag else ""
+                content = summary_tag.get_text(strip=True) if summary_tag else title
 
-                # 오늘 날짜가 포함되어 있는지 확인
-                if (
-                    today_pattern in article_date or not article_date
-                ):  # 날짜가 없으면 최신 기사로 간주
-                    # 본문 미리보기 요약
-                    summary_tag = article.find("p", class_="sapo") or article.find(
-                        "div", class_="summary"
-                    )
-                    content = summary_tag.get_text(strip=True) if summary_tag else title
-
-                    articles.append(
-                        {
-                            "title": title,
-                            "content": content[:200],  # 200자 제한
-                            "url": article_url,
-                            "date": article_date,
-                        }
-                    )
-
-                    if len(articles) >= 2:  # 최대 2개 제한
-                        break
-
-            print(f"  [OK] VietnamNet 정보통신: {len(articles)}개 기사 수집")
-            return articles
-
-        except Exception as e:
-            print(f"  [!] VietnamNet 정보통신 스크래핑 실패: {str(e)}")
-            return []
-
-    def scrape_vnexpress_tech(date_str: str) -> List[Dict[str, str]]:
-        """
-        VnExpress IT/과학(Khoa học công nghệ) 스크래핑
-
-        Args:
-            date_str: 기준일 (YYYY-MM-DD 형식)
-
-        Returns:
-            기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
-        """
-        print(f"[스크래핑] VnExpress IT/과학 수집 중...")
-
-        url = "https://vnexpress.net/khoa-hoc-cong-nghe"
-        articles = []
-
-        try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-            }
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-
-            soup = BeautifulSoup(response.text, "html.parser")
-
-            # 오늘 날짜 형식
-            today_pattern = (
-                date_str.split("-")[2]
-                + "/"
-                + date_str.split("-")[1]
-                + "/"
-                + date_str.split("-")[0]
-            )
-
-            # 기사 리스트 찾기
-            article_elements = soup.find_all("article") or soup.select(
-                ".article-item, .news-item"
-            )
-
-            for article in article_elements[:5]:  # 최대 5개 기사 체크
-                # 링크 찾기
-                link_tag = article.find("a")
-                if not link_tag:
-                    continue
-
-                article_url = link_tag.get("href", "")
-                if not article_url.startswith("http"):
-                    article_url = "https://vnexpress.net" + article_url
-
-                # 제목 찾기
-                title_tag = article.find(["h2", "h3", "h4"])
-                title = title_tag.get_text(strip=True) if title_tag else ""
-
-                # 날짜 찾기
-                date_tag = (
-                    article.find("time")
-                    or article.find("span", class_="date")
-                    or article.find("div", class_="article-date")
+                articles.append(
+                    {
+                        "title": title,
+                        "content": content[:200],  # 200자 제한
+                        "url": article_url,
+                        "date": article_date,
+                    }
                 )
-                article_date = date_tag.get_text(strip=True) if date_tag else ""
 
-                # 오늘 날짜가 포함되어 있는지 확인
-                if (
-                    today_pattern in article_date or not article_date
-                ):  # 날짜가 없으면 최신 기사로 간주
-                    # 본문 미리보기 요약
-                    summary_tag = article.find("p", class_="sapo") or article.find(
-                        "div", class_="summary"
-                    )
-                    content = summary_tag.get_text(strip=True) if summary_tag else title
+                if len(articles) >= 2:  # 최대 2개 제한
+                    break
 
-                    articles.append(
-                        {
-                            "title": title,
-                            "content": content[:200],  # 200자 제한
-                            "url": article_url,
-                            "date": article_date,
-                        }
-                    )
+        print(f"  [OK] VietnamNet 정보통신: {len(articles)}개 기사 수집")
+        return articles
 
-                    if len(articles) >= 2:  # 최대 2개 제한
-                        break
+    except Exception as e:
+        print(f"  [!] VietnamNet 정보통신 스크래핑 실패: {str(e)}")
+        return []
 
-            print(f"  [OK] VnExpress IT/과학: {len(articles)}개 기사 수집")
-            return articles
+def scrape_vnexpress_tech(date_str: str) -> List[Dict[str, str]]:
+    """
+    VnExpress IT/과학(Khoa học công nghệ) 스크래핑
 
-        except Exception as e:
-            print(f"  [!] VnExpress IT/과학 스크래핑 실패: {str(e)}")
-            return []
+    Args:
+        date_str: 기준일 (YYYY-MM-DD 형식)
 
-    def scrape_saigontimes(date_str: str) -> List[Dict[str, str]]:
-        """
-        The Saigon Times(경제) 스크래핑
+    Returns:
+        기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
+    """
+    print(f"[스크래핑] VnExpress IT/과학 수집 중...")
 
-        Args:
-            date_str: 기준일 (YYYY-MM-DD 형식)
+    url = "https://vnexpress.net/khoa-hoc-cong-nghe"
+    articles = []
 
-        Returns:
-            기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
-        """
-        print(f"[스크래핑] The Saigon Times 수집 중...")
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # 오늘 날짜 형식
+        today_pattern = (
+            date_str.split("-")[2]
+            + "/"
+            + date_str.split("-")[1]
+            + "/"
+            + date_str.split("-")[0]
+        )
+
+        # 기사 리스트 찾기
+        article_elements = soup.find_all("article") or soup.select(
+            ".article-item, .news-item"
+        )
+
+        for article in article_elements[:5]:  # 최대 5개 기사 체크
+            # 링크 찾기
+            link_tag = article.find("a")
+            if not link_tag:
+                continue
+
+            article_url = link_tag.get("href", "")
+            if not article_url.startswith("http"):
+                article_url = "https://vnexpress.net" + article_url
+
+            # 제목 찾기
+            title_tag = article.find(["h2", "h3", "h4"])
+            title = title_tag.get_text(strip=True) if title_tag else ""
+
+            # 날짜 찾기
+            date_tag = (
+                article.find("time")
+                or article.find("span", class_="date")
+                or article.find("div", class_="article-date")
+            )
+            article_date = date_tag.get_text(strip=True) if date_tag else ""
+
+            # 오늘 날짜가 포함되어 있는지 확인
+            if (
+                today_pattern in article_date or not article_date
+            ):  # 날짜가 없으면 최신 기사로 간주
+                # 본문 미리보기 요약
+                summary_tag = article.find("p", class_="sapo") or article.find(
+                    "div", class_="summary"
+                )
+                content = summary_tag.get_text(strip=True) if summary_tag else title
+
+                articles.append(
+                    {
+                        "title": title,
+                        "content": content[:200],  # 200자 제한
+                        "url": article_url,
+                        "date": article_date,
+                    }
+                )
+
+                if len(articles) >= 2:  # 최대 2개 제한
+                    break
+
+        print(f"  [OK] VnExpress IT/과학: {len(articles)}개 기사 수집")
+        return articles
+
+    except Exception as e:
+        print(f"  [!] VnExpress IT/과학 스크래핑 실패: {str(e)}")
+        return []
+
+def scrape_saigontimes(date_str: str) -> List[Dict[str, str]]:
+    """
+    The Saigon Times(경제) 스크래핑
+
+    Args:
+        date_str: 기준일 (YYYY-MM-DD 형식)
+
+    Returns:
+        기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
+    """
+    print(f"[스크래핑] The Saigon Times 수집 중...")
 
     url = "https://thesaigontimes.vn/"
     articles = []
