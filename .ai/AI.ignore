@@ -1,39 +1,29 @@
-# 1. 수집된 데이터 및 결과물 (가장 중요)
-# 매일 생성되는 YAML 파일들을 다 읽으면 토큰이 순식간에 사라집니다.
-data/*.yaml
-output/*.mp3
-output/*.wav
+# 결과물
+output/
+dist/
+build/
 
-# 2. 파이썬 환경 및 캐시
-# 로직과 상관없는 바이너리 파일들입니다.
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
+# 의존성
+node_modules/
 .venv/
-pip-log.txt
-setup.cfg
+__pycache__/
 
-# 3. 개발 도구 및 IDE 설정
-.vscode/
-.idea/
-.DS_Store
-
-# 4. Git 및 히스토리
-# 아까 말씀하신 대로 gh CLI로 조회하면 되니 전체 히스토리를 읽을 필요 없습니다.
-.git/
-.gitignore
-
-# 5. 환경 변수 및 보안
-# API 키 등이 들어있는 파일은 보안상 AI가 학습하거나 전송하지 않게 막아야 합니다.
-.env*
+# 환경 변수
+.env
+.env.local
 *.secret
 credentials.json
 
-# 6. 로그 및 임시 파일
+# 용량 큰 파일
+data/*.csv
+data/*.json
+*.mp3
+*.mp4
+*.wav
+
+# 임시 파일
 logs/
 *.log
 tmp/
+.pytest_cache/
+.ruff_cache/
