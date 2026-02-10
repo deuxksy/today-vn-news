@@ -591,37 +591,54 @@ def scrape_weather_hochiminh() -> Dict[str, str]:
 
 def scrape_air_quality() -> Dict[str, str]:
     """
-    Open-Meteo Air Quality API 스크래핑 (호치민시)
+    IQAir API (AQI) + Open-Meteo API (PM2.5) 혼합
 
     Returns:
         공기질 정보 딕셔너리 {'aqi': str, 'status': str, 'pm25': str}
     """
-    print(f"[스크래핑] Open-Meteo 공기질 정보 수집 중...")
+    print(f"[스크래핑] IQAir + Open-Meteo 공기질 정보 수집 중...")
 
     try:
-        # 호치민시 좌표
-        lat, lon = 10.8231, 106.6297
+        # Vinhomes Central Park 2 근처 좌표
+        lat, lon = 10.7795, 106.6972
 
-        url = "https://air-quality-api.open-meteo.com/v1/air-quality"
-        params = {
+        # 1. IQAir API로 AQI 가져오기
+        api_key = "6662f218-23bf-4224-8b70-cc95ba87c13d"
+        iqair_url = f"http://api.airvisual.com/v2/nearest_city"
+        iqair_params = {
+            "lat": lat,
+            "lon": lon,
+            "key": api_key
+        }
+
+        iqair_response = requests.get(iqair_url, params=iqair_params, timeout=10)
+        iqair_response.raise_for_status()
+        iqair_data = iqair_response.json()
+
+        # AQI 추출
+        if iqair_data.get("status") == "success":
+            pollution = iqair_data["data"]["current"]["pollution"]
+            us_aqi = pollution.get("aqius")
+        else:
+            print(f"  [!] IQAir API 실패: {iqair_data.get('data', {}).get('message')}")
+            us_aqi = None
+
+        # 2. Open-Meteo API로 PM2.5 가져오기
+        openmeteo_url = "https://air-quality-api.open-meteo.com/v1/air-quality"
+        openmeteo_params = {
             "latitude": lat,
             "longitude": lon,
-            "current": "us_aqi,pm2_5,pm10",
+            "current": "pm2_5",
             "timezone": "auto"
         }
 
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
+        openmeteo_response = requests.get(openmeteo_url, params=openmeteo_params, timeout=10)
+        openmeteo_response.raise_for_status()
+        openmeteo_data = openmeteo_response.json()
 
-        data = response.json()
+        pm25 = openmeteo_data.get("current", {}).get("pm2_5")
 
-        # 데이터 추출
-        current = data.get("current", {})
-        us_aqi = current.get("us_aqi")
-        pm25 = current.get("pm2_5")
-        pm10 = current.get("pm10")
-
-        # AQI 상태 계산 (US 기준)
+        # AQI 상태 계산
         if us_aqi is not None:
             aqi = str(us_aqi)
             if us_aqi <= 50:
@@ -646,11 +663,11 @@ def scrape_air_quality() -> Dict[str, str]:
         else:
             pm25 = ""
 
-        print(f"  [OK] Open-Meteo 공기질 정보 수집 완료: AQI={aqi}, 상태={status}, PM2.5={pm25} µg/m³")
+        print(f"  [OK] IQAir AQI={aqi}, Open-Meteo PM2.5={pm25} µg/m³")
         return {"aqi": aqi, "status": status, "pm25": pm25}
 
     except Exception as e:
-        print(f"  [!] Open-Meteo 공기질 정보 스크래핑 실패: {str(e)}")
+        print(f"  [!] 공기질 정보 스크래핑 실패: {str(e)}")
         return {"aqi": "", "status": "", "pm25": ""}
 
 
