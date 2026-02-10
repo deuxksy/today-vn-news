@@ -19,6 +19,8 @@
 ```text
 1. 스크래핑 (scraper.py)
    └─> BeautifulSoup4 기반 10개 소스 수집
+   └─> IQAir API + Open-Meteo API (공기질: AQI, PM2.5, PM10)
+   └─> IGP-VAST RSS 피드 (지진 정보, 당일 필터링)
    └─> 원본 YAML 저장 (data/YYYYMMDD_HHMM_raw.yaml)
 
 2. 번역 (translator.py)
@@ -46,8 +48,8 @@
 | 소스 | 분류 | 우선순위 | 수집 방식 |
 |:---|:---|:---|:---|
 | **NCHMF** | 기상 | P0 | 스크래핑 (호치민 날씨) |
-| **IQAir** | 공기질 | P0 | 스크래핑 (Saigon Pearl) |
-| **IGP-VAST** | 지진 | P0 | 스크래핑 |
+| **IQAir + Open-Meteo** | 공기질 | P0 | API (AQI, PM2.5, PM10) |
+| **IGP-VAST** | 지진 | P0 | RSS 피드 (당일 필터링) |
 | **Nhân Dân** | 정부 기관지 | P1 | 스크래핑 |
 | **Sức khỏe & Đời sống** | 보건부 공식 | P0 | 스크래핑 |
 | **Tuổi Trẻ** | 호치민 로컬 | P2 | 스크래핑 |
@@ -97,6 +99,7 @@ cp .env.example .env
 
 # API 키 설정 (필수)
 GEMINI_API_KEY=your_gemini_api_key_here
+IQAIR_API_KEY=your_iqair_api_key_here
 
 # YouTube 업로드 시 필요 (선택)
 GOOGLE_API_KEY=your_google_api_key
@@ -236,6 +239,15 @@ GEMINI.md → .ai/AGENTS.md
 - 기상 상태 사전 기반 번역 (맑음, 흐림, 비 등)
 - Gemma-3-27b-it 기반 기사 번역
 - 3줄 요약 자동 생성
+
+### 공기질 데이터 (IQAir + Open-Meteo)
+- **IQAir API**: AQI(미국 기준) 데이터
+- **Open-Meteo API**: PM2.5, PM10 미세먼지 농도
+- **관측소 위치**: Quan Mot (10.78069, 106.69944)
+
+### 지진 정보 (IGP-VAST)
+- RSS 피드 기반 자동 수집
+- 당일 발생 지진만 필터링
 
 ### 하드웨어 가속
 - **Mac**: VideoToolbox (H.264/H.265)
