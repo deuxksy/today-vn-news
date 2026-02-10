@@ -640,6 +640,10 @@ def scrape_thanhnien_rss(date_str: str) -> List[Dict[str, str]]:
 
     articles = []
 
+    # date_str 변환 (2026-02-10 → 10 Feb 26)
+    date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+    target_date_short = date_obj.strftime("%d %b %y")  # "10 Feb 26"
+
     for category_name, rss_url in rss_feeds:
         try:
             # RSS 가져오기
@@ -677,20 +681,23 @@ def scrape_thanhnien_rss(date_str: str) -> List[Dict[str, str]]:
                 pub_date_elem = item.find(".//pubDate")
                 if pub_date_elem is not None and pub_date_elem.text:
                     try:
-                        # 날짜 파싱: "Tue, 10 Feb 2026 17:00:00 +0700"
+                        # pubDate 파싱: "Tue, 10 Feb26 15:05:00 +0700"
                         pub_date_text = pub_date_elem.text.strip()
-                        pub_date = datetime.strptime(
-                            pub_date_text, "%a, %d %b %Y %H:%M:%S %z"
-                        )
-                        entry_date = pub_date.strftime("%Y-%m-%d")
+
+                        # "10 Feb 26" 추출 (정규 표현식)
+                        date_match = re.search(r"\d{2} \w{3} \d{2}", pub_date_text)
+                        pub_date_short = date_match.group(0) if date_match else ""
+
+                        # 필터링: 당일 기사만
+                        if pub_date_short != target_date_short:
+                            continue  # 당일 기사가 아니면 건너뜀기
                     except Exception as e:
                         continue
                 else:
                     continue
 
-                # 날짜 필터링
-                if entry_date != date_str:
-                    continue
+                # entry_date 설정 (원본 형식 유지)
+                entry_date = date_str
 
                 # title 찾기
                 title_elem = item.find(".//title")
