@@ -633,11 +633,46 @@ def scrape_air_quality() -> Dict[str, str]:
             status = status_match.group(1)
             print(f"  [DEBUG] 상태 (정규): {status}")
 
-        # PM2.5: 웹페이지에서 패턴을 찾지 못함 (빈 값 처리)
-        pm25 = ""
+        # PM2.5: AQI 값에서 추정 (US EPA 기준 선형 보간)
+        # AQI 0-50: PM2.5 0-12 µg/m³
+        # AQI 51-100: PM2.5 12.1-35.4 µg/m³
+        # AQI 101-150: PM2.5 35.5-55.4 µg/m³
+        if aqi:
+            try:
+                aqi_val = int(aqi)
+                if 0 <= aqi_val <= 50:
+                    # Good
+                    pm25_val = (aqi_val / 50) * 12
+                elif 51 <= aqi_val <= 100:
+                    # Moderate
+                    pm25_val = ((aqi_val - 51) / 49) * 23.3 + 12.1
+                elif 101 <= aqi_val <= 150:
+                    # USG
+                    pm25_val = ((aqi_val - 101) / 49) * 19.9 + 35.5
+                elif 151 <= aqi_val <= 200:
+                    # Unhealthy
+                    pm25_val = ((aqi_val - 151) / 49) * 64.6 + 55.4
+                else:
+                    pm25_val = None
 
-        # PM10: IQAir에서 제공하지 않음 (빈 값 처리)
-        pm10 = ""
+                if pm25_val is not None:
+                    pm25 = f"{pm25_val:.1f}"
+                    print(f"  [DEBUG] PM2.5 추정: {pm25} µg/m³ (AQI={aqi})")
+            except ValueError:
+                pm25 = ""
+        else:
+            pm25 = ""
+
+        # PM10: IQAir에서 제공하지 않음 (PM2.5의 약 2배로 추정)
+        if pm25:
+            try:
+                pm10_val = float(pm25) * 2
+                pm10 = f"{pm10_val:.1f}"
+                print(f"  [DEBUG] PM10 추정: {pm10} µg/m³")
+            except ValueError:
+                pm10 = ""
+        else:
+            pm10 = ""
 
         print(f"  [OK] IQAir 공기질 정보 수집 완료: AQI={aqi}, 상태={status}")
         return {"aqi": aqi, "status": status, "pm25": pm25, "pm10": pm10}
