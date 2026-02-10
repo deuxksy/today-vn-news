@@ -5,33 +5,39 @@
 ## 🔄 데이터 파이프라인
 
 ```mermaid
-flowchart LR
-    A[데이터 소스<br/>10개 뉴스 사이트] --> B[스크래핑<br/>BeautifulSoup4]
-    B --> C[YAML 저장<br/>raw]
+graph TD
+    subgraph "1. 데이터 수집 (Collection)"
+        S[scraper.py] -->|BeautifulSoup4| RAW[data/YYYYMMDD_HHMM_raw.yaml]
+        RAW -->|Gemini API| G[Gemma-3-27b-it]
+        G -->|Translation| YAML[data/YYYYMMDD_HHMM.yaml]
+    end
 
-    C --> D[번역<br/>Gemma-3-27b-it]
-    D --> E[YAML 저장<br/>번역 완료]
+    subgraph "2. 처리 파이프라인 (main.py)"
+        YAML -->|Parsing| TTS[tts.py: edge-tts]
+        TTS -->|V-Voice| MP3[data/YYYYMMDD_HHMM.mp3]
 
-    E --> F[TTS<br/>edge-tts]
-    F --> G[MP3 저장]
+        MP3 -->|Mixing| Engine[engine.py: FFmpeg]
+        MOV[data/YYYYMMDD_HHMM.mov] -->|Video Source| Engine
 
-    G --> H[영상 합성<br/>FFmpeg]
-    H --> I[MP4 저장]
+        Engine -->|Hardware Accel| Final[data/YYYYMMDD_HHMM_final.mp4]
+    end
 
-    I --> J[유튜브 업로드<br/>YouTube API]
+    subgraph "3. 배포 (Deployment)"
+        Final -->|OAuth2| UP[uploader.py: YouTube API]
+        UP --> YT((YouTube Channel))
+    end
 
-    style A fill:#e1f5fe
-    style D fill:#fff3e0
-    style F fill:#f3e5f5
-    style H fill:#e8f5e9
-    style J fill:#ffebee
+    subgraph "💻 분산 인프라"
+        NAS[N100 NAS: Inotify / Storage]
+        SD[Steam Deck: VAAPI Synth]
+        MAC[Mac Mini M4: VideoToolbox Dev]
+    end
+
+    YAML -.-> NAS
+    Final -.-> NAS
+    Engine -.-> SD
+    Engine -.-> MAC
 ```
-
-1. **스크래핑** - BeautifulSoup4 기반 10개 소스 수집
-2. **번역** - Gemma-3-27b-it 기반 베트남어 → 한국어
-3. **TTS** - edge-tts 기반 한국어 음성 변환
-4. **영상 합성** - FFmpeg 하드웨어 가속
-5. **유튜브 업로드** - YouTube Data API v3
 
 ## 🎯 데이터 소스
 
