@@ -272,6 +272,7 @@ def scrape_tuoitre(date_str: str) -> List[Dict[str, str]]:
         print(f"  [!] Tuổi Trẻ 스크래핑 실패: {str(e)}")
         return []
 
+
 def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
     """
     VietnamNet(종합 뉴스) 스크래핑
@@ -308,21 +309,11 @@ def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
         )
 
         # 카테고리 필터링 설정
-        # 우선 카테고리 (포함)
+        # 카테고리 필터링 (베트남 시사/경제/재무만 수집)
         priority_categories = [
             "/thoi-su/",  # 시사
-            "/the-gioi/",  # 세계 뉴스
             "/kinh-doanh/",  # 경제/비즈니스
             "/tai-chinh/",  # 재무/경제
-        ]
-
-        # 제외 카테고리
-        skip_categories = [
-            "/cntt/",  # 기술
-            "/cong-nghe/",  # 기술
-            "/suc-khoe/",  # 건강
-            "/doi-song/",  # 생활
-            "/thong-tin-truyen-thong/",  # 정보통신 (별도 섹션 존재)
         ]
 
         # 기사 리스트 찾기
@@ -340,17 +331,10 @@ def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
             if not article_url.startswith("http"):
                 article_url = "https://vietnamnet.vn" + article_url
 
-            # 카테고리 필터링
-            # 1. 우선 카테고리가 포함된 경우 수집
-            # 2. 우선 카테고리가 없더라도 제외 카테고리가 아니면 수집
+            # 카테고리 필터링 (시사/경제/재무만 수집)
             in_priority = any(cat in article_url for cat in priority_categories)
-            in_skip = any(cat in article_url for cat in skip_categories)
-
-            if in_skip:
-                continue
 
             if not in_priority:
-                # 우선 카테고리가 아니면 스킵 (우선 카테고리 우선)
                 continue
 
             # 제목 찾기
@@ -394,6 +378,7 @@ def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
         print(f"  [!] VietnamNet 종합 뉴스 스크래핑 실패: {str(e)}")
         return []
 
+
 def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
     """
     VnExpress(종합 뉴스) 스크래핑
@@ -429,19 +414,10 @@ def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
             + date_str.split("-")[0]
         )
 
-        # 카테고리 필터링 설정
-        # 우선 카테고리 (포함)
+        # 카테고리 필터링 (베트남 시사/경제만 수집)
         priority_categories = [
             "/thoi-su/",  # 시사
-            "/the-gioi/",  # 세계 뉴스
             "/kinh-doanh/",  # 경제/비즈니스
-        ]
-
-        # 제외 카테고리
-        skip_categories = [
-            "/khoa-hoc-cong-nghe/",  # 과학기술
-            "/suc-khoe/",  # 건강
-            "/doi-song/",  # 생활
         ]
 
         # 기사 리스트 찾기 (VnExpress 구조)
@@ -459,17 +435,10 @@ def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
             if not article_url.startswith("http"):
                 article_url = "https://vnexpress.net" + article_url
 
-            # 카테고리 필터링
-            # 1. 우선 카테고리가 포함된 경우 수집
-            # 2. 우선 카테고리가 없더라도 제외 카테고리가 아니면 수집
+            # 카테고리 필터링 (시사/경제만 수집)
             in_priority = any(cat in article_url for cat in priority_categories)
-            in_skip = any(cat in article_url for cat in skip_categories)
-
-            if in_skip:
-                continue
 
             if not in_priority:
-                # 우선 카테고리가 아니면 스킵 (우선 카테고리 우선)
                 continue
 
             # 제목 찾기
@@ -645,6 +614,7 @@ def scrape_air_quality() -> Dict[str, str]:
         print(f"  [!] IQAir 공기질 정보 스크래핑 실패: {str(e)}")
         return {"aqi": "", "status": "", "pm25": "", "pm10": ""}
 
+
 def scrape_thanhnien(date_str: str) -> List[Dict[str, str]]:
     """
     Thanh Niên(사회/청년) 스크래핑
@@ -683,7 +653,6 @@ def scrape_thanhnien(date_str: str) -> List[Dict[str, str]]:
         # 우선 카테고리 (포함)
         priority_categories = [
             "/thoi-su/",  # 시사
-            "/the-gioi/",  # 세계 뉴스
             "/kinh-te/",  # 경제/비즈니스
         ]
 
@@ -754,6 +723,7 @@ def scrape_thanhnien(date_str: str) -> List[Dict[str, str]]:
     except Exception as e:
         print(f"  [!] Thanh Niên 스크래핑 실패: {str(e)}")
         return []
+
 
 def scrape_vietnamnet_ttt(date_str: str) -> List[Dict[str, str]]:
     """
@@ -844,6 +814,7 @@ def scrape_vietnamnet_ttt(date_str: str) -> List[Dict[str, str]]:
         print(f"  [!] VietnamNet 정보통신 스크래핑 실패: {str(e)}")
         return []
 
+
 def scrape_vnexpress_tech(date_str: str) -> List[Dict[str, str]]:
     """
     VnExpress IT/과학(Khoa học công nghệ) 스크래핑
@@ -933,6 +904,7 @@ def scrape_vnexpress_tech(date_str: str) -> List[Dict[str, str]]:
         print(f"  [!] VnExpress IT/과학 스크래핑 실패: {str(e)}")
         return []
 
+
 def scrape_saigontimes(date_str: str) -> List[Dict[str, str]]:
     """
     The Saigon Times(경제) 스크래핑
@@ -980,6 +952,19 @@ def scrape_saigontimes(date_str: str) -> List[Dict[str, str]]:
             article_url = link_tag.get("href", "")
             if not article_url.startswith("http"):
                 article_url = "https://thesaigontimes.vn" + article_url
+
+            # 카테고리 필터링 (기획/경제/재무/부동산만 수집)
+            priority_categories = [
+                "/noi-bat-2/",  # 기획/하이라이트
+                "/kinh-doanh/",  # 경제
+                "/tai-chinh-ngan-hang/",  # 재무-금융
+                "/dia-oc/",  # 부동산
+            ]
+
+            in_priority = any(cat in article_url for cat in priority_categories)
+
+            if not in_priority:
+                continue
 
             # 제목 찾기
             title_tag = article.find(["h2", "h3", "h4"])
