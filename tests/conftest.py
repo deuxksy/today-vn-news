@@ -28,7 +28,7 @@ def sample_weather_data():
 @pytest.fixture
 def sample_aqi_data():
     """공기질 데이터 샘플"""
-    return {"aqi": "115", "status": "Unhealthy", "pm25": "N/A"}
+    return {"aqi": "115", "status": "Unhealthy", "pm25": "N/A", "pm10": "N/A"}
 
 
 @pytest.fixture

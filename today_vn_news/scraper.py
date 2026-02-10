@@ -591,10 +591,10 @@ def scrape_weather_hochiminh() -> Dict[str, str]:
 
 def scrape_air_quality() -> Dict[str, str]:
     """
-    IQAir API (AQI) + Open-Meteo API (PM2.5) 혼합
+    IQAir API (AQI) + Open-Meteo API (PM2.5, PM10) 혼합
 
     Returns:
-        공기질 정보 딕셔너리 {'aqi': str, 'status': str, 'pm25': str}
+        공기질 정보 딕셔너리 {'aqi': str, 'status': str, 'pm25': str, 'pm10': str}
     """
     print(f"[스크래핑] IQAir + Open-Meteo 공기질 정보 수집 중...")
 
@@ -623,12 +623,12 @@ def scrape_air_quality() -> Dict[str, str]:
             print(f"  [!] IQAir API 실패: {iqair_data.get('data', {}).get('message')}")
             us_aqi = None
 
-        # 2. Open-Meteo API로 PM2.5 가져오기
+        # 2. Open-Meteo API로 PM2.5, PM10 가져오기
         openmeteo_url = "https://air-quality-api.open-meteo.com/v1/air-quality"
         openmeteo_params = {
             "latitude": lat,
             "longitude": lon,
-            "current": "pm2_5",
+            "current": "pm2_5,pm10",
             "timezone": "auto"
         }
 
@@ -636,7 +636,9 @@ def scrape_air_quality() -> Dict[str, str]:
         openmeteo_response.raise_for_status()
         openmeteo_data = openmeteo_response.json()
 
-        pm25 = openmeteo_data.get("current", {}).get("pm2_5")
+        current = openmeteo_data.get("current", {})
+        pm25 = current.get("pm2_5")
+        pm10 = current.get("pm10")
 
         # AQI 상태 계산
         if us_aqi is not None:
@@ -657,18 +659,23 @@ def scrape_air_quality() -> Dict[str, str]:
             aqi = ""
             status = ""
 
-        # PM2.5 포맷팅
+        # PM2.5, PM10 포맷팅
         if pm25 is not None:
             pm25 = f"{pm25:.1f}"
         else:
             pm25 = ""
 
-        print(f"  [OK] IQAir AQI={aqi}, Open-Meteo PM2.5={pm25} µg/m³")
-        return {"aqi": aqi, "status": status, "pm25": pm25}
+        if pm10 is not None:
+            pm10 = f"{pm10:.1f}"
+        else:
+            pm10 = ""
+
+        print(f"  [OK] IQAir AQI={aqi}, Open-Meteo PM2.5={pm25} µg/m³, PM10={pm10} µg/m³")
+        return {"aqi": aqi, "status": status, "pm25": pm25, "pm10": pm10}
 
     except Exception as e:
         print(f"  [!] 공기질 정보 스크래핑 실패: {str(e)}")
-        return {"aqi": "", "status": "", "pm25": ""}
+        return {"aqi": "", "status": "", "pm25": "", "pm10": ""}
 
 
 def scrape_thanhnien_rss(date_str: str) -> List[Dict[str, str]]:
@@ -1346,25 +1353,28 @@ def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str,
         aqi_str = air_data["aqi"].strip() if air_data["aqi"] else "N/A"
         status_str = air_data["status"].strip() if air_data["status"] else "N/A"
         pm25_str = air_data["pm25"].strip() if air_data["pm25"] else "N/A"
+        pm10_str = air_data["pm10"].strip() if air_data["pm10"] else "N/A"
 
         # 모든 데이터가 비어있더라도 기본값으로 추가
-        if not aqi_str and not status_str and not pm25_str:
+        if not aqi_str and not status_str and not pm25_str and not pm10_str:
             aqi_str = "N/A"
             status_str = "N/A"
             pm25_str = "N/A"
+            pm10_str = "N/A"
 
         safety_items.append(
             {
                 "name": "공기",
-                "source": "IQAir (Saigon Pearl)",
+                "source": "IQAir + Open-Meteo (Vinhomes Central Park 2)",
                 "aqi": air_data["aqi"],
                 "status": air_data["status"],
                 "pm25": air_data["pm25"],
-                "content": f"AQI {aqi_str} ({status_str}), PM2.5: {pm25_str}",
-                "url": "https://www.iqair.com/vietnam/ho-chi-minh-city/ho-chi-minh-city/iqair-vietnam-saigon-pearl",
+                "pm10": air_data["pm10"],
+                "content": f"AQI {aqi_str} ({status_str}), PM2.5: {pm25_str}, PM10: {pm10_str}",
+                "url": "https://www.iqair.com/vietnam/ho-chi-minh-city/ho-chi-minh-city/vinhomes-central-park-2",
             }
         )
-        print(f"  [INFO] 공기질 정보 추가됨: AQI {aqi_str}, {status_str}")
+        print(f"  [INFO] 공기질 정보 추가됨: AQI {aqi_str}, {status_str}, PM2.5: {pm25_str}, PM10: {pm10_str}")
 
     # 지진 정보 (최근 3개)
     for quake in earthquake_data:
