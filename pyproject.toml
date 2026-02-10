@@ -13,3 +13,24 @@ dependencies = [
     "requests>=2.32.5",
     "beautifulsoup4>=4.13.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=5.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers --tb=short"
+asyncio_mode = "auto"
+markers = [
+    "integration: 통합 테스트",
+    "unit: 단위 테스트",
+    "slow: 느린 테스트 (실제 외부 API 호출)",
+    "upload: 유튜브 업로드 테스트 (실제 업로드)",
+]

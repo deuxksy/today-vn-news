@@ -1,0 +1,22 @@
+metadata:
+  date: 2026-02-10
+  time: 16:00
+  location: Ho Chi Minh City (Saigon Pearl)
+sections:
+  - id: '1'
+    name: 안전 및 기상 관제
+    priority: P0
+    items:
+    - title: 기상 (NCHMF)
+      content: 흐림, 온도 29°C, 습도 68
+      url: https://www.nchmf.gov.vn/en/portal/portal/hcm-weather
+    - title: 공기질 (IQAir) - AQI 115
+      content: 'AQI 115 (Unhealthy), PM2.5: N/A, PM10: N/A'
+      url: https://www.iqair.com/vietnam/ho-chi-minh-city/ho-chi-minh-city/iqair-vietnam-saigon-pearl
+  - id: '2'
+    name: VnExpress IT/과학
+    priority: P2
+    items:
+    - title: ChatGPT, 광고 시작
+      content: ChatGPT가 광고를 시작했습니다. OpenAI는 사용자 경험 개선을 위해 광고를 도입한다고 밝혔습니다. 현재는 Plus 구독자에게는 광고가 표시되지 않으며, 무료 사용자에게만 제한적으로 제공됩니다.
+      url: https://vnexpress.net/chatgpt-bat-dau-co-quang-cao-5039557.html

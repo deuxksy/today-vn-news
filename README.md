@@ -209,3 +209,59 @@ graph TB
 ## ⚖️ 라이선스
 
 MIT License - Copyright (c) 2026 Crong
+
+## 🧪 테스트
+
+### 실행 방법
+
+```bash
+# 전체 테스트 실행 (모든 실제 API 사용)
+uv run pytest
+
+# 빠른 테스트 (외부 API 제외)
+uv run pytest -m "not slow"
+
+# 업로드 테스트 제외
+uv run pytest -m "not upload"
+
+# 단위 테스트만
+uv run pytest tests/unit/
+
+# 통합 테스트만
+uv run pytest tests/integration/
+
+# 커버리지 확인
+uv run pytest --cov=today_vn_news --cov-report=html
+```
+
+### 테스트 구조
+
+```
+tests/
+├── conftest.py              # 공통 fixture 정의
+├── fixtures/                # 테스트 데이터 샘플
+│   ├── sample_news.json      # 뉴스 데이터 샘플
+│   └── sample_translated.yaml # 번역된 YAML 샘플
+├── unit/                    # 단위 테스트
+│   ├── test_scraper.py      # 스크래핑 테스트
+│   ├── test_translator.py   # 번역 테스트
+│   ├── test_tts.py          # TTS 테스트
+│   ├── test_engine.py       # FFmpeg 엔진 테스트
+│   └── test_uploader.py    # 업로더 테스트
+└── integration/             # 통합 테스트
+    └── test_pipeline.py     # 전체 파이프라인 테스트
+```
+
+### 테스트 마커
+
+- `unit`: 단위 테스트
+- `integration`: 통합 테스트
+- `slow`: 외부 API 호출 테스트
+- `upload`: 유튜브 업로드 테스트
+
+### 주의사항
+
+- 모든 테스트는 실제 API를 사용합니다
+- YouTube 업로드 테스트는 실제 영상을 업로드합니다
+- `pytest -m "not slow"`로 빠르게 테스트 가능
+

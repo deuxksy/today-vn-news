@@ -87,3 +87,9 @@ out/
 *.swp
 *.swo
 *~
+
+# === Testing ===
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
