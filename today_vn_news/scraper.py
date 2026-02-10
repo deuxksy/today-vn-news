@@ -1186,50 +1186,54 @@ def scrape_earthquake() -> List[Dict[str, str]]:
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
 
-        # IGP-VAST 지진 뉴스 페이지
-        url = "http://igp-vast.vn/index.php/vi/tin-dong-dat"
+        # IGP-VAST RSS 피드 (영어)
+        url = "http://igp-vast.vn/index.php/en/earthquake-news?format=feed"
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
 
-        soup = BeautifulSoup(response.text, "html.parser")
+        # XML 파싱
+        root = ET.fromstring(response.content)
 
-        # 지진 기사 찾기
-        article_elements = soup.find_all("article")
+        # item 태그 찾기
+        items = root.findall(".//item")
 
-        for article in article_elements[:3]:  # 최근 3개
-            # 링크 찾기
-            link_tag = article.find("a")
-            if not link_tag:
-                continue
+        for idx, item in enumerate(items[:3]):  # 최근 3개
+            # 직접 자식 요소에서 데이터 추출
+            title = ""
+            description = ""
+            article_url = ""
+            pub_date = ""
 
-            article_url = link_tag.get("href", "")
-            if not article_url.startswith("http"):
-                article_url = "http://igp-vast.vn" + article_url
+            for child in item:
+                tag_name = child.tag.split('}')[-1]  # 네임스페이스 제거
+                if tag_name == "title":
+                    title = child.text or ""
+                elif tag_name == "description":
+                    description = child.text or ""
+                elif tag_name == "link":
+                    article_url = child.text or ""
+                elif tag_name == "pubDate":
+                    pub_date = child.text or ""
 
-            # 제목 찾기
-            title_tag = article.find(["h2", "h3", "h4"])
-            title = title_tag.get_text(strip=True) if title_tag else ""
-            title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
+            # HTML 엔티티 디코딩 및 태그 제거
+            description = html.unescape(description)
+            # HTML 태그 제거
+            description = re.sub(r'<[^>]+>', ' ', description)
+            description = re.sub(r'\s+', ' ', description).strip()
 
-            # 본문 전체 텍스트 가져오기
-            content = article.get_text(strip=True)
-            content = clean_text(content)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
+            # 제목이 없으면 description에서 첫 문장 사용
+            if not title:
+                title = "Earthquake Report"
+            else:
+                title = html.unescape(title)
 
-            # 날짜 추출 (정규 표현식)
-            import re
-
-            date_match = re.search(
-                r"ngày (\d{1,2}) tháng (\d{1,2}) năm (\d{4})", content
-            )
-            article_date = date_match.group(0) if date_match else ""
-
-            if title and content:
+            if description:
                 earthquakes.append(
                     {
                         "title": title,
-                        "content": content[:500],  # 500자 제한
+                        "content": description[:500],  # 500자 제한
                         "url": article_url,
-                        "date": article_date,
+                        "date": pub_date,
                     }
                 )
 
