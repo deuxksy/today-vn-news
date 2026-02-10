@@ -39,6 +39,15 @@ today-vn-news/
 │   ├── engine.py          # FFmpeg 영상 합성
 │   └── uploader.py        # 유튜브 업로드
 ├── tests/                 # pytest 테스트
+│   ├── conftest.py        # 공통 fixture
+│   ├── unit/              # 단위 테스트
+│   │   ├── test_scraper.py
+│   │   ├── test_translator.py
+│   │   ├── test_tts.py
+│   │   ├── test_engine.py
+│   │   └── test_uploader.py
+│   └── integration/       # 통합 테스트
+│       └── test_pipeline.py
 ├── data/                  # YAML/MP3/MP4 출력
 └── assets/                # 배경 이미지 등
 ```
