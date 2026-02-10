@@ -5,6 +5,7 @@
 - 대상: Nhân Dân, Sức khỏe & Đời sống, Tuổi Trẻ
 """
 
+import os
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
@@ -603,7 +604,9 @@ def scrape_air_quality() -> Dict[str, str]:
         lat, lon = 10.78069, 106.69944
 
         # 1. IQAir API로 AQI 가져오기
-        api_key = "6662f218-23bf-4224-8b70-cc95ba87c13d"
+        api_key = os.getenv("IQAIR_API_KEY")
+        if not api_key:
+            raise ValueError("IQAIR_API_KEY 환경 변수가 설정되지 않았습니다.")
         iqair_url = f"http://api.airvisual.com/v2/nearest_city"
         iqair_params = {
             "lat": lat,
