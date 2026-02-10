@@ -67,7 +67,23 @@ items:
 5. 작은따옴표(')는 절대 사용하지 마세요.
 6. 홑따옴표(')는 절대 사용하지 마세요.
 7. 올바른 YAML 문법을 따르세요.
+"""
 
+    # 사이트별 TTS 최적화 규칙 추가
+    tts_rules = """
+    8. **모든 기사 TTS 최적화**: 영어 약어, 통화 단위 등은 그대로 사용합니다.
+       - 5G, 4G, 3G, AI, API, AWS, SaaS, USD, VND 등은 원래대로 읽습니다.
+"""
+
+    # 사이트별 추가 최적화 규칙
+    if "Thanh Niên" in source_name:
+        tts_rules += """
+    9. **Thanh Niên 추가 최적화**: 불필요한 수식어 및 자극적인 문장 부호(!!!, ???)를 제거하세요. 느낌표는 최대 1개만, 물음표는 최대 2개까지만 허용합니다.
+"""
+
+    prompt += tts_rules
+
+    prompt += """
 **올바른 출력 예시**:
 ```yaml
 items:
@@ -202,7 +218,12 @@ def translate_and_save(scraped_data: Dict, date_str: str, output_path: str) -> b
         "Sức khỏe & Đời sống",
         "Nhân Dân",
         "Tuổi Trẻ",
+        "VietnamNet",
         "VnExpress",
+        "Thanh Niên",
+        "The Saigon Times",
+        "VietnamNet 정보통신",
+        "VnExpress IT/과학",
     ]
 
     # 순서대로 처리

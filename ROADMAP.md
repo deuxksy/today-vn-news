@@ -14,6 +14,11 @@
   - [x] **Sức khỏe & Đời sống - 건강 관련 이슈**
   - [x] **Tuổi Trẻ - 시정 소식**
   - [x] **VnExpress - 종합 뉴스**
+  - [x] **VietnamNet - 종합 뉴스**
+  - [x] **Thanh Niên - 사회/청년**
+  - [x] **The Saigon Times - 경제**
+  - [x] **VietnamNet 정보통신**
+  - [x] **VnExpress IT/과학**
 - [x] **TTS 최적화 가이드라인 적용**: 에모지, 특수문자, 불필요한 영어 제거 필터링 구현
 
 ## 2단계: 음성 및 텍스트 최적화 (Voice & Text)
