@@ -205,32 +205,6 @@ uv run python main.py 20260210-1430
 - [x] **Step 4: Deployment** - 유튜브 API 통합 및 OAuth2 인증
 - [ ] **Step 5: Operations** - NAS Inotify 감시 및 자동 스케줄링 (진행 예정)
 
-## 🛠️ 핵심 기능
-
-### 텍스트 정제 (TTS 최적화)
-- 홑따옴표(`'`) 제거 (YAML 파싱 오류 방지)
-- HTML 엔티티 변환 (`&uacute;` → `ú`)
-- 자극적인 문장 부호 제거 (`!!!` → `!`)
-
-### 번역 기능
-- 기상 상태 사전 기반 번역 (맑음, 흐림, 비 등)
-- Gemma-3-27b-it 기반 기사 번역
-- 3줄 요약 자동 생성
-
-### 공기질 데이터 (IQAir + Open-Meteo)
-- **IQAir API**: AQI(미국 기준) 데이터
-- **Open-Meteo API**: PM2.5, PM10 미세먼지 농도
-- **관측소 위치**: Quan Mot (10.78069, 106.69944)
-
-### 지진 정보 (IGP-VAST)
-- RSS 피드 기반 자동 수집
-- 당일 발생 지진만 필터링
-
-### 하드웨어 가속
-- **Mac**: VideoToolbox (H.264/H.265)
-- **Steam Deck**: VAAPI (Intel/AMD)
-- **자동 감지**: FFmpeg hwaccel 자동 선택
-
 ## 🧪 테스트
 
 ### 실행 방법
