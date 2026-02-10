@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 import re
+import xml.etree.ElementTree as ET
 
 
 def scrape_nhandan(date_str: str) -> List[Dict[str, str]]:
@@ -615,9 +616,119 @@ def scrape_air_quality() -> Dict[str, str]:
         return {"aqi": "", "status": "", "pm25": "", "pm10": ""}
 
 
+def scrape_thanhnien_rss(date_str: str) -> List[Dict[str, str]]:
+    """
+    Thanh Niên 카테고리별 RSS 파싱 (시사, 경제, 생활)
+    - 시사 (/rss/thoi-su.rss)
+    - 경제 (/rss/kinh-te.rss)
+    - 생활 (/rss/doi-song.rss)
+
+    Args:
+        date_str: 기준일 (YYYY-MM-DD 형식)
+
+    Returns:
+        기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
+    """
+    print(f"[스크래핑] Thanh Niên RSS 파싱 중...")
+
+    # RSS 피드 리스트
+    rss_feeds = [
+        ("시사", "https://thanhnien.vn/rss/thoi-su.rss"),
+        ("경제", "https://thanhnien.vn/rss/kinh-te.rss"),
+        ("생활", "https://thanhnien.vn/rss/doi-song.rss"),
+    ]
+
+    articles = []
+
+    for category_name, rss_url in rss_feeds:
+        try:
+            # RSS 가져오기
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+            }
+            response = requests.get(rss_url, headers=headers, timeout=10)
+            response.raise_for_status()
+
+            # XML 파싱
+            root = ET.fromstring(response.text)
+
+            # RSS 네임스페이스
+            # ElementTree는 기본적으로 네임스페이스를 처리하지 않음
+            # 네임스페이스 접두사를 빈 문자열로 처리
+
+            # channel 찾기 (전체 네임스페이스에서 검색)
+            channel = None
+            for child in root:
+                if child.tag == "channel" or child.tag.endswith("channel"):
+                    channel = child
+                    break
+
+            if channel is None:
+                continue
+
+            # items 찾기
+            items = []
+            for child in channel:
+                if child.tag == "item" or child.tag.endswith("item"):
+                    items.append(child)
+
+            for item in items[:2]:  # 카테고리별 최대 2개
+                # pubDate 찾기
+                pub_date_elem = item.find(".//pubDate")
+                if pub_date_elem is not None and pub_date_elem.text:
+                    try:
+                        # 날짜 파싱: "Tue, 10 Feb 2026 17:00:00 +0700"
+                        pub_date_text = pub_date_elem.text.strip()
+                        pub_date = datetime.strptime(
+                            pub_date_text, "%a, %d %b %Y %H:%M:%S %z"
+                        )
+                        entry_date = pub_date.strftime("%Y-%m-%d")
+                    except Exception as e:
+                        continue
+                else:
+                    continue
+
+                # 날짜 필터링
+                if entry_date != date_str:
+                    continue
+
+                # title 찾기
+                title_elem = item.find(".//title")
+                title = title_elem.text if title_elem is not None else ""
+
+                # link 찾기
+                link_elem = item.find(".//link")
+                article_url = link_elem.text if link_elem is not None else ""
+
+                # description 찾기
+                desc_elem = item.find(".//description")
+                description = desc_elem.text if desc_elem is not None else ""
+
+                # HTML 태그 제거
+                content = re.sub(r"<[^>]+>", "", description).strip()
+                content = content[:200]  # 200자 제한
+
+                articles.append(
+                    {
+                        "title": title,
+                        "content": content,
+                        "url": article_url,
+                        "date": entry_date,
+                    }
+                )
+
+            print(f"  [OK] {category_name} RSS: {len([a for a in articles])}개 기사")
+
+        except Exception as e:
+            print(f"  [!] {category_name} RSS 파싱 실패: {str(e)}")
+
+    print(f"  [OK] Thanh Niên RSS: 총 {len(articles)}개 기사 수집")
+    return articles
+
+
 def scrape_thanhnien(date_str: str) -> List[Dict[str, str]]:
     """
-    Thanh Niên(사회/청년) 스크래핑
+    Thanh Niên(사회/청년) 스크래핑 (RSS 파싱 실패 시 폴백)
     - 시사, 뉴스, 경제, 비즈니스 카테고리 우선 필터링
 
     Args:
@@ -1190,7 +1301,7 @@ def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str,
         "Tuổi Trẻ": scrape_tuoitre(date_str),
         "VietnamNet": scrape_vietnamnet(date_str),
         "VnExpress": scrape_vnexpress(date_str),
-        "Thanh Niên": scrape_thanhnien(date_str),
+        "Thanh Niên": scrape_thanhnien_rss(date_str),
         "The Saigon Times": scrape_saigontimes(date_str),
         "VietnamNet 정보통신": scrape_vietnamnet_ttt(date_str),
         "VnExpress IT/과학": scrape_vnexpress_tech(date_str),
