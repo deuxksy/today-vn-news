@@ -4,6 +4,29 @@
 
 ## 🔄 데이터 파이프라인
 
+```mermaid
+flowchart LR
+    A[데이터 소스<br/>10개 뉴스 사이트] --> B[스크래핑<br/>BeautifulSoup4]
+    B --> C[YAML 저장<br/>raw]
+
+    C --> D[번역<br/>Gemma-3-27b-it]
+    D --> E[YAML 저장<br/>번역 완료]
+
+    E --> F[TTS<br/>edge-tts]
+    F --> G[MP3 저장]
+
+    G --> H[영상 합성<br/>FFmpeg]
+    H --> I[MP4 저장]
+
+    I --> J[유튜브 업로드<br/>YouTube API]
+
+    style A fill:#e1f5fe
+    style D fill:#fff3e0
+    style F fill:#f3e5f5
+    style H fill:#e8f5e9
+    style J fill:#ffebee
+```
+
 1. **스크래핑** - BeautifulSoup4 기반 10개 소스 수집
 2. **번역** - Gemma-3-27b-it 기반 베트남어 → 한국어
 3. **TTS** - edge-tts 기반 한국어 음성 변환
