@@ -11,6 +11,59 @@ from typing import List, Dict, Optional
 import os
 
 
+def translate_weather_condition(condition: str) -> str:
+    """
+    베트남어 기상 상태를 한국어로 번역
+
+    Args:
+        condition: 베트남어 기상 상태 (예: "Mây thay đổi, trời nắng")
+
+    Returns:
+        한국어 번역된 기상 상태
+    """
+    if not condition:
+        return condition
+
+    # 빠른 매칭 (사전 기반)
+    weather_dict = {
+        "mây thay đổi": "구름 낌",
+        "trời nắng": "맑음",
+        "trời mưa": "비",
+        "trời giông": "천둥번개",
+        "nhiều mây": "흐림",
+        "trời âm u": "흐림",
+        "mưa rào": "소나기",
+        "sương mù": "안개",
+        "mây tản": "흐림 → 맑음",
+        "nóng": "더움",
+        "lạnh": "추움",
+        "trời đẹp": "좋음",
+        "nắng đẹp": "맑고 좋음",
+    }
+
+    # 부분 매칭으로 복합 상태 처리
+    translated = condition.lower()
+    for vn, kr in weather_dict.items():
+        translated = translated.replace(vn.lower(), kr)
+
+    # 매칭 안되면 Gemma API 사용
+    if translated == condition.lower():
+        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        if api_key:
+            client = genai.Client(api_key=api_key)
+            try:
+                prompt = f"베트남어 기상 상태 '{condition}'를 한국어 3글자 이내로 짧게 번역해주세요. 답변만 출력하세요."
+                response = client.models.generate_content(
+                    model="gemma-3-27b-it", contents=prompt
+                )
+                if response.text:
+                    return response.text.strip()
+            except Exception:
+                pass
+
+    return translated
+
+
 def translate_articles(
     articles: List[Dict[str, str]],
     source_name: str,
@@ -249,12 +302,24 @@ def translate_and_save(scraped_data: Dict, date_str: str, output_path: str) -> b
                         }
                     )
                 else:
-                    # 기상/공기질/지진 데이터는 그대로 사용 (이미 한국어 포함)
+                    # 기상/공기질/지진 데이터 처리
                     if item.get("name") == "기상":
+                        # 기상 상태 번역
+                        condition = item.get("condition", "")
+                        translated_condition = translate_weather_condition(condition)
+
+                        # 온도/습도 포맷팅
+                        temp = item.get("temp", "")
+                        humidity = item.get("humidity", "")
+
+                        content = (
+                            f"{translated_condition}, 온도 {temp}, 습도 {humidity}"
+                        )
+
                         section["items"].append(
                             {
                                 "title": f"기상 (NCHMF)",
-                                "content": item["content"],
+                                "content": content,
                                 "url": item["url"],
                             }
                         )
