@@ -110,7 +110,12 @@ def synthesize_video(base_name: str, data_dir: str = "data"):
             return True
         else:
             print(f"[!] FFmpeg 실행 에러:")
-            print(process.stderr)
+            # stderr 전체를 출력 (긴 로그도 잘리지 않음)
+            if process.stderr:
+                print(process.stderr)
+            # stdout도 있으면 출력
+            if process.stdout:
+                print(f"[!] FFmpeg stdout: {process.stdout}")
             return False
     except Exception as e:
         print(f"[!] 예기치 못한 오류: {str(e)}")

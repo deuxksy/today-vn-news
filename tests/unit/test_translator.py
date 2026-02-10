@@ -38,16 +38,14 @@ class TestTranslationRealAPI:
 
     def test_translate_and_save_real_api(self, test_data_dir, test_timestamp):
         """실제 Gemma API로 뉴스 번역 테스트"""
+        # scraper.py에서 반환하는 데이터 구조 (소스명을 키로 하는 딕셔너리)
         scraped_data = {
-            "sections": [
+            "VnExpress": [
                 {
-                    "items": [
-                        {
-                            "title": "Tiêu đề",
-                            "content": "Nội dung tiếng Việt",
-                            "url": "https://example.com",
-                        }
-                    ]
+                    "title": "Tiêu đề",
+                    "content": "Nội dung tiếng Việt",
+                    "url": "https://example.com",
+                    "date": "2026-02-10",
                 }
             ]
         }

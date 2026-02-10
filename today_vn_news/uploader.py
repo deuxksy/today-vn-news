@@ -23,12 +23,18 @@ SCOPES = [
 # 기본 재생 목록 ID (오늘의 베트남 뉴스)
 DEFAULT_PLAYLIST_ID = "PLzMxB6D1eypIA_JNasD_MNISMEUtMbHvK"
 
-def get_authenticated_service():
+def get_authenticated_service(data_dir: str = "data"):
     """
     OAuth2 인증을 통해 유튜브 API 서비스 객체 생성 및 반환
+
+    Args:
+        data_dir: 데이터 디렉토리 경로 (토큰 파일 위치)
+                   인증 파일(client_secrets.json)은 프로젝트 루트에서 찾습니다.
     """
     credentials = None
-    token_path = 'token.pickle'
+    # 토큰은 data_dir에 저장
+    token_path = os.path.join(data_dir, 'token.pickle')
+    # 인증 파일은 프로젝트 루트에서 찾음
     secrets_path = 'client_secrets.json'
 
     # 기존 토큰 로드
@@ -93,13 +99,17 @@ def add_video_to_playlist(youtube, video_id, playlist_id):
 def upload_video(yymmdd: str, data_dir: str = "data"):
     """
     영상을 유튜브에 업로드
+
+    Args:
+        yymmdd: 타임스탬프 (YYYYMMDD_HHMM 형식)
+        data_dir: 데이터 디렉토리 경로
     """
     file_path = os.path.join(data_dir, f"{yymmdd}_final.mp4")
     if not os.path.exists(file_path):
         print(f"[!] 업로드할 파일을 찾을 수 없습니다: {file_path}")
         return False
 
-    youtube = get_authenticated_service()
+    youtube = get_authenticated_service(data_dir)
     if not youtube:
         return False
 

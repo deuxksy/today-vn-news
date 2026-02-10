@@ -11,6 +11,31 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 import re
 import xml.etree.ElementTree as ET
+import html
+
+
+def clean_text(text: str) -> str:
+    """
+    텍스트 정제: 홑따옴표 제거 + HTML 엔티티 변환
+
+    Args:
+        text: 정제할 텍스트
+
+    Returns:
+        정제된 텍스트
+        - 홑따옴표(') 제거 (YAML 파싱 오류 방지)
+        - HTML 엔티티 변환 (&uacute; → ú, &ocirc; → ô 등)
+    """
+    if not text:
+        return text
+
+    # 홑따옴표 제거
+    text = text.replace("'", "").replace("\u2019", "").replace("\u2018", "")
+
+    # HTML 엔티티 변환
+    text = html.unescape(text)
+
+    return text
 
 
 def scrape_nhandan(date_str: str) -> List[Dict[str, str]]:
@@ -66,6 +91,7 @@ def scrape_nhandan(date_str: str) -> List[Dict[str, str]]:
             # 제목 찾기
             title_tag = article.find(["h2", "h3", "h4"])
             title = title_tag.get_text(strip=True) if title_tag else ""
+            title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
             # 날짜 찾기
             date_tag = (
@@ -82,6 +108,7 @@ def scrape_nhandan(date_str: str) -> List[Dict[str, str]]:
                     "div", class_="summary"
                 )
                 content = summary_tag.get_text(strip=True) if summary_tag else title
+                content = clean_text(content)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
                 articles.append(
                     {
@@ -151,6 +178,7 @@ def scrape_suckhoedoisong(date_str: str) -> List[Dict[str, str]]:
             # 제목 찾기
             title_tag = article.find(["h2", "h3", "h4"])
             title = title_tag.get_text(strip=True) if title_tag else ""
+            title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
             # 날짜 찾기
             date_tag = (
@@ -169,6 +197,7 @@ def scrape_suckhoedoisong(date_str: str) -> List[Dict[str, str]]:
                     "div", class_="summary"
                 )
                 content = summary_tag.get_text(strip=True) if summary_tag else title
+                content = clean_text(content)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
                 articles.append(
                     {
@@ -238,6 +267,7 @@ def scrape_tuoitre(date_str: str) -> List[Dict[str, str]]:
             # 제목 찾기
             title_tag = article.find(["h2", "h3", "h4"])
             title = title_tag.get_text(strip=True) if title_tag else ""
+            title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
             # 날짜 찾기
             date_tag = (
@@ -256,6 +286,7 @@ def scrape_tuoitre(date_str: str) -> List[Dict[str, str]]:
                     "div", class_="summary"
                 )
                 content = summary_tag.get_text(strip=True) if summary_tag else title
+                content = clean_text(content)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
                 articles.append(
                     {
@@ -341,6 +372,7 @@ def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
             # 제목 찾기
             title_tag = article.find(["h2", "h3", "h4"])
             title = title_tag.get_text(strip=True) if title_tag else ""
+            title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
             # 날짜 찾기
             date_tag = (
@@ -359,6 +391,7 @@ def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
                     "div", class_="summary"
                 )
                 content = summary_tag.get_text(strip=True) if summary_tag else title
+                content = clean_text(content)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
                 articles.append(
                     {
@@ -445,8 +478,7 @@ def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
             # 제목 찾기
             title_tag = article.find(["h2", "h3", "h4"])
             title = title_tag.get_text(strip=True) if title_tag else ""
-            # 홑따옴표 제거
-            title = title.replace("'''", "").replace("'''", "")
+            title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
             # 날짜 찾기
             date_tag = (
@@ -465,8 +497,7 @@ def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
                     "div", class_="summary"
                 )
                 content = summary_tag.get_text(strip=True) if summary_tag else title
-                # 홑따옴표 제거
-                content = content.replace("'''", "").replace("'''", "")
+                content = clean_text(content)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
                 articles.append(
                     {
@@ -639,6 +670,7 @@ def scrape_thanhnien_rss(date_str: str) -> List[Dict[str, str]]:
     ]
 
     articles = []
+    seen_urls = set()  # 중복 방지를 위한 URL 추적
 
     # date_str 변환 (2026-02-10 → 10 Feb 26)
     date_obj = datetime.strptime(date_str, "%Y-%m-%d")
@@ -702,6 +734,7 @@ def scrape_thanhnien_rss(date_str: str) -> List[Dict[str, str]]:
                 # title 찾기
                 title_elem = item.find(".//title")
                 title = title_elem.text if title_elem is not None else ""
+                title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
                 # link 찾기
                 link_elem = item.find(".//link")
@@ -714,17 +747,21 @@ def scrape_thanhnien_rss(date_str: str) -> List[Dict[str, str]]:
                 # HTML 태그 제거
                 content = re.sub(r"<[^>]+>", "", description).strip()
                 content = content[:200]  # 200자 제한
+                content = clean_text(content)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
-                articles.append(
-                    {
-                        "title": title,
-                        "content": content,
-                        "url": article_url,
-                        "date": entry_date,
-                    }
-                )
+                # 중복 체크 (URL 기반)
+                if article_url not in seen_urls:
+                    seen_urls.add(article_url)
+                    articles.append(
+                        {
+                            "title": title,
+                            "content": content,
+                            "url": article_url,
+                            "date": entry_date,
+                        }
+                    )
 
-            print(f"  [OK] {category_name} RSS: {len([a for a in articles])}개 기사")
+            print(f"  [OK] {category_name} RSS: {len([a for a in articles if a['url'] in seen_urls])}개 기사")
 
         except Exception as e:
             print(f"  [!] {category_name} RSS 파싱 실패: {str(e)}")
@@ -800,6 +837,8 @@ def scrape_thanhnien(date_str: str) -> List[Dict[str, str]]:
             # 제목 찾기
             title_tag = article.find(["h2", "h3", "h4"])
             title = title_tag.get_text(strip=True) if title_tag else ""
+            # 텍스트 정제 (홑따옴표 제거 + HTML 엔티티 변환)
+            title = clean_text(title)
             # 자극적인 문장 부호 제거 (TTS 최적화)
             title = re.sub(r"!{2,}", "!", title).replace("??", "?")
 
@@ -820,6 +859,8 @@ def scrape_thanhnien(date_str: str) -> List[Dict[str, str]]:
                     "div", class_="summary"
                 )
                 content = summary_tag.get_text(strip=True) if summary_tag else title
+                # 텍스트 정제 (홑따옴표 제거 + HTML 엔티티 변환)
+                content = clean_text(content)
                 # 자극적인 문장 부호 제거 (TTS 최적화)
                 content = re.sub(r"!{2,}", "!", content).replace("??", "?")
 
@@ -894,6 +935,7 @@ def scrape_vietnamnet_ttt(date_str: str) -> List[Dict[str, str]]:
             # 제목 찾기
             title_tag = article.find(["h2", "h3", "h4"])
             title = title_tag.get_text(strip=True) if title_tag else ""
+            title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
             # 날짜 찾기
             date_tag = (
@@ -912,6 +954,7 @@ def scrape_vietnamnet_ttt(date_str: str) -> List[Dict[str, str]]:
                     "div", class_="summary"
                 )
                 content = summary_tag.get_text(strip=True) if summary_tag else title
+                content = clean_text(content)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
                 articles.append(
                     {
@@ -984,6 +1027,7 @@ def scrape_vnexpress_tech(date_str: str) -> List[Dict[str, str]]:
             # 제목 찾기
             title_tag = article.find(["h2", "h3", "h4"])
             title = title_tag.get_text(strip=True) if title_tag else ""
+            title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
             # 날짜 찾기
             date_tag = (
@@ -1002,6 +1046,7 @@ def scrape_vnexpress_tech(date_str: str) -> List[Dict[str, str]]:
                     "div", class_="summary"
                 )
                 content = summary_tag.get_text(strip=True) if summary_tag else title
+                content = clean_text(content)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
                 articles.append(
                     {
@@ -1087,6 +1132,7 @@ def scrape_saigontimes(date_str: str) -> List[Dict[str, str]]:
             # 제목 찾기
             title_tag = article.find(["h2", "h3", "h4"])
             title = title_tag.get_text(strip=True) if title_tag else ""
+            title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
             # 날짜 찾기
             date_tag = (
@@ -1105,6 +1151,7 @@ def scrape_saigontimes(date_str: str) -> List[Dict[str, str]]:
                     "div", class_="summary"
                 )
                 content = summary_tag.get_text(strip=True) if summary_tag else title
+                content = clean_text(content)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
                 articles.append(
                     {
@@ -1162,9 +1209,11 @@ def scrape_earthquake() -> List[Dict[str, str]]:
             # 제목 찾기
             title_tag = article.find(["h2", "h3", "h4"])
             title = title_tag.get_text(strip=True) if title_tag else ""
+            title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
             # 본문 전체 텍스트 가져오기
             content = article.get_text(strip=True)
+            content = clean_text(content)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
             # 날짜 추출 (정규 표현식)
             import re

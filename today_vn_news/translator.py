@@ -288,7 +288,7 @@ def translate_and_save(scraped_data: Dict, date_str: str, output_path: str) -> b
 
         # 안전 및 기상 관제 (이미 스크래핑된 데이터 번역)
         if source_name == "안전 및 기상 관제":
-            section = {"id": "1", "name": source_name, "priority": "P0", "items": []}
+            section = {"id": str(section_id), "name": source_name, "priority": "P0", "items": []}
 
             # 스크래핑된 안전 데이터를 그대로 사용 (이미 베트남어/한국어 혼합)
             for item in articles:
@@ -345,6 +345,8 @@ def translate_and_save(scraped_data: Dict, date_str: str, output_path: str) -> b
                 print(
                     f"  [OK] {source_name} 데이터 저장 완료: {len(section['items'])}개"
                 )
+
+            section_id += 1  # 안전 및 기상 관제 후 ID 증가
 
         # 일반 뉴스 소스 (스크래핑 + 번역)
         elif articles:

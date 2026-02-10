@@ -37,8 +37,10 @@ def parse_yaml_to_text(yaml_path: str) -> str:
     date = meta.get("date", "")
     time = meta.get("time", "")
     location = meta.get("location", "")
-    
-    script.append(f"오늘의 베트남 주요 뉴스. {date} {time} 기준입니다.")
+
+    # 날짜와 시간 포맷팅 (time이 없으면 공백 제거)
+    datetime_str = f"{date} {time} 기준입니다." if time else f"{date} 기준입니다."
+    script.append(f"오늘의 베트남 주요 뉴스. {datetime_str}")
     if location:
         script.append(f"{location} 인근 정보를 포함합니다.")
     script.append("\n")

@@ -26,6 +26,9 @@ async def main():
     print("🇻🇳 오늘의 베트남 뉴스 (today-vn-news)")
     print("=" * 40)
 
+    # 데이터 디렉토리 설정
+    data_dir = "data"
+
     # 기본 대상일 설정
     if len(sys.argv) > 1:
         # 명령줄 인자로 날짜 지정 시 (YYMMDD 또는 YYMMDD-HHMM 형식 모두 지원)
@@ -38,15 +41,15 @@ async def main():
     today_iso = datetime.datetime.now().strftime("%Y-%m-%d")
     today_display = datetime.datetime.now().strftime("%Y년 %m월 %d일 %H:%M")
 
-    yaml_path = f"data/{yymmdd_hhmm}.yaml"
-    mov_path = f"data/{yymmdd_hhmm}.mov"
-    mp4_path = f"data/{yymmdd_hhmm}.mp4"
-    mp3_path = f"data/{yymmdd_hhmm}.mp3"
-    final_video = f"data/{yymmdd_hhmm}_final.mp4"
+    yaml_path = f"{data_dir}/{yymmdd_hhmm}.yaml"
+    mov_path = f"{data_dir}/{yymmdd_hhmm}.mov"
+    mp4_path = f"{data_dir}/{yymmdd_hhmm}.mp4"
+    mp3_path = f"{data_dir}/{yymmdd_hhmm}.mp3"
+    final_video = f"{data_dir}/{yymmdd_hhmm}_final.mp4"
 
     # 1. 스크래핑
     print("\n[*] 1단계: 뉴스 스크래핑 시작...")
-    raw_yaml_path = f"data/{yymmdd_hhmm}_raw.yaml"
+    raw_yaml_path = f"{data_dir}/{yymmdd_hhmm}_raw.yaml"
     scraped_data = scrape_and_save(today_iso, raw_yaml_path)
 
     # 2. 번역 (항상 실행 - 타임스탬프 파일명으로 중복 방지)
@@ -67,7 +70,7 @@ async def main():
         or os.path.exists(default_bg)
     ):
         print("\n[*] 4단계: 영상 합성(FFmpeg) 시작...")
-        synthesize_video(yymmdd_hhmm)
+        synthesize_video(yymmdd_hhmm, data_dir)
     else:
         print(
             f"\n[!] 4단계: 베이스 영상(.mov, .mp4) 또는 기본 배경 이미지({default_bg})가 없어 합성을 건너뜁니다."
@@ -76,7 +79,7 @@ async def main():
     # 5. 유튜브 업로드 (항상 실행)
     if os.path.exists(final_video):
         print("\n[*] 5단계: 유튜브 업로드 시작...")
-        success = upload_video(yymmdd_hhmm)
+        success = upload_video(yymmdd_hhmm, data_dir)
         if success:
             print("\n🎉 모든 파이프라인 작업이 성공적으로 완료되었습니다!")
         else:
