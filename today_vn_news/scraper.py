@@ -594,7 +594,7 @@ def scrape_air_quality() -> Dict[str, str]:
     IQAir 공기질 스크래핑 (Saigon Pearl, Ho Chi Minh City)
 
     Returns:
-        공기질 정보 딕셔너리 {'aqi': str, 'status': str, 'pm25': str, 'pm10': str}
+        공기질 정보 딕셔너리 {'aqi': str, 'status': str, 'pm25': str}
     """
     print(f"[스크래핑] IQAir 공기질 정보 수집 중...")
 
@@ -614,7 +614,6 @@ def scrape_air_quality() -> Dict[str, str]:
         aqi = ""
         status = ""
         pm25 = ""
-        pm10 = ""
 
         # HTML을 문자열로 변환하여 정규 표현식으로 검색
         html_content = str(soup)
@@ -663,23 +662,12 @@ def scrape_air_quality() -> Dict[str, str]:
         else:
             pm25 = ""
 
-        # PM10: IQAir에서 제공하지 않음 (PM2.5의 약 2배로 추정)
-        if pm25:
-            try:
-                pm10_val = float(pm25) * 2
-                pm10 = f"{pm10_val:.1f}"
-                print(f"  [DEBUG] PM10 추정: {pm10} µg/m³")
-            except ValueError:
-                pm10 = ""
-        else:
-            pm10 = ""
-
-        print(f"  [OK] IQAir 공기질 정보 수집 완료: AQI={aqi}, 상태={status}")
-        return {"aqi": aqi, "status": status, "pm25": pm25, "pm10": pm10}
+        print(f"  [OK] IQAir 공기질 정보 수집 완료: AQI={aqi}, 상태={status}, PM2.5={pm25} µg/m³")
+        return {"aqi": aqi, "status": status, "pm25": pm25}
 
     except Exception as e:
         print(f"  [!] IQAir 공기질 정보 스크래핑 실패: {str(e)}")
-        return {"aqi": "", "status": "", "pm25": "", "pm10": ""}
+        return {"aqi": "", "status": "", "pm25": ""}
 
 
 def scrape_thanhnien_rss(date_str: str) -> List[Dict[str, str]]:
@@ -1357,14 +1345,12 @@ def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str,
         aqi_str = air_data["aqi"].strip() if air_data["aqi"] else "N/A"
         status_str = air_data["status"].strip() if air_data["status"] else "N/A"
         pm25_str = air_data["pm25"].strip() if air_data["pm25"] else "N/A"
-        pm10_str = air_data["pm10"].strip() if air_data["pm10"] else "N/A"
 
         # 모든 데이터가 비어있더라도 기본값으로 추가
-        if not aqi_str and not status_str and not pm25_str and not pm10_str:
+        if not aqi_str and not status_str and not pm25_str:
             aqi_str = "N/A"
             status_str = "N/A"
             pm25_str = "N/A"
-            pm10_str = "N/A"
 
         safety_items.append(
             {
@@ -1373,8 +1359,7 @@ def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str,
                 "aqi": air_data["aqi"],
                 "status": air_data["status"],
                 "pm25": air_data["pm25"],
-                "pm10": air_data["pm10"],
-                "content": f"AQI {aqi_str} ({status_str}), PM2.5: {pm25_str}, PM10: {pm10_str}",
+                "content": f"AQI {aqi_str} ({status_str}), PM2.5: {pm25_str}",
                 "url": "https://www.iqair.com/vietnam/ho-chi-minh-city/ho-chi-minh-city/iqair-vietnam-saigon-pearl",
             }
         )
