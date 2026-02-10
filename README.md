@@ -231,9 +231,7 @@ uv run python main.py 20260210-1430
 - **Steam Deck**: VAAPI (Intel/AMD)
 - **자동 감지**: FFmpeg hwaccel 자동 선택
 
-## ⚖️ 라이선스
-
-MIT License - Copyright (c) 2026 Crong
+## 🧪 테스트
 
 ### 실행 방법
 
@@ -276,3 +274,6 @@ tests/
     └── test.yaml            # 테스트용 YAML
 ```
 
+## ⚖️ 라이선스
+
+MIT License - Copyright (c) 2026 Crong
