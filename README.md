@@ -205,29 +205,6 @@ uv run python main.py 20260210-1430
 - [x] **Step 4: Deployment** - 유튜브 API 통합 및 OAuth2 인증
 - [ ] **Step 5: Operations** - NAS Inotify 감시 및 자동 스케줄링 (진행 예정)
 
-## 📖 문서 시스템
-
-### 문서 구조
-
-```
-.ai/
-├── AGENTS.md       # AI 실행 가이드 (운영 원칙, Git Flow)
-├── CONTEXT.md      # 도메인 지식 (데이터 소스, 기술 스펙)
-└── AI.ignore       # AI 무시 규칙 (결과물, 캐시)
-
-심볼릭 링크:
-CLAUDE.md → .ai/AGENTS.md
-GEMINI.md → .ai/AGENTS.md
-.claudeignore → .ai/AI.ignore
-```
-
-### 핵심 설정 파일 보호 정책
-
-다음 파일은 **사용자 승인 없이 AI가 수정할 수 없습니다**:
-1. `.ai/AGENTS.md` (AI 운영 매뉴얼)
-2. `.ai/CONTEXT.md` (비즈니스 SSoT)
-3. `ROADMAP.md` (장기 로드맵)
-
 ## 🛠️ 핵심 기능
 
 ### 텍스트 정제 (TTS 최적화)
