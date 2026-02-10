@@ -591,82 +591,66 @@ def scrape_weather_hochiminh() -> Dict[str, str]:
 
 def scrape_air_quality() -> Dict[str, str]:
     """
-    IQAir 공기질 스크래핑 (Saigon Pearl, Ho Chi Minh City)
+    Open-Meteo Air Quality API 스크래핑 (호치민시)
 
     Returns:
         공기질 정보 딕셔너리 {'aqi': str, 'status': str, 'pm25': str}
     """
-    print(f"[스크래핑] IQAir 공기질 정보 수집 중...")
+    print(f"[스크래핑] Open-Meteo 공기질 정보 수집 중...")
 
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+        # 호치민시 좌표
+        lat, lon = 10.8231, 106.6297
+
+        url = "https://air-quality-api.open-meteo.com/v1/air-quality"
+        params = {
+            "latitude": lat,
+            "longitude": lon,
+            "current": "us_aqi,pm2_5,pm10",
+            "timezone": "auto"
         }
 
-        # IQAir Saigon Pearl 페이지
-        url = "https://www.iqair.com/vietnam/ho-chi-minh-city/ho-chi-minh-city/iqair-vietnam-saigon-pearl"
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, params=params, timeout=10)
         response.raise_for_status()
 
-        soup = BeautifulSoup(response.text, "html.parser")
+        data = response.json()
 
-        # 공기질 데이터 추출
-        aqi = ""
-        status = ""
-        pm25 = ""
+        # 데이터 추출
+        current = data.get("current", {})
+        us_aqi = current.get("us_aqi")
+        pm25 = current.get("pm2_5")
+        pm10 = current.get("pm10")
 
-        # HTML을 문자열로 변환하여 정규 표현식으로 검색
-        html_content = str(soup)
+        # AQI 상태 계산 (US 기준)
+        if us_aqi is not None:
+            aqi = str(us_aqi)
+            if us_aqi <= 50:
+                status = "Good"
+            elif us_aqi <= 100:
+                status = "Moderate"
+            elif us_aqi <= 150:
+                status = "Unhealthy for Sensitive Groups"
+            elif us_aqi <= 200:
+                status = "Unhealthy"
+            elif us_aqi <= 300:
+                status = "Very Unhealthy"
+            else:
+                status = "Hazardous"
+        else:
+            aqi = ""
+            status = ""
 
-        # 방법 1: 정규 표현식으로 AQI 범위 추출 (50-150)
-        aqi_match = re.search(r">([5-9][0-9]|1[0-4][0-9])<", html_content)
-        if aqi_match:
-            aqi = aqi_match.group(1)
-            print(f"  [DEBUG] AQI (정규): {aqi}")
-
-        # 방법 2: 상태 텍스트 검색 (Good/Moderate/Unhealthy)
-        status_match = re.search(
-            r"(Good|Moderate|Unhealthy for Sensitive Groups|Unhealthy)", html_content
-        )
-        if status_match:
-            status = status_match.group(1)
-            print(f"  [DEBUG] 상태 (정규): {status}")
-
-        # PM2.5: AQI 값에서 추정 (US EPA 기준 선형 보간)
-        # AQI 0-50: PM2.5 0-12 µg/m³
-        # AQI 51-100: PM2.5 12.1-35.4 µg/m³
-        # AQI 101-150: PM2.5 35.5-55.4 µg/m³
-        if aqi:
-            try:
-                aqi_val = int(aqi)
-                if 0 <= aqi_val <= 50:
-                    # Good
-                    pm25_val = (aqi_val / 50) * 12
-                elif 51 <= aqi_val <= 100:
-                    # Moderate
-                    pm25_val = ((aqi_val - 51) / 49) * 23.3 + 12.1
-                elif 101 <= aqi_val <= 150:
-                    # USG
-                    pm25_val = ((aqi_val - 101) / 49) * 19.9 + 35.5
-                elif 151 <= aqi_val <= 200:
-                    # Unhealthy
-                    pm25_val = ((aqi_val - 151) / 49) * 64.6 + 55.4
-                else:
-                    pm25_val = None
-
-                if pm25_val is not None:
-                    pm25 = f"{pm25_val:.1f}"
-                    print(f"  [DEBUG] PM2.5 추정: {pm25} µg/m³ (AQI={aqi})")
-            except ValueError:
-                pm25 = ""
+        # PM2.5 포맷팅
+        if pm25 is not None:
+            pm25 = f"{pm25:.1f}"
         else:
             pm25 = ""
 
-        print(f"  [OK] IQAir 공기질 정보 수집 완료: AQI={aqi}, 상태={status}, PM2.5={pm25} µg/m³")
+        print(f"  [OK] Open-Meteo 공기질 정보 수집 완료: AQI={aqi}, 상태={status}, PM2.5={pm25} µg/m³")
         return {"aqi": aqi, "status": status, "pm25": pm25}
 
     except Exception as e:
-        print(f"  [!] IQAir 공기질 정보 스크래핑 실패: {str(e)}")
+        print(f"  [!] Open-Meteo 공기질 정보 스크래핑 실패: {str(e)}")
         return {"aqi": "", "status": "", "pm25": ""}
 
 
