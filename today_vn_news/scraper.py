@@ -599,8 +599,8 @@ def scrape_air_quality() -> Dict[str, str]:
     print(f"[스크래핑] IQAir + Open-Meteo 공기질 정보 수집 중...")
 
     try:
-        # Vinhomes Central Park 2 근처 좌표
-        lat, lon = 10.7795, 106.6972
+        # IQAir 실제 관측소 좌표 (Quan Mot)
+        lat, lon = 10.78069, 106.69944
 
         # 1. IQAir API로 AQI 가져오기
         api_key = "6662f218-23bf-4224-8b70-cc95ba87c13d"
