@@ -1132,17 +1132,15 @@ def scrape_earthquake() -> List[Dict[str, str]]:
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
 
-        # IGP-VAST 홈페이지
-        url = "http://igpvas.gov.vn/"
+        # IGP-VAST 지진 뉴스 페이지
+        url = "http://igp-vast.vn/index.php/vi/tin-dong-dat"
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "html.parser")
 
         # 지진 기사 찾기
-        article_elements = soup.find_all("article") or soup.select(
-            ".news-item, .earthquake-item"
-        )
+        article_elements = soup.find_all("article")
 
         for article in article_elements[:3]:  # 최근 3개
             # 링크 찾기
@@ -1152,33 +1150,28 @@ def scrape_earthquake() -> List[Dict[str, str]]:
 
             article_url = link_tag.get("href", "")
             if not article_url.startswith("http"):
-                article_url = "http://igpvas.gov.vn" + article_url
+                article_url = "http://igp-vast.vn" + article_url
 
             # 제목 찾기
             title_tag = article.find(["h2", "h3", "h4"])
             title = title_tag.get_text(strip=True) if title_tag else ""
 
-            # 날짜 찾기
-            date_tag = article.find("time") or article.find("span", class_="date")
-            article_date = date_tag.get_text(strip=True) if date_tag else ""
+            # 본문 전체 텍스트 가져오기
+            content = article.get_text(strip=True)
 
-            # 본문 요약
-            summary_tag = article.find("p", class_="sapo") or article.find(
-                "div", class_="summary"
+            # 날짜 추출 (정규 표현식)
+            import re
+
+            date_match = re.search(
+                r"ngày (\d{1,2}) tháng (\d{1,2}) năm (\d{4})", content
             )
-            content = summary_tag.get_text(strip=True) if summary_tag else title
+            article_date = date_match.group(0) if date_match else ""
 
-            # 지진 관련 키워드 확인
-            if (
-                "động đất" in title.lower()
-                or "earthquake" in title.lower()
-                or "dư chấn" in title.lower()
-                or "tsunami" in title.lower()
-            ):
+            if title and content:
                 earthquakes.append(
                     {
                         "title": title,
-                        "content": content[:200],
+                        "content": content[:500],  # 500자 제한
                         "url": article_url,
                         "date": article_date,
                     }
