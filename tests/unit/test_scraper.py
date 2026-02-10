@@ -47,7 +47,7 @@ class TestScraperVnExpress:
 
     def test_scrape_vnexpress_real_api(self):
         """실제 VnExpress 웹사이트 스크래핑 테스트"""
-        articles = scrape_vnexpress("2026-02-10", 2)
+        articles = scrape_vnexpress("2026-02-10")
 
         assert isinstance(articles, list)
         for article in articles:
