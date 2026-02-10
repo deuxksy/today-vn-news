@@ -23,7 +23,7 @@ wheels/
 MANIFEST
 
 # === Project Data & Media (Local resources only) ===
-# We ignore the entire data directory and all media files
+# We ignore entire data directory and all media files
 data/
 outputs/
 temp/
@@ -34,6 +34,9 @@ logs/
 *.wav
 *.avi
 *.mkv
+
+# 테스트 결과 파일 (data/test는 제외하고 커밋하지 않음)
+data/test/
 
 # === macOS ===
 .DS_Store

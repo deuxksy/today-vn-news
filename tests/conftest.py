@@ -80,17 +80,19 @@ def sample_sections(sample_weather_data, sample_aqi_data, sample_news_article):
 # ====== 파일 관리 Fixtures ======
 
 
-@pytest.fixture
-def test_data_dir(tmp_path):
-    """자동 cleanup되는 테스트 데이터 디렉토리"""
-    data_dir = tmp_path / "data"
-    data_dir.mkdir()
+@pytest.fixture(scope="session")
+def test_data_dir():
+    """테스트 데이터 디렉토리 (data/test)"""
+    from pathlib import Path
+
+    data_dir = Path("data/test")
+    data_dir.mkdir(parents=True, exist_ok=True)
     return data_dir
 
 
 @pytest.fixture
 def yaml_file(sample_sections, test_data_dir, test_timestamp):
-    """자동 생성/삭제되는 YAML 파일"""
+    """자동 생성되는 YAML 파일 (data/test에 저장)"""
     yaml_path = test_data_dir / f"{test_timestamp}.yaml"
     with open(yaml_path, "w", encoding="utf-8") as f:
         yaml.dump(sample_sections, f)
