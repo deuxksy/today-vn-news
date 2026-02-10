@@ -1170,9 +1170,12 @@ def scrape_saigontimes(date_str: str) -> List[Dict[str, str]]:
         return []
 
 
-def scrape_earthquake() -> List[Dict[str, str]]:
+def scrape_earthquake(date_str: Optional[str] = None) -> List[Dict[str, str]]:
     """
-    IGP-VAST 지진 정보 스크래핑
+    IGP-VAST 지진 정보 스크래핑 (RSS 피드, 당일 지진만 필터링)
+
+    Args:
+        date_str: 기준일 (YYYY-MM-DD 형식, None이면 필터링 없음)
 
     Returns:
         지진 정보 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
@@ -1197,7 +1200,15 @@ def scrape_earthquake() -> List[Dict[str, str]]:
         # item 태그 찾기
         items = root.findall(".//item")
 
-        for idx, item in enumerate(items[:3]):  # 최근 3개
+        # 필터링을 위한 날짜 파싱
+        target_date = None
+        if date_str:
+            try:
+                target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError:
+                print(f"  [!] 날짜 형식 오류: {date_str}")
+
+        for item in items:
             # 직접 자식 요소에서 데이터 추출
             title = ""
             description = ""
@@ -1214,6 +1225,19 @@ def scrape_earthquake() -> List[Dict[str, str]]:
                     article_url = child.text or ""
                 elif tag_name == "pubDate":
                     pub_date = child.text or ""
+
+            # 날짜 필터링 (pubDate 파싱: "Tue, 10 Feb 2026 09:20:17 +0700")
+            if target_date and pub_date:
+                try:
+                    # RSS 날짜 파싱
+                    from email.utils import parsedate_to_datetime
+                    earthquake_datetime = parsedate_to_datetime(pub_date)
+                    # GMT+7 (베트남 시간)으로 변환 후 날짜 비교
+                    earthquake_date = earthquake_datetime.date()
+                    if earthquake_date != target_date:
+                        continue  # 당일이 아니면 스킵
+                except Exception:
+                    pass  # 날짜 파싱 실패 시 포함
 
             # HTML 엔티티 디코딩 및 태그 제거
             description = html.unescape(description)
@@ -1262,7 +1286,7 @@ def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str,
     # 안전 및 기상 관제 데이터 스크래핑
     weather_data = scrape_weather_hochiminh()
     air_data = scrape_air_quality()
-    earthquake_data = scrape_earthquake()
+    earthquake_data = scrape_earthquake(date_str)
 
     # 안전 및 기상 관제 데이터 통합
     safety_items = []
