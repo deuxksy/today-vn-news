@@ -26,7 +26,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --strict-markers --tb=short"
+addopts = "-v --strict-markers --tb=short -W ignore::DeprecationWarning"
 asyncio_mode = "auto"
 markers = [
     "integration: 통합 테스트",
