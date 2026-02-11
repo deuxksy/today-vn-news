@@ -97,3 +97,71 @@ def yaml_file(sample_sections, test_data_dir, test_timestamp):
     with open(yaml_path, "w", encoding="utf-8") as f:
         yaml.dump(sample_sections, f)
     return yaml_path
+
+
+@pytest.fixture
+def save_scraped_yaml(test_data_dir):
+    """
+    스크래핑 테스트 후 YAML 자동 저장 Fixture
+
+    사용법:
+        def test_something(save_scraped_yaml):
+            # 테스트 코드
+            articles = scrape_xxx()
+            # 테스트 끝나면 자동으로 YAML 저장됨
+    """
+    from today_vn_news.scraper import scrape_and_save
+
+    saved_files = []
+
+    def save_yaml():
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+        raw_yaml_path = test_data_dir / f"{timestamp}_raw.yaml"
+
+        # 오늘 날짜로 스크래핑 및 저장
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        scrape_and_save(date_str, str(raw_yaml_path))
+        saved_files.append(raw_yaml_path)
+
+    yield save_yaml
+
+    # finalizer: 테스트 후 YAML 저장
+    # save_scraped_yaml fixture를 사용하는 테스트만 저장
+    # (필요할 때 함수 호출로 저장)
+
+
+@pytest.fixture(autouse=True)
+def auto_save_scraped_yaml(test_data_dir, request):
+    """
+    스크래핑 단위 테스트가 실행될 때마다 YAML 자동 저장 (autouse)
+
+    test_scraper.py의 테스트가 실행되면 자동으로 YAML을 data/test/에 저장합니다.
+    """
+    # test_scraper.py의 테스트만 대상
+    module_name = request.module.__name__ if request.module else ""
+    if "test_scraper" not in module_name:
+        return
+
+    # TestScraperFullSaveYaml는 이미 YAML을 저장하므로 스킵
+    class_name = request.node.cls.__name__ if request.node.cls else ""
+    if "TestScraperFullSaveYaml" in class_name:
+        return
+
+    from today_vn_news.scraper import scrape_and_save
+    from datetime import datetime
+
+    def save_after_test():
+        try:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+            raw_yaml_path = test_data_dir / f"{timestamp}_raw.yaml"
+            date_str = datetime.now().strftime("%Y-%m-%d")
+
+            # 스크래핑 및 저장
+            scrape_and_save(date_str, str(raw_yaml_path))
+        except Exception as e:
+            # 실패해도 테스트는 계속 진행
+            pass
+
+    # 테스트 종료 후 YAML 저장
+    request.addfinalizer(save_after_test)

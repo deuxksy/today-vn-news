@@ -74,7 +74,8 @@ def scrape_nhandan(date_str: str) -> List[Dict[str, str]]:
 
         # 기사 리스트 찾기
         article_elements = (
-            soup.find_all("article", class_="news-item")
+            soup.find_all("article", class_="story")
+            or soup.find_all("article", class_="news-item")
             or soup.find_all("div", class_="article")
             or soup.select(".article-content, .news-list article")
         )
@@ -100,10 +101,29 @@ def scrape_nhandan(date_str: str) -> List[Dict[str, str]]:
                 or article.find("span", class_="date")
                 or article.find("div", class_="article-date")
             )
-            article_date = date_tag.get_text(strip=True) if date_tag else ""
 
-            # 오늘 날짜가 포함되어 있는지 확인
-            if today_pattern in article_date:
+            # 오늘 날짜 확인
+            is_today = False
+            if date_tag and date_tag.name == "time":
+                # ISO 8601 형식 (datetime 속성): 2026-02-11T17:21:16+07:00
+                datetime_str = date_tag.get("datetime", "")
+                if datetime_str:
+                    try:
+                        article_dt = datetime.fromisoformat(datetime_str.replace("+07:00", ""))
+                        target_dt = datetime.strptime(date_str, "%Y-%m-%d")
+                        is_today = article_dt.date() == target_dt.date()
+                        article_date = article_dt.strftime("%d/%m/%Y")
+                    except:
+                        article_date = date_tag.get_text(strip=True)
+                else:
+                    article_date = date_tag.get_text(strip=True)
+            else:
+                article_date = date_tag.get_text(strip=True) if date_tag else ""
+                # 기존 패턴 매칭 (텍스트 날짜)
+                if today_pattern in article_date:
+                    is_today = True
+
+            if is_today:
                 # 본문 미리보기 요약
                 summary_tag = article.find("p", class_="sapo") or article.find(
                     "div", class_="summary"
@@ -161,14 +181,12 @@ def scrape_suckhoedoisong(date_str: str) -> List[Dict[str, str]]:
             + date_str.split("-")[0]
         )
 
-        # 기사 리스트 찾기
-        article_elements = soup.find_all("article") or soup.select(
-            ".news-item, .article-item"
-        )
+        # 기사 리스트 찾기 (h2 태그 안에 링크가 있는 구조)
+        h2_tags = soup.find_all("h2")[:5]  # 최대 5개 기사 체크
 
-        for article in article_elements[:5]:  # 최대 5개 기사 체크
+        for h2_tag in h2_tags:
             # 링크 찾기
-            link_tag = article.find("a")
+            link_tag = h2_tag.find("a")
             if not link_tag:
                 continue
 
@@ -177,15 +195,16 @@ def scrape_suckhoedoisong(date_str: str) -> List[Dict[str, str]]:
                 article_url = "https://suckhoedoisong.vn" + article_url
 
             # 제목 찾기
-            title_tag = article.find(["h2", "h3", "h4"])
-            title = title_tag.get_text(strip=True) if title_tag else ""
+            title = link_tag.get_text(strip=True)
             title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
-            # 날짜 찾기
+            # 날짜 찾기 (h2 주변 또는 부모 요소)
+            parent = h2_tag.parent
             date_tag = (
-                article.find("time")
-                or article.find("span", class_="date")
-                or article.find("div", class_="article-date")
+                parent.find("time")
+                if parent
+                else None or h2_tag.find_next_sibling("span", class_="date")
+                or h2_tag.find_next_sibling("div", class_="article-date")
             )
             article_date = date_tag.get_text(strip=True) if date_tag else ""
 
@@ -194,8 +213,10 @@ def scrape_suckhoedoisong(date_str: str) -> List[Dict[str, str]]:
                 today_pattern in article_date or not article_date
             ):  # 날짜가 없으면 최신 기사로 간주
                 # 본문 미리보기 요약
-                summary_tag = article.find("p", class_="sapo") or article.find(
-                    "div", class_="summary"
+                summary_tag = (
+                    parent.find("p", class_="sapo")
+                    if parent
+                    else None or h2_tag.find_next("p")
                 )
                 content = summary_tag.get_text(strip=True) if summary_tag else title
                 content = clean_text(content)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
