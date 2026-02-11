@@ -4,6 +4,7 @@
 """
 
 import pytest
+from datetime import datetime
 from today_vn_news.scraper import (
     scrape_nhandan,
     scrape_suckhoedoisong,
@@ -20,6 +21,9 @@ from today_vn_news.scraper import (
     scrape_earthquake,
 )
 
+# 오늘 날짜 (YYYY-MM-DD 형식)
+TODAY = datetime.now().strftime("%Y-%m-%d")
+
 
 @pytest.mark.unit
 @pytest.mark.slow
@@ -28,7 +32,7 @@ class TestScraperNhanDan:
 
     def test_scrape_nhandan_real_api(self):
         """실제 Nhân Dân 웹사이트 스크래핑 테스트"""
-        articles = scrape_nhandan("2026-02-10")
+        articles = scrape_nhandan(TODAY)
 
         assert isinstance(articles, list)
         for article in articles:
@@ -44,7 +48,7 @@ class TestScraperSucKhoeDoiSong:
 
     def test_scrape_suckhoedoisong_real_api(self):
         """실제 Sức khỏe & Đời sống 웹사이트 스크래핑 테스트"""
-        articles = scrape_suckhoedoisong("2026-02-10")
+        articles = scrape_suckhoedoisong(TODAY)
 
         assert isinstance(articles, list)
         for article in articles:
@@ -60,7 +64,7 @@ class TestScraperTuoiTre:
 
     def test_scrape_tuoitre_real_api(self):
         """실제 Tuổi Trẻ 웹사이트 스크래핑 테스트"""
-        articles = scrape_tuoitre("2026-02-10")
+        articles = scrape_tuoitre(TODAY)
 
         assert isinstance(articles, list)
         for article in articles:
@@ -76,7 +80,7 @@ class TestScraperVietnamNet:
 
     def test_scrape_vietnamnet_real_api(self):
         """실제 VietnamNet 웹사이트 스크래핑 테스트"""
-        articles = scrape_vietnamnet("2026-02-10")
+        articles = scrape_vietnamnet(TODAY)
 
         assert isinstance(articles, list)
         for article in articles:
@@ -92,7 +96,7 @@ class TestScraperVnExpress:
 
     def test_scrape_vnexpress_real_api(self):
         """실제 VnExpress 웹사이트 스크래핑 테스트"""
-        articles = scrape_vnexpress("2026-02-10")
+        articles = scrape_vnexpress(TODAY)
 
         assert isinstance(articles, list)
         for article in articles:
@@ -108,7 +112,7 @@ class TestScraperThanhNien:
 
     def test_scrape_thanhnien_real_api(self):
         """실제 Thanh Niên RSS 스크래핑 테스트"""
-        articles = scrape_thanhnien_rss("2026-02-10")
+        articles = scrape_thanhnien_rss(TODAY)
 
         assert isinstance(articles, list)
         for article in articles:
@@ -124,7 +128,7 @@ class TestScraperVietnamNetTTT:
 
     def test_scrape_vietnamnet_ttt_real_api(self):
         """실제 VietnamNet 정보통신 웹사이트 스크래핑 테스트"""
-        articles = scrape_vietnamnet_ttt("2026-02-10")
+        articles = scrape_vietnamnet_ttt(TODAY)
 
         assert isinstance(articles, list)
         for article in articles:
@@ -140,7 +144,7 @@ class TestScraperVnExpressTech:
 
     def test_scrape_vnexpress_tech_real_api(self):
         """실제 VnExpress IT/과학 웹사이트 스크래핑 테스트"""
-        articles = scrape_vnexpress_tech("2026-02-10")
+        articles = scrape_vnexpress_tech(TODAY)
 
         assert isinstance(articles, list)
         for article in articles:
@@ -156,7 +160,7 @@ class TestScraperSaigonTimes:
 
     def test_scrape_saigontimes_real_api(self):
         """실제 The Saigon Times 웹사이트 스크래핑 테스트"""
-        articles = scrape_saigontimes("2026-02-10")
+        articles = scrape_saigontimes(TODAY)
 
         assert isinstance(articles, list)
         for article in articles:
