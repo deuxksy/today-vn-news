@@ -3,10 +3,15 @@
 """
 
 import pytest
+from datetime import datetime
 from today_vn_news.scraper import scrape_and_save
 from today_vn_news.translator import translate_and_save
 from today_vn_news.engine import synthesize_video
 from today_vn_news.uploader import upload_video
+
+# 동적 날짜 설정
+TODAY = datetime.now().strftime("%Y-%m-%d")
+TODAY_KO = datetime.now().strftime("%Y년 %m월 %d일")
 
 
 @pytest.mark.integration
@@ -23,14 +28,14 @@ class TestFullPipelineRealAPI:
 
         # 1단계: 스크래핑 (실제 웹사이트)
         raw_yaml_path = test_data_dir / f"{test_timestamp}_raw.yaml"
-        scraped_data = scrape_and_save("2026-02-10", str(raw_yaml_path))
+        scraped_data = scrape_and_save(TODAY, str(raw_yaml_path))
         assert scraped_data is not None
         assert raw_yaml_path.exists()
 
         # 2단계: 번역 (실제 Gemma API)
         yaml_path = test_data_dir / f"{test_timestamp}.yaml"
         success = translate_and_save(
-            scraped_data, "2026년 2월 10일 16:00", str(yaml_path)
+            scraped_data, f"{TODAY_KO} 16:00", str(yaml_path)
         )
         assert success
         assert yaml_path.exists()
@@ -68,14 +73,14 @@ class TestFullPipelineWithUpload:
         """파이프라인 1-4단계 실행 (내부 메서드)"""
         # 1단계: 스크래핑 (실제 웹사이트)
         raw_yaml_path = test_data_dir / f"{test_timestamp}_raw.yaml"
-        scraped_data = scrape_and_save("2026-02-10", str(raw_yaml_path))
+        scraped_data = scrape_and_save(TODAY, str(raw_yaml_path))
         assert scraped_data is not None
         assert raw_yaml_path.exists()
 
         # 2단계: 번역 (실제 Gemma API)
         yaml_path = test_data_dir / f"{test_timestamp}.yaml"
         success = translate_and_save(
-            scraped_data, "2026년 2월 10일 16:00", str(yaml_path)
+            scraped_data, f"{TODAY_KO} 16:00", str(yaml_path)
         )
         assert success
         assert yaml_path.exists()
