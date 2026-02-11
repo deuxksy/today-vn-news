@@ -449,9 +449,10 @@ def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
 
 def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
     """
-    VnExpress(종합 뉴스) 스크래핑
-    - 시사, 뉴스, 경제, 비즈니스 카테고리 우선 필터링
-    - 기술, 건강 카테고리 제외
+    VnExpress(종합 뉴스) RSS 파싱
+    - 시사 (thoi-su.rss)
+    - 경제 (kinh-doanh.rss)
+    - 뉴스 (tin-moi-nhat.rss)
 
     Args:
         date_str: 기준일 (YYYY-MM-DD 형식)
@@ -459,96 +460,107 @@ def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
-    print(f"[스크래핑] VnExpress 수집 중...")
+    print(f"[스크래핑] VnExpress RSS 파싱 중...")
 
-    url = "https://vnexpress.net/"
+    # RSS 피드 리스트
+    rss_feeds = [
+        ("시사", "https://vnexpress.net/rss/thoi-su.rss"),
+        ("경제", "https://vnexpress.net/rss/kinh-doanh.rss"),
+        ("뉴스", "https://vnexpress.net/rss/tin-moi-nhat.rss"),
+    ]
+
     articles = []
+    seen_urls = set()  # 중복 방지를 위한 URL 추적
 
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-        }
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
+    # date_str 변환 (2026-02-11 → 11 Feb 2026)
+    date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+    target_date_short = date_obj.strftime("%d %b %Y")  # "11 Feb 2026"
 
-        soup = BeautifulSoup(response.text, "html.parser")
+    for category_name, rss_url in rss_feeds:
+        try:
+            # RSS 가져오기
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+            }
+            response = requests.get(rss_url, headers=headers, timeout=10)
+            response.raise_for_status()
 
-        # 오늘 날짜 형식
-        today_pattern = (
-            date_str.split("-")[2]
-            + "/"
-            + date_str.split("-")[1]
-            + "/"
-            + date_str.split("-")[0]
-        )
+            # XML 파싱
+            root = ET.fromstring(response.text)
 
-        # 카테고리 필터링 (베트남 시사/경제만 수집)
-        priority_categories = [
-            "/thoi-su/",  # 시사
-            "/kinh-doanh/",  # 경제/비즈니스
-        ]
-
-        # 기사 리스트 찾기 (VnExpress 구조: article.item-news)
-        article_elements = soup.find_all("article", class_="item-news") or soup.find_all("article")
-
-        for article in article_elements[:10]:  # 최대 10개 체크 후 필터링
-            # 링크 찾기
-            link_tag = article.find("a")
-            if not link_tag:
-                continue
-
-            article_url = link_tag.get("href", "")
-            if not article_url.startswith("http"):
-                article_url = "https://vnexpress.net" + article_url
-
-            # 카테고리 필터링 (시사/경제만 수집)
-            in_priority = any(cat in article_url for cat in priority_categories)
-
-            if not in_priority:
-                continue
-
-            # 제목 찾기
-            title_tag = article.find(["h2", "h3", "h4"])
-            title = title_tag.get_text(strip=True) if title_tag else ""
-            title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
-
-            # 날짜 찾기
-            date_tag = (
-                article.find("time")
-                or article.find("span", class_="date")
-                or article.find("div", class_="article-date")
-            )
-            article_date = date_tag.get_text(strip=True) if date_tag else ""
-
-            # 오늘 날짜가 포함되어 있는지 확인
-            if (
-                today_pattern in article_date or not article_date
-            ):  # 날짜가 없으면 최신 기사로 간주
-                # 본문 미리보기 요약
-                summary_tag = article.find("p", class_="sapo") or article.find(
-                    "div", class_="summary"
-                )
-                content = summary_tag.get_text(strip=True) if summary_tag else title
-                content = clean_text(content)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
-
-                articles.append(
-                    {
-                        "title": title,
-                        "content": content[:200],  # 200자 제한
-                        "url": article_url,
-                        "date": article_date,
-                    }
-                )
-
-                if len(articles) >= 2:  # 최대 2개 제한
+            # channel 찾기
+            channel = None
+            for child in root:
+                if child.tag == "channel" or child.tag.endswith("channel"):
+                    channel = child
                     break
 
-        print(f"  [OK] VnExpress: {len(articles)}개 기사 수집")
-        return articles
+            if channel is None:
+                continue
 
-    except Exception as e:
-        print(f"  [!] VnExpress 스크래핑 실패: {str(e)}")
-        return []
+            # items 찾기
+            items = []
+            for child in channel:
+                if child.tag == "item" or child.tag.endswith("item"):
+                    items.append(child)
+
+            for item in items[:2]:  # 카테고리별 최대 2개
+                # pubDate 찾기
+                pub_date_elem = item.find(".//pubDate")
+                if pub_date_elem is not None and pub_date_elem.text:
+                    try:
+                        # pubDate 파싱: "Wed, 11 Feb 2026 18:38:41 +0700"
+                        pub_date_text = pub_date_elem.text.strip()
+
+                        # "11 Feb 2026" 추출
+                        date_match = re.search(r"\d{2} \w{3} \d{4}", pub_date_text)
+                        pub_date_short = date_match.group(0) if date_match else ""
+
+                        # 필터링: 당일 기사만
+                        if pub_date_short != target_date_short:
+                            continue
+                    except Exception as e:
+                        continue
+                else:
+                    continue
+
+                # title 찾기
+                title_elem = item.find(".//title")
+                title = title_elem.text if title_elem is not None else ""
+                title = clean_text(title)
+
+                # link 찾기
+                link_elem = item.find(".//link")
+                article_url = link_elem.text if link_elem is not None else ""
+
+                # description 찾기
+                desc_elem = item.find(".//description")
+                description = desc_elem.text if desc_elem is not None else ""
+
+                # HTML 태그 제거
+                content = re.sub(r"<[^>]+>", "", description).strip()
+                content = content[:200]
+                content = clean_text(content)
+
+                # 중복 체크 (URL 기반)
+                if article_url not in seen_urls:
+                    seen_urls.add(article_url)
+                    articles.append(
+                        {
+                            "title": title,
+                            "content": content,
+                            "url": article_url,
+                            "date": date_str,
+                        }
+                    )
+
+            print(f"  [OK] {category_name} RSS: 기사 수집 완료")
+
+        except Exception as e:
+            print(f"  [!] {category_name} RSS 파싱 실패: {str(e)}")
+
+    print(f"  [OK] VnExpress RSS: 총 {len(articles)}개 기사 수집")
+    return articles[:2]  # 전체 2개 제한
 
 
 def scrape_weather_hochiminh() -> Dict[str, str]:
