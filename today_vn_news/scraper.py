@@ -372,8 +372,9 @@ def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
         ]
 
         # 기사 리스트 찾기
-        article_elements = soup.find_all("article") or soup.select(
-            ".news-item, .article-item, .story"
+        article_elements = (
+            soup.find_all("div", class_="horizontalPost")
+            or soup.select(".news-item, .article-item, .story")
         )
 
         for article in article_elements[:10]:  # 최대 10개 체크 후 필터링
@@ -386,16 +387,16 @@ def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
             if not article_url.startswith("http"):
                 article_url = "https://vietnamnet.vn" + article_url
 
+            # 제목 찾기 (h3 태그)
+            title_tag = article.find("h3") or article.find("h2")
+            title = title_tag.get_text(strip=True) if title_tag else ""
+            title = clean_text(title)
+
             # 카테고리 필터링 (시사/경제/재무만 수집)
             in_priority = any(cat in article_url for cat in priority_categories)
 
             if not in_priority:
                 continue
-
-            # 제목 찾기
-            title_tag = article.find(["h2", "h3", "h4"])
-            title = title_tag.get_text(strip=True) if title_tag else ""
-            title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
 
             # 날짜 찾기
             date_tag = (
