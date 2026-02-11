@@ -3,7 +3,12 @@
 """
 
 import pytest
+from datetime import datetime
 from today_vn_news.translator import translate_weather_condition, translate_and_save
+
+# 동적 날짜 설정
+TODAY = datetime.now().strftime("%Y-%m-%d")
+TODAY_KO = datetime.now().strftime("%Y년 %m월 %d일")
 
 
 @pytest.mark.unit
@@ -45,13 +50,13 @@ class TestTranslationRealAPI:
                     "title": "Tiêu đề",
                     "content": "Nội dung tiếng Việt",
                     "url": "https://example.com",
-                    "date": "2026-02-10",
+                    "date": TODAY,
                 }
             ]
         }
 
         yaml_path = test_data_dir / f"{test_timestamp}.yaml"
-        success = translate_and_save(scraped_data, "2026년 2월 10일", str(yaml_path))
+        success = translate_and_save(scraped_data, TODAY_KO, str(yaml_path))
 
         assert success
         assert yaml_path.exists()

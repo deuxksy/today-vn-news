@@ -12,6 +12,9 @@ from typing import Dict
 
 # ====== 데이터 Fixtures ======
 
+TODAY = datetime.datetime.now().strftime("%Y-%m-%d")
+NOW_TIME = datetime.datetime.now().strftime("%H:%M")
+
 
 @pytest.fixture
 def test_timestamp():
@@ -38,7 +41,7 @@ def sample_news_article():
         "title": "ChatGPT 광고 시작",
         "content": "OpenAI는 사용자 경험 개선을 위해 광고를 도입한다.",
         "url": "https://vnexpress.net/...",
-        "date": "2026-02-10",
+        "date": TODAY,
     }
 
 
@@ -47,8 +50,8 @@ def sample_sections(sample_weather_data, sample_aqi_data, sample_news_article):
     """섹션 데이터 샘플"""
     return {
         "metadata": {
-            "date": "2026-02-10",
-            "time": "16:00",
+            "date": TODAY,
+            "time": NOW_TIME,
             "location": "Ho Chi Minh City",
         },
         "sections": [
