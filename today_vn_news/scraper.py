@@ -150,7 +150,7 @@ def scrape_nhandan(date_str: str) -> List[Dict[str, str]]:
 
 def scrape_suckhoedoisong(date_str: str) -> List[Dict[str, str]]:
     """
-    Sức khỏe & Đời sống(보건부 관보) 스크래핑
+    Sức khỏe & Đời living(보건부 관보) RSS 파싱
 
     Args:
         date_str: 기준일 (YYYY-MM-DD 형식)
@@ -158,83 +158,91 @@ def scrape_suckhoedoisong(date_str: str) -> List[Dict[str, str]]:
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
-    print(f"[스크래핑] Sức khỏe & Đời sống 수집 중...")
+    print(f"[스크래핑] Sức khỏe & Đời living RSS 파싱 중...")
 
-    url = "https://suckhoedoisong.vn/"
+    rss_url = "https://suckhoedoisong.vn/y-te.rss"
     articles = []
 
     try:
+        # date_str 변환 (2026-02-11 → 11 Feb 2026)
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+        target_date_short = date_obj.strftime("%d %b %Y")  # "11 Feb 2026"
+
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(rss_url, headers=headers, timeout=10)
         response.raise_for_status()
 
-        soup = BeautifulSoup(response.text, "html.parser")
+        # XML 파싱
+        root = ET.fromstring(response.text)
 
-        # 오늘 날짜 형식 (베트남어)
-        today_pattern = (
-            date_str.split("-")[2]
-            + "/"
-            + date_str.split("-")[1]
-            + "/"
-            + date_str.split("-")[0]
-        )
+        # channel 찾기
+        channel = None
+        for child in root:
+            if child.tag == "channel" or child.tag.endswith("channel"):
+                channel = child
+                break
 
-        # 기사 리스트 찾기 (h2 태그 안에 링크가 있는 구조)
-        h2_tags = soup.find_all("h2")[:5]  # 최대 5개 기사 체크
+        if channel is not None:
+            # items 찾기
+            items = []
+            for child in channel:
+                if child.tag == "item" or child.tag.endswith("item"):
+                    items.append(child)
 
-        for h2_tag in h2_tags:
-            # 링크 찾기
-            link_tag = h2_tag.find("a")
-            if not link_tag:
-                continue
+            for item in items[:5]:  # 최대 5개 (건강 관련 이슈 전수 수집)
+                # pubDate 찾기
+                pub_date_elem = item.find(".//pubDate")
+                if pub_date_elem is not None and pub_date_elem.text:
+                    try:
+                        # pubDate 파싱: "Wed, 11 Feb 2026 18:38:41 +0700"
+                        pub_date_text = pub_date_elem.text.strip()
 
-            article_url = link_tag.get("href", "")
-            if not article_url.startswith("http"):
-                article_url = "https://suckhoedoisong.vn" + article_url
+                        # "11 Feb 2026" 추출
+                        date_match = re.search(r"\d{2} \w{3} \d{4}", pub_date_text)
+                        pub_date_short = date_match.group(0) if date_match else ""
 
-            # 제목 찾기
-            title = link_tag.get_text(strip=True)
-            title = clean_text(title)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
+                        # 필터링: 당일 기사만
+                        if pub_date_short != target_date_short:
+                            continue
+                    except Exception:
+                        continue
+                else:
+                    continue
 
-            # 날짜 찾기 (h2 주변 또는 부모 요소)
-            parent = h2_tag.parent
-            date_tag = (
-                parent.find("time")
-                if parent
-                else None or h2_tag.find_next_sibling("span", class_="date")
-                or h2_tag.find_next_sibling("div", class_="article-date")
-            )
-            article_date = date_tag.get_text(strip=True) if date_tag else ""
+                # title 찾기
+                title_elem = item.find(".//title")
+                title = title_elem.text if title_elem is not None else ""
+                title = clean_text(title)
 
-            # 오늘 날짜가 포함되어 있는지 확인
-            if (
-                today_pattern in article_date or not article_date
-            ):  # 날짜가 없으면 최신 기사로 간주
-                # 본문 미리보기 요약
-                summary_tag = (
-                    parent.find("p", class_="sapo")
-                    if parent
-                    else None or h2_tag.find_next("p")
-                )
-                content = summary_tag.get_text(strip=True) if summary_tag else title
-                content = clean_text(content)  # 텍스트 정제 (홑따옴표 + HTML 엔티티)
+                # link 찾기
+                link_elem = item.find(".//link")
+                article_url = link_elem.text if link_elem is not None else ""
+
+                # description 찾기
+                desc_elem = item.find(".//description")
+                description = desc_elem.text if desc_elem is not None else ""
+
+                # HTML 태그 제거
+                content = re.sub(r"<[^>]+>", "", description).strip()
+                content = content[:200]
+                content = clean_text(content)
 
                 articles.append(
                     {
                         "title": title,
-                        "content": content[:200],  # 200자 제한
+                        "content": content,
                         "url": article_url,
-                        "date": article_date,
+                        "date": date_str,
                     }
                 )
 
-        print(f"  [OK] Sức khỏe & Đời sống: {len(articles)}개 기사 수집")
+        print(f"  [OK] Sức khỏe & Đời living RSS: {len(articles)}개 기사 수집")
         return articles
 
     except Exception as e:
-        print(f"  [!] Sức khỏe & Đời sống 스크래핑 실패: {str(e)}")
+        print(f"  [!] Sức khỏe & Đời living RSS 파싱 실패: {str(e)}")
         return []
 
 
