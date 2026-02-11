@@ -478,10 +478,8 @@ def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
             "/kinh-doanh/",  # 경제/비즈니스
         ]
 
-        # 기사 리스트 찾기 (VnExpress 구조)
-        article_elements = soup.find_all("article") or soup.select(
-            ".article-item, .news-item"
-        )
+        # 기사 리스트 찾기 (VnExpress 구조: article.item-news)
+        article_elements = soup.find_all("article", class_="item-news") or soup.find_all("article")
 
         for article in article_elements[:10]:  # 최대 10개 체크 후 필터링
             # 링크 찾기
