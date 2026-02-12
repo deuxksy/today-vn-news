@@ -1567,8 +1567,8 @@ def save_raw_yaml(scraped_data: Dict, date_str: str, output_path: str) -> bool:
     yaml_data = {
         "metadata": {
             "date": date_str,
-            "time": "",
-            "location": "Ho Chi Minh City (Saigon Pearl)",
+            "time": datetime.datetime.now().strftime("%H:%M"),
+            "location": "Ho Chi Minh City",
         },
         "sections": [],
     }
