@@ -17,7 +17,7 @@ import html
 
 def clean_text(text: str) -> str:
     """
-    텍스트 정제: 홑따옴표 제거 + HTML 엔티티 변환
+    텍스트 정제: 홑따옴표 제거 + HTML 엔티티 변환 + 유니코드 정규화
 
     Args:
         text: 정제할 텍스트
@@ -26,9 +26,20 @@ def clean_text(text: str) -> str:
         정제된 텍스트
         - 홑따옴표(') 제거 (YAML 파싱 오류 방지)
         - HTML 엔티티 변환 (&uacute; → ú, &ocirc; → ô 등)
+        - 유니코드 정규화 (깨진 문자 복구)
     """
     if not text:
         return text
+
+    # 유니코드 깨진 문자 복구 (\\x88, \\x95 등 제거)
+    # 이것은 실제로는 YAML 덤프 시의 표현 문제일 수 있음
+    import re
+    # 유니코드 이스케이프 시퀀스 제거 (YAML 표현 문제)
+    text = re.sub(r'\\x[0-9a-fA-F]{2}', '', text)
+
+    # 유니코드 정규화
+    import unicodedata
+    text = unicodedata.normalize("NFKC", text)
 
     # 홑따옴표 제거
     text = text.replace("'", "").replace("\u2019", "").replace("\u2018", "")
@@ -1504,6 +1515,44 @@ def save_raw_yaml(scraped_data: Dict, date_str: str, output_path: str) -> bool:
     import yaml
     import os
 
+    def is_valid_news_article(title: str) -> bool:
+        """
+        유효한 뉴스 기사인지 필터링 (비뉴스성 항목 제거)
+
+        제외 대상:
+        - 메뉴/페이지 이름 (Videos, TuoitrePodcast, Thời tiết hôm nay, Kinh doanh 등)
+        - 짧은 제목 (10자 미만)
+
+        Args:
+            title: 기사 제목
+
+        Returns:
+            유효 여부
+        """
+        if not title:
+            return False
+
+        # 제외할 비뉴스성 키워드
+        exclude_keywords = [
+            "Videos",
+            "TuoitrePodcast",
+            "Podcast",
+            "Thời tiết hôm nay",
+            "Kinh doanh",
+            "Thể thao",
+            "Giải trí",
+        ]
+
+        for keyword in exclude_keywords:
+            if keyword.lower() in title.lower():
+                return False
+
+        # 너무 짧은 제목 제외 (10자 미만)
+        if len(title.strip()) < 10:
+            return False
+
+        return True
+
     print(f"\n[*] 원본 YAML 저장 시작...")
 
     yaml_data = {
@@ -1576,6 +1625,10 @@ def save_raw_yaml(scraped_data: Dict, date_str: str, output_path: str) -> bool:
             }
 
             for article in articles:
+                # 비뉴스성 항목 필터링
+                if not is_valid_news_article(article.get("title", "")):
+                    continue
+
                 section["items"].append(
                     {
                         "title": article["title"],
