@@ -10,9 +10,10 @@
 
 ### 1.2 주요 안전 및 기상정보 소스
 
-- NCHMF: 태풍, 지진, 홍수 정보와 현재 날씨 정보
-- IGP-VAST: 지진 정보 (RSS 피드)
+- [베트남 기상철](https://nchmf.gov.vn/kttv/): 태풍, 지진, 홍수 정보와 현재 날씨 정보
+- [베트남 지구물리학 연구소](http://igp-vast.vn/index.php/vi/tin-dong-dat): 지진 정보 (RSS 피드)
 - IQAir + Open-Meteo: 공기질 정보 (AQI, PM2.5, PM10)
+- [베트남 공기질 정부포탈](https://cem.gov.vn/)
 
 ### 1.3 주요 뉴스 소스
 
@@ -74,7 +75,8 @@
 ### 4.3 Sức khỏe & Đời sống
 
 - **목적:** **[통합 안전 관제 핵심]** 보건부 산하 매체로 식품 위생 위반 사례, 알레르기 유발 정보, 질병 주의보 수집.
-- **데이터 소스:** [Sức khỏe & Đời sống](https://suckhoedoisong.vn/)
+- **데이터 소스:** [Sức khỏe & Đời sống](https://suckhoedoisong.vn/page-rss.htm)
+  - **의료** : <https://suckhoedoisong.vn/y-te.rss>
 - **배타적 데이터 수집 원칙:** 식중독 사례, 호치민 대기질 악화, 전염병 정보 등 건강 관련 이슈 전수 수집.
 - **추출 규칙:** 식중독 사례, 호치민 대기질 악화, 전염병 정보 등 **건강 관련 이슈 전수 수집**.
 - **TTS 최적화:** '궤양성 대장염' 등 사용자 맞춤형 키워드 강조, 의학 전문 용어 순화.
@@ -83,7 +85,7 @@
 ### 4.4 Tuổi Trẻ
 
 - **목적:** 호치민(HCMC) 중심의 시정 소식, 주요 도로 통제 이벤트 수집.
-- **데이터 소스:** [Tuổi Trẻ](https://tuoitre.vn/)
+- **데이터 소스:** [Tuổi Trẻ](https://tuoitre.vn/rss.htm)
 - **배타적 데이터 수집 원칙:** 호치민(HCMC) 중심의 시정 소식, 주요 도로 통제 이벤트 수집.
 - **추출 규칙:** 최신 기사 2개.
 - **TTS 최적화:** 베트남어 성조가 포함된 거리명 등을 한국어 독음으로 변환 (예: Quận 1 -> 1군).
@@ -91,25 +93,34 @@
 
 ### 4.5 VietnamNet (종합 뉴스)
 
-- **목적:** 베트남 종합 뉴스 포털로서 전국구 이슈 및 사회 경제 뉴스 수집.
-- **데이터 소스:** [VietnamNet](https://vietnamnet.vn/)
-- **추출 규칙:** 시사, 뉴스, 경제, 비즈니스 카테고리 우선 필터링하여 메인 이슈 2개 수집 (기술, 건강 카테고리 제외).
+- **목적:** 정보통신부 산하 매체 종합 뉴스 포털로서 B2G 기반의 뉴스 수집.
+- **데이터 소스:** 
+  - **정치**: <https://vietnamnet.vn/rss/chinh-tri.rss>
+  - **법률**: <https://vietnamnet.vn/rss/phap-luat.rss>
+  - **시사**: <https://vietnamnet.vn/rss/thoi-su.rss>
+- **추출 규칙:** 정치,법률,시사 카테고리 우선 필터링하여 메인 이슈 2개 수집.
 - **TTS 최적화:** 기사 서두의 지역명(예: 하노이, 호치민) 및 날짜 정보 간소화.
 - **가중치**: Normal (P2)
 
 ### 4.6 VnExpress (종합 뉴스)
 
-- **목적:** 베트남 최대 뉴스 포털로서 가장 빠른 전국구 이슈 및 글로벌 경제 뉴스 수집.
-- **데이터 소스:** [VNEXPRESS](https://vnexpress.net)
-- **추출 규칙:** 시사, 뉴스, 경제, 비즈니스 카테고리 우선 필터링하여 메인 이슈 2개 수집 (기술, 건강 카테고리 제외).
+- **목적:** 베트남 최대 뉴스 포털로서 B2C 기반의 뉴스 수집.
+- **데이터 소스:** [VNEXPRESS](https://vnexpress.net/rss)
+  - **경제**: <https://vnexpress.net/rss/kinh-doanh.rss>
+  - **호치민시보**: <https://vnexpress.net/rss/thoi-su.rss>
+  - **자동차**: <https://vnexpress.net/rss/oto-xe-may.rss>
+  - **부동산**: <https://vnexpress.net/rss/bat-dong-san.rss>
+- **추출 규칙:** 경제, 자동차, 부동산, 비즈니스 카테고리 우선 필터링하여 메인 이슈 2개 수집.
 - **TTS 최적화:** 기사 서두의 지역명(예: 하노이, 호치민) 및 날짜 정보 간소화.
 - **가중치**: Normal (P2)
 
 ### 4.7 Thanh Niên (사회/청년)
 
 - **목적:** 대중적 관심사가 높은 트렌드, 사회 현상 및 독자 제보 뉴스 수집.
-- **데이터 소스:** [Thanh Niên](https://thanhnien.vn/)
-- **추출 규칙:** 카테고리별 RSS 피드 파싱 (시사, 경제, 생활), 메인 이슈 1~2개 수집.
+- **데이터 소스:** [Thanh Niên](https://thanhnien.vn/rss.html)
+  - **민생/시사**: <https://thanhnien.vn/rss/thoi-su.rss>
+  - **생활**: <https://thanhnien.vn/rss/doi-song.rss>
+- **추출 규칙:** 카테고리별 RSS 피드 파싱 (민생/시사, 생활), 메인 이슈 2개 수집.
 - **TTS 최적화:** 불필요한 수식어 및 자극적인 문장 부호(!!!, ???) 제거.
 - **가중치**: Normal (P2)
 
@@ -117,22 +128,22 @@
 
 - **목적:** 경제 전문지로 환율, 물가, 호치민 부동산 및 투자 동향 수집.
 - **데이터 소스:** [The Saigon Times](https://thesaigontimes.vn/)
-- **추출 규칙:** 카테고리 필터링 없이 최신 기사 1~2개 수집.
+- **추출 규칙:** 카테고리 필터링 없이 최신 기사 2개 수집.
 - **TTS 최적화:** 통화 단위(VND, USD) 및 퍼센트(%) 단위를 한국어 읽기 방식으로 교정.
 - **가중치**: Normal (P2)
 
 ### 4.9 VietnamNet 정보통신
 
 - **목적:** 베트남 정보통신 산업 동향, 5G/4G 통신망 확장, 통신 정책 수집.
-- **데이터 소스:** [VietnamNet - Thông tin và Truyền thông](https://vietnamnet.vn/thong-tin-truyen-thong)
-- **추출 규칙:** 통신 관련 정책, 인터넷 서비스, 모바일 통신 관련 뉴스 1~2개.
+- **데이터 소스:** [VietnamNet - Thông tin và Truyền thông](https://vietnamnet.vn/rss/thong-tin-truyen-thong.rss)
+- **추출 규칙:** 통신 관련 정책, 인터넷 서비스, 모바일 통신 관련 뉴스 2개.
 - **TTS 최적화:** 영어 약어는 그대로 사용합니다 (5G, 4G, 3G, AI, API 등).
 - **가중치**: Normal (P2)
 
 ### 4.10 VnExpress IT/과학
 
-- **목적:** 베트남 IT 산업 동향, AI, Cloud(AWS) 도입 현황 수집.
-- **데이터 소스:** [VnExpress Khoa học công nghệ](https://vnexpress.net/khoa-hoc-cong-nghe)
+- **목적:** 베트남 IT 산업 동향, AI, Cloud 도입 현황 수집.
+- **데이터 소스:** [VnExpress Khoa học công nghệ](https://vnexpress.net/rss/khoa-hoc-cong-nghe.rss)
 - **추출 규칙:** 기술 트렌드 및 엔지니어 채용 관련 이슈 2개.
 - **TTS 최적화:** 영어 약어는 그대로 사용합니다 (AWS, SaaS, AI, API 등).
 - **가중치**: Normal (P2)
