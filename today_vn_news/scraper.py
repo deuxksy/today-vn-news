@@ -17,35 +17,44 @@ import html
 
 def clean_text(text: str) -> str:
     """
-    텍스트 정제: 홑따옴표 제거 + HTML 엔티티 변환 + 유니코드 정규화
+    텍스트 정제 및 정규화 (저장 전 필수 처리)
 
     Args:
         text: 정제할 텍스트
 
     Returns:
         정제된 텍스트
-        - 홑따옴표(') 제거 (YAML 파싱 오류 방지)
-        - HTML 엔티티 변환 (&uacute; → ú, &ocirc; → ô 등)
-        - 유니코드 정규화 (깨진 문자 복구)
+        - 연속된 공백 → 단일 공백
+        - 앞뒤 공백 제거
+        - 개행문자 제거
+        - 탭 문자 제거
+        - 홑따옴표(') 제거
+        - HTML 엔티티 변환
+        - 유니코드 정규화 (NFKC)
     """
     if not text:
         return text
 
-    # 유니코드 깨진 문자 복구 (\\x88, \\x95 등 제거)
-    # 이것은 실제로는 YAML 덤프 시의 표현 문제일 수 있음
-    import re
-    # 유니코드 이스케이프 시퀀스 제거 (YAML 표현 문제)
-    text = re.sub(r'\\x[0-9a-fA-F]{2}', '', text)
-
-    # 유니코드 정규화
+    # 유니코드 정규화 (호환성 문제 해결)
     import unicodedata
     text = unicodedata.normalize("NFKC", text)
+
+    # HTML 엔티티 변환
+    import html
+    text = html.unescape(text)
 
     # 홑따옴표 제거
     text = text.replace("'", "").replace("\u2019", "").replace("\u2018", "")
 
-    # HTML 엔티티 변환
-    text = html.unescape(text)
+    # 연속된 공백 → 단일 공백
+    import re
+    text = re.sub(r'\s+', ' ', text)
+
+    # 앞뒤 공백 제거
+    text = text.strip()
+
+    # 개행문자 제거
+    text = text.replace('\n', ' ').replace('\r', ' ')
 
     return text
 
@@ -1578,34 +1587,39 @@ def save_raw_yaml(scraped_data: Dict, date_str: str, output_path: str) -> bool:
             for item in articles:
                 # 기상/공기질/지진 데이터 형식 변환
                 if item.get("name") == "기상":
+                    content = clean_text(item.get("content", ""))
                     section["items"].append(
                         {
-                            "title": f"기상 (NCHMF)",
-                            "content": item.get("content", ""),
+                            "title": "기상 (NCHMF)",
+                            "content": content,
                             "url": item.get("url", ""),
                         }
                     )
                 elif item.get("name") == "공기":
+                    content = clean_text(item.get("content", ""))
                     section["items"].append(
                         {
                             "title": f"공기질 (IQAir) - AQI {item.get('aqi', '')}",
-                            "content": item.get("content", ""),
+                            "content": content,
                             "url": item.get("url", ""),
                         }
                     )
                 elif item.get("name") == "지진":
+                    title = clean_text(item.get("title", ""))
+                    content = clean_text(item.get("content", ""))
                     section["items"].append(
                         {
-                            "title": item.get("title", ""),
-                            "content": item.get("content", ""),
+                            "title": title,
+                            "content": content,
                             "url": item.get("url", ""),
                         }
                     )
                 elif item.get("name") == "플레이스홀더":
+                    content = clean_text(item.get("content", ""))
                     section["items"].append(
                         {
                             "title": "안전 및 기상 관제",
-                            "content": item.get("content", ""),
+                            "content": content,
                             "url": item.get("url", ""),
                         }
                     )
@@ -1629,10 +1643,14 @@ def save_raw_yaml(scraped_data: Dict, date_str: str, output_path: str) -> bool:
                 if not is_valid_news_article(article.get("title", "")):
                     continue
 
+                # title과 content 정규화 적용
+                clean_title = clean_text(article["title"])
+                clean_content = clean_text(article["content"])
+
                 section["items"].append(
                     {
-                        "title": article["title"],
-                        "content": article["content"],
+                        "title": clean_title,
+                        "content": clean_content,
                         "url": article["url"],
                     }
                 )
