@@ -1,4 +1,6 @@
-# 🇻🇳 오늘의 베트남 뉴스 (today-vn-news)
+# 오늘의 베트남 뉴스 (today-vn-news)
+
+> **AI** 를 활용해 생성된 프로젝트입니다.
 
 베트남 뉴스 자동화 파이프라인. BeautifulSoup4 스크래핑 + Gemma-3-27b 번역 + edge-tts 음성 생성 + FFmpeg 영상 합성 + YouTube 업로드.
 
