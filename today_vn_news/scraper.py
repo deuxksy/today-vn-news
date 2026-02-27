@@ -14,6 +14,9 @@ import re
 import xml.etree.ElementTree as ET
 import html
 
+from today_vn_news.logger import logger
+from today_vn_news.exceptions import ScrapingError
+
 
 def clean_text(text: str) -> str:
     """
@@ -69,7 +72,7 @@ def scrape_nhandan(date_str: str) -> List[Dict[str, str]]:
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
-    print(f"[스크래핑] Nhân Dân 수집 중...")
+    logger.info("Nhân Dân 스크래핑 시작", extra={"url": "https://nhandan.vn/"})
 
     url = "https://nhandan.vn/"
     articles = []
@@ -160,12 +163,12 @@ def scrape_nhandan(date_str: str) -> List[Dict[str, str]]:
                     }
                 )
 
-        print(f"  [OK] Nhân Dân: {len(articles)}개 기사 수집")
+        logger.info(f"Nhân Dân 스크래핑 완료: {len(articles)}개 기사 수집")
         return articles
 
     except Exception as e:
-        print(f"  [!] Nhân Dân 스크래핑 실패: {str(e)}")
-        return []
+        logger.error(f"Nhân Dân 스크래핑 실패: {str(e)}", extra={"url": url})
+        raise ScrapingError(f"Failed to scrape Nhân Dân: {str(e)}")
 
 
 def scrape_suckhoedoisong(date_str: str) -> List[Dict[str, str]]:
@@ -178,7 +181,7 @@ def scrape_suckhoedoisong(date_str: str) -> List[Dict[str, str]]:
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
-    print(f"[스크래핑] Sức khỏe & Đời living RSS 파싱 중...")
+    logger.info("Sức khỏe & Đời living RSS 파싱 시작", extra={"url": "https://suckhoedoisong.vn/y-te.rss"})
 
     rss_url = "https://suckhoedoisong.vn/y-te.rss"
     articles = []
@@ -258,12 +261,12 @@ def scrape_suckhoedoisong(date_str: str) -> List[Dict[str, str]]:
                     }
                 )
 
-        print(f"  [OK] Sức khỏe & Đời living RSS: {len(articles)}개 기사 수집")
+        logger.info(f"Sức khỏe & Đời living RSS 파싱 완료: {len(articles)}개 기사 수집")
         return articles
 
     except Exception as e:
-        print(f"  [!] Sức khỏe & Đời living RSS 파싱 실패: {str(e)}")
-        return []
+        logger.error(f"Sức khỏe & Đời living RSS 파싱 실패: {str(e)}", extra={"url": rss_url})
+        raise ScrapingError(f"Failed to parse Sức khỏe & Đời living RSS: {str(e)}")
 
 
 def scrape_tuoitre(date_str: str) -> List[Dict[str, str]]:
@@ -276,7 +279,7 @@ def scrape_tuoitre(date_str: str) -> List[Dict[str, str]]:
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
-    print(f"[스크래핑] Tuổi Trẻ 수집 중...")
+    logger.info("Tuổi Trẻ 스크래핑 시작", extra={"url": "https://tuoitre.vn/"})
 
     url = "https://tuoitre.vn/"
     articles = []
@@ -348,12 +351,12 @@ def scrape_tuoitre(date_str: str) -> List[Dict[str, str]]:
                     }
                 )
 
-        print(f"  [OK] Tuổi Trẻ: {len(articles)}개 기사 수집")
+        logger.info(f"Tuổi Trẻ 스크래핑 완료: {len(articles)}개 기사 수집")
         return articles
 
     except Exception as e:
-        print(f"  [!] Tuổi Trẻ 스크래핑 실패: {str(e)}")
-        return []
+        logger.error(f"Tuổi Trẻ 스크래핑 실패: {str(e)}", extra={"url": url})
+        raise ScrapingError(f"Failed to scrape Tuổi Trẻ: {str(e)}")
 
 
 def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
@@ -369,7 +372,7 @@ def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
-    print(f"[스크래핑] VietnamNet RSS 파싱 중...")
+    logger.info("VietnamNet RSS 파싱 시작")
 
     # RSS 피드 리스트
     rss_feeds = [
@@ -466,12 +469,12 @@ def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
                         }
                     )
 
-            print(f"  [OK] {category_name} RSS: 기사 수집 완료")
+            logger.debug(f"{category_name} RSS: 기사 수집 완료")
 
         except Exception as e:
-            print(f"  [!] {category_name} RSS 파싱 실패: {str(e)}")
+            logger.warning(f"{category_name} RSS 파싱 실패: {str(e)}", extra={"url": rss_url})
 
-    print(f"  [OK] VietnamNet RSS: 총 {len(articles)}개 기사 수집")
+    logger.info(f"VietnamNet RSS 파싱 완료: 총 {len(articles)}개 기사 수집")
     return articles[:2]  # 전체 2개 제한
 
 
@@ -488,7 +491,7 @@ def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
-    print(f"[스크래핑] VnExpress RSS 파싱 중...")
+    logger.info("VnExpress RSS 파싱 시작")
 
     # RSS 피드 리스트 (ContextFile.md 4.6 기준)
     rss_feeds = [
@@ -583,12 +586,12 @@ def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
                         }
                     )
 
-            print(f"  [OK] {category_name} RSS: 기사 수집 완료")
+            logger.debug(f"{category_name} RSS: 기사 수집 완료")
 
         except Exception as e:
-            print(f"  [!] {category_name} RSS 파싱 실패: {str(e)}")
+            logger.warning(f"{category_name} RSS 파싱 실패: {str(e)}", extra={"url": rss_url})
 
-    print(f"  [OK] VnExpress RSS: 총 {len(articles)}개 기사 수집")
+    logger.info(f"VnExpress RSS 파싱 완료: 총 {len(articles)}개 기사 수집")
     return articles[:2]  # 전체 2개 제한
 
 
@@ -599,7 +602,7 @@ def scrape_weather_hochiminh() -> Dict[str, str]:
     Returns:
         기상 정보 딕셔너리 {'temp': str, 'humidity': str, 'condition': str}
     """
-    print(f"[스크래핑] NCHMF 기상 정보 수집 중...")
+    logger.info("NCHMF 기상 정보 수집 시작", extra={"url": "https://nchmf.gov.vn/kttvsiteE/vi-VN/1/vung-tau-tp-ho-chi-minh-w31.html"})
 
     try:
         headers = {
@@ -619,7 +622,7 @@ def scrape_weather_hochiminh() -> Dict[str, str]:
         condition = ""
 
         # 디버깅: HTML 구조 확인
-        print(f"  [DEBUG] NCHMF 페이지 구조 분석 중...")
+        logger.debug("NCHMF 페이지 구조 분석 중...")
 
         # 온도 찾기 (.text-weather-location .list-info-wt li:nth-child(1) .uk-width-3-4)
         temp_element = soup.select_one(
@@ -629,7 +632,7 @@ def scrape_weather_hochiminh() -> Dict[str, str]:
             temp = temp_element.get_text(strip=True)
             # 불필요한 콜론 제거
             temp = temp.lstrip(":").strip()
-            print(f"  [DEBUG] 온도: {temp}")
+            logger.debug(f"온도: {temp}")
 
         # 날씨 상태 찾기 (.text-weather-location .list-info-wt li:nth-child(2) .uk-width-3-4)
         condition_element = soup.select_one(
@@ -639,7 +642,7 @@ def scrape_weather_hochiminh() -> Dict[str, str]:
             condition = condition_element.get_text(strip=True)
             # 불필요한 콜론 제거
             condition = condition.lstrip(":").strip()
-            print(f"  [DEBUG] 상태: {condition}")
+            logger.debug(f"상태: {condition}")
 
         # 습도 찾기 (.text-weather-location .list-info-wt li:nth-child(3) .uk-width-3-4)
         humidity_element = soup.select_one(
@@ -649,16 +652,14 @@ def scrape_weather_hochiminh() -> Dict[str, str]:
             humidity = humidity_element.get_text(strip=True)
             # 불필요한 콜론 제거
             humidity = humidity.lstrip(":").strip()
-            print(f"  [DEBUG] 습도: {humidity}")
+            logger.debug(f"습도: {humidity}")
 
-        print(
-            f"  [DEBUG] 수집된 데이터: temp={temp}, humidity={humidity}, condition={condition}"
-        )
-        print(f"  [OK] NCHMF 기상 정보 수집 완료")
+        logger.debug(f"수집된 데이터: temp={temp}, humidity={humidity}, condition={condition}")
+        logger.info("NCHMF 기상 정보 수집 완료")
         return {"temp": temp, "humidity": humidity, "condition": condition}
 
     except Exception as e:
-        print(f"  [!] NCHMF 기상 정보 스크래핑 실패: {str(e)}")
+        logger.error(f"NCHMF 기상 정보 스크래핑 실패: {str(e)}", extra={"url": url})
         return {"temp": "", "humidity": "", "condition": ""}
 
 
@@ -669,7 +670,7 @@ def scrape_air_quality() -> Dict[str, str]:
     Returns:
         공기질 정보 딕셔너리 {'aqi': str, 'status': str, 'pm25': str, 'pm10': str}
     """
-    print(f"[스크래핑] IQAir + Open-Meteo 공기질 정보 수집 중...")
+    logger.info("IQAir + Open-Meteo 공기질 정보 수집 시작")
 
     try:
         # IQAir 실제 관측소 좌표 (Quan Mot)
@@ -695,7 +696,7 @@ def scrape_air_quality() -> Dict[str, str]:
             pollution = iqair_data["data"]["current"]["pollution"]
             us_aqi = pollution.get("aqius")
         else:
-            print(f"  [!] IQAir API 실패: {iqair_data.get('data', {}).get('message')}")
+            logger.warning(f"IQAir API 실패: {iqair_data.get('data', {}).get('message')}")
             us_aqi = None
 
         # 2. Open-Meteo API로 PM2.5, PM10 가져오기
@@ -745,11 +746,11 @@ def scrape_air_quality() -> Dict[str, str]:
         else:
             pm10 = ""
 
-        print(f"  [OK] IQAir AQI={aqi}, Open-Meteo PM2.5={pm25} µg/m³, PM10={pm10} µg/m³")
+        logger.info(f"IQAir AQI={aqi}, Open-Meteo PM2.5={pm25} µg/m³, PM10={pm10} µg/m³")
         return {"aqi": aqi, "status": status, "pm25": pm25, "pm10": pm10}
 
     except Exception as e:
-        print(f"  [!] 공기질 정보 스크래핑 실패: {str(e)}")
+        logger.error(f"공기질 정보 스크래핑 실패: {str(e)}")
         return {"aqi": "", "status": "", "pm25": "", "pm10": ""}
 
 
@@ -766,7 +767,7 @@ def scrape_thanhnien_rss(date_str: str) -> List[Dict[str, str]]:
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
-    print(f"[스크래핑] Thanh Niên RSS 파싱 중...")
+    logger.info("Thanh Niên RSS 파싱 시작")
 
     # RSS 피드 리스트 (ContextFile.md 4.7 기준)
     rss_feeds = [
@@ -866,12 +867,12 @@ def scrape_thanhnien_rss(date_str: str) -> List[Dict[str, str]]:
                         }
                     )
 
-            print(f"  [OK] {category_name} RSS: {len([a for a in articles if a['url'] in seen_urls])}개 기사")
+            logger.debug(f"{category_name} RSS: {len([a for a in articles if a['url'] in seen_urls])}개 기사")
 
         except Exception as e:
-            print(f"  [!] {category_name} RSS 파싱 실패: {str(e)}")
+            logger.warning(f"{category_name} RSS 파싱 실패: {str(e)}", extra={"url": rss_url})
 
-    print(f"  [OK] Thanh Niên RSS: 총 {len(articles)}개 기사 수집")
+    logger.info(f"Thanh Niên RSS 파싱 완료: 총 {len(articles)}개 기사 수집")
     return articles
 
 
@@ -886,7 +887,7 @@ def scrape_thanhnien(date_str: str) -> List[Dict[str, str]]:
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
-    print(f"[스크래핑] Thanh Niên 수집 중...")
+    logger.info("Thanh Niên 스크래핑 시작", extra={"url": "https://thanhnien.vn/"})
 
     url = "https://thanhnien.vn/"
     articles = []
@@ -981,12 +982,12 @@ def scrape_thanhnien(date_str: str) -> List[Dict[str, str]]:
                 if len(articles) >= 2:  # 최대 2개 제한
                     break
 
-        print(f"  [OK] Thanh Niên: {len(articles)}개 기사 수집")
+        logger.info(f"Thanh Niên 스크래핑 완료: {len(articles)}개 기사 수집")
         return articles
 
     except Exception as e:
-        print(f"  [!] Thanh Niên 스크래핑 실패: {str(e)}")
-        return []
+        logger.error(f"Thanh Niên 스크래핑 실패: {str(e)}", extra={"url": url})
+        raise ScrapingError(f"Failed to scrape Thanh Niên: {str(e)}")
 
 
 def scrape_vietnamnet_ttt(date_str: str) -> List[Dict[str, str]]:
@@ -999,7 +1000,7 @@ def scrape_vietnamnet_ttt(date_str: str) -> List[Dict[str, str]]:
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
-    print(f"[스크래핑] VietnamNet 정보통신 RSS 파싱 중...")
+    logger.info("VietnamNet 정보통신 RSS 파싱 시작", extra={"url": "https://vietnamnet.vn/rss/thong-tin-truyen-thong.rss"})
 
     rss_url = "https://vietnamnet.vn/rss/thong-tin-truyen-thong.rss"
     articles = []
@@ -1079,12 +1080,12 @@ def scrape_vietnamnet_ttt(date_str: str) -> List[Dict[str, str]]:
                     }
                 )
 
-        print(f"  [OK] VietnamNet 정보통신 RSS: {len(articles)}개 기사 수집")
+        logger.info(f"VietnamNet 정보통신 RSS 파싱 완료: {len(articles)}개 기사 수집")
         return articles
 
     except Exception as e:
-        print(f"  [!] VietnamNet 정보통신 RSS 파싱 실패: {str(e)}")
-        return []
+        logger.error(f"VietnamNet 정보통신 RSS 파싱 실패: {str(e)}", extra={"url": rss_url})
+        raise ScrapingError(f"Failed to parse VietnamNet 정보통신 RSS: {str(e)}")
 
 
 def scrape_vnexpress_tech(date_str: str) -> List[Dict[str, str]]:
@@ -1097,7 +1098,7 @@ def scrape_vnexpress_tech(date_str: str) -> List[Dict[str, str]]:
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
-    print(f"[스크래핑] VnExpress IT/과학 RSS 파싱 중...")
+    logger.info("VnExpress IT/과학 RSS 파싱 시작", extra={"url": "https://vnexpress.net/rss/khoa-hoc-cong-nghe.rss"})
 
     rss_url = "https://vnexpress.net/rss/khoa-hoc-cong-nghe.rss"
     articles = []
@@ -1177,12 +1178,12 @@ def scrape_vnexpress_tech(date_str: str) -> List[Dict[str, str]]:
                     }
                 )
 
-        print(f"  [OK] VnExpress IT/과학 RSS: {len(articles)}개 기사 수집")
+        logger.info(f"VnExpress IT/과학 RSS 파싱 완료: {len(articles)}개 기사 수집")
         return articles
 
     except Exception as e:
-        print(f"  [!] VnExpress IT/과학 RSS 파싱 실패: {str(e)}")
-        return []
+        logger.error(f"VnExpress IT/과학 RSS 파싱 실패: {str(e)}", extra={"url": rss_url})
+        raise ScrapingError(f"Failed to parse VnExpress IT/과학 RSS: {str(e)}")
 
 
 def scrape_saigontimes(date_str: str) -> List[Dict[str, str]]:
@@ -1195,7 +1196,7 @@ def scrape_saigontimes(date_str: str) -> List[Dict[str, str]]:
     Returns:
         기사 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
-    print(f"[스크래핑] The Saigon Times 수집 중...")
+    logger.info("The Saigon Times 스크래핑 시작", extra={"url": "https://thesaigontimes.vn/"})
 
     url = "https://thesaigontimes.vn/"
     articles = []
@@ -1279,12 +1280,12 @@ def scrape_saigontimes(date_str: str) -> List[Dict[str, str]]:
                     }
                 )
 
-        print(f"  [OK] The Saigon Times: {len(articles)}개 기사 수집")
+        logger.info(f"The Saigon Times 스크래핑 완료: {len(articles)}개 기사 수집")
         return articles
 
     except Exception as e:
-        print(f"  [!] The Saigon Times 스크래핑 실패: {str(e)}")
-        return []
+        logger.error(f"The Saigon Times 스크래핑 실패: {str(e)}", extra={"url": url})
+        raise ScrapingError(f"Failed to scrape The Saigon Times: {str(e)}")
 
 
 def scrape_earthquake(date_str: Optional[str] = None) -> List[Dict[str, str]]:
@@ -1297,7 +1298,7 @@ def scrape_earthquake(date_str: Optional[str] = None) -> List[Dict[str, str]]:
     Returns:
         지진 정보 리스트 [{'title': str, 'content': str, 'url': str, 'date': str}]
     """
-    print(f"[스크래핑] IGP-VAST 지진 정보 수집 중...")
+    logger.info("IGP-VAST 지진 정보 수집 시작", extra={"url": "http://igp-vast.vn/index.php/en/earthquake-news?format=feed"})
 
     earthquakes = []
 
@@ -1323,7 +1324,7 @@ def scrape_earthquake(date_str: Optional[str] = None) -> List[Dict[str, str]]:
             try:
                 target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
             except ValueError:
-                print(f"  [!] 날짜 형식 오류: {date_str}")
+                logger.warning(f"날짜 형식 오류: {date_str}")
 
         for item in items:
             # 직접 자식 요소에서 데이터 추출
@@ -1378,11 +1379,11 @@ def scrape_earthquake(date_str: Optional[str] = None) -> List[Dict[str, str]]:
                     }
                 )
 
-        print(f"  [OK] IGP-VAST: {len(earthquakes)}개 지진 정보 수집")
+        logger.info(f"IGP-VAST 지진 정보 수집 완료: {len(earthquakes)}개 지진 정보 수집")
         return earthquakes
 
     except Exception as e:
-        print(f"  [!] IGP-VAST 지진 정보 스크래핑 실패: {str(e)}")
+        logger.error(f"IGP-VAST 지진 정보 스크래핑 실패: {str(e)}", extra={"url": url})
         return []
 
 
@@ -1397,8 +1398,7 @@ def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str,
     Returns:
         스크래핑된 기사 데이터 딕셔너리
     """
-    print(f"\n[*] 모든 소스 스크래핑 시작 ({date_str})")
-    print("-" * 50)
+    logger.info(f"모든 소스 스크래핑 시작 ({date_str})")
 
     # 안전 및 기상 관제 데이터 스크래핑
     weather_data = scrape_weather_hochiminh()
@@ -1432,7 +1432,7 @@ def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str,
                 "url": "https://www.nchmf.gov.vn/en/portal/portal/hcm-weather",
             }
         )
-        print(f"  [INFO] 기상 정보 추가됨: {condition_str}, {temp_str}")
+        logger.info(f"기상 정보 추가됨: {condition_str}, {temp_str}")
 
     # 공기질 정보 (데이터가 비어있더라도 시도)
     if air_data:
@@ -1460,7 +1460,7 @@ def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str,
                 "url": "https://www.iqair.com/vietnam/ho-chi-minh-city/ho-chi-minh-city/vinhomes-central-park-2",
             }
         )
-        print(f"  [INFO] 공기질 정보 추가됨: AQI {aqi_str}, {status_str}, PM2.5: {pm25_str}, PM10: {pm10_str}")
+        logger.info(f"공기질 정보 추가됨: AQI {aqi_str}, {status_str}, PM2.5: {pm25_str}, PM10: {pm10_str}")
 
     # 지진 정보 (최근 3개)
     for quake in earthquake_data:
@@ -1484,9 +1484,9 @@ def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str,
                 "url": "https://www.nchmf.gov.vn/",
             }
         )
-        print(f"  [INFO] 안전 데이터가 없어 플레이스홀더 추가됨")
+        logger.info("안전 데이터가 없어 플레이스홀더 추가됨")
     else:
-        print(f"  [INFO] 안전 데이터 {len(safety_items)}개 추가됨")
+        logger.info(f"안전 데이터 {len(safety_items)}개 추가됨")
 
     scraped_data = {
         "안전 및 기상 관제": safety_items,
@@ -1500,8 +1500,6 @@ def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str,
         "VietnamNet 정보통신": scrape_vietnamnet_ttt(date_str),
         "VnExpress IT/과학": scrape_vnexpress_tech(date_str),
     }
-
-    print("-" * 50)
 
     # 원본 YAML 저장
     save_raw_yaml(scraped_data, date_str, output_path)
@@ -1562,12 +1560,12 @@ def save_raw_yaml(scraped_data: Dict, date_str: str, output_path: str) -> bool:
 
         return True
 
-    print(f"\n[*] 원본 YAML 저장 시작...")
+    logger.info("원본 YAML 저장 시작")
 
     yaml_data = {
         "metadata": {
             "date": date_str,
-            "time": datetime.datetime.now().strftime("%H:%M"),
+            "time": datetime.now().strftime("%H:%M"),
             "location": "Ho Chi Minh City",
         },
         "sections": [],
@@ -1668,5 +1666,5 @@ def save_raw_yaml(scraped_data: Dict, date_str: str, output_path: str) -> bool:
             yaml_data, f, allow_unicode=True, default_flow_style=False, sort_keys=False
         )
 
-    print(f"[+] 원본 YAML 저장 완료: {output_path}")
+    logger.info(f"원본 YAML 저장 완료: {output_path}")
     return True
