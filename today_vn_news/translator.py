@@ -12,6 +12,27 @@ import os
 
 from today_vn_news.logger import logger
 from today_vn_news.exceptions import TranslationError
+from today_vn_news.retry import with_api_retry
+
+
+@with_api_retry(max_attempts=2)
+def _call_gemma_api(client, prompt: str):
+    """
+    Gemma API 호출 (재시도 적용)
+
+    Args:
+        client: GenAI 클라이언트
+        prompt: 전송할 프롬프트
+
+    Returns:
+        API 응답 객체
+
+    Raises:
+        Exception: API 호출 실패 시 (최대 2회 재시도 후)
+    """
+    return client.models.generate_content(
+        model="gemma-3-27b-it", contents=prompt
+    )
 
 
 def translate_weather_condition(condition: str) -> str:
@@ -56,9 +77,7 @@ def translate_weather_condition(condition: str) -> str:
             client = genai.Client(api_key=api_key)
             try:
                 prompt = f"베트남어 기상 상태 '{condition}'를 한국어 3글자 이내로 짧게 번역해주세요. 답변만 출력하세요."
-                response = client.models.generate_content(
-                    model="gemma-3-27b-it", contents=prompt
-                )
+                response = _call_gemma_api(client, prompt)
                 if response.text:
                     return response.text.strip()
             except Exception:
@@ -161,9 +180,7 @@ items:
     try:
         logger.info(f"{source_name} 기사 {len(articles_to_translate)}개 번역 시작")
 
-        response = client.models.generate_content(
-            model="gemma-3-27b-it", contents=prompt
-        )
+        response = _call_gemma_api(client, prompt)
 
         if response.text:
             # YAML 파싱
