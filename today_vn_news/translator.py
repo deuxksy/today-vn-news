@@ -9,6 +9,7 @@ Gemma 기반 번역 모듈
 from google import genai
 from typing import List, Dict, Optional
 import os
+import asyncio
 
 from today_vn_news.logger import logger
 from today_vn_news.exceptions import TranslationError
@@ -218,6 +219,38 @@ items:
             raise
         logger.error(f"{source_name} 번역 실패", exc_info=True)
         raise TranslationError(f"Translation failed for {source_name}: {str(e)}")
+
+
+async def translate_articles_async(
+    articles: List[Dict[str, str]],
+    source_name: str,
+    today_str: str,
+    max_articles: int = 2,
+    semaphore: asyncio.Semaphore = None,
+) -> Optional[List[Dict[str, str]]]:
+    """
+    비동기 번역 작업 (세마포어로 동시성 제어)
+
+    Args:
+        articles: 번역할 기사 리스트
+        source_name: 뉴스 소스 이름
+        today_str: 기준일 표시용
+        max_articles: 번역할 최대 기사 수
+        semaphore: 동시성 제어 세마포어 (기본 3개)
+
+    Returns:
+        번역된 기사 리스트 또는 None
+    """
+    if semaphore is None:
+        semaphore = asyncio.Semaphore(3)  # Gemma API 요금 제한 고려
+
+    async with semaphore:
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,
+            translate_articles,  # 기존 동기 함수
+            articles, source_name, today_str, max_articles
+        )
 
 
 def save_translated_yaml(
