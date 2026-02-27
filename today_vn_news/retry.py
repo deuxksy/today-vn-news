@@ -17,17 +17,28 @@ def with_http_retry(
     backoff_factor: float = 2.0,
 ):
     """
-    HTTP 요청 재시도 데코레이터
-    - 타임아웃, 5xx 서버 에러, 네트워크 오류 시 자동 재시도
-    - 4xx 클라이언트 에러는 즉시 실패 처리
+    HTTP 요청 재시도 데코레이터.
+
+    타임아웃, 5xx 서버 에러, 네트워크 오류 시 자동 재시도합니다.
+    4xx 클라이언트 에러는 즉시 실패 처리합니다.
 
     Args:
-        max_attempts: 최대 시도 횟수 (초기 호출 포함)
-        initial_delay: 초기 대기 시간 (초)
-        backoff_factor: 백오프 배수 (지연 시간 = initial_delay * (backoff_factor ** attempt))
+        max_attempts: 최대 시도 횟수 (기본값: 3, 초기 호출 포함)
+        initial_delay: 초기 대기 시간(초) (기본값: 1.0)
+        backoff_factor: 백오프 배수 (기본값: 2.0)
+            지연 시간 = initial_delay * (backoff_factor ** attempt)
 
     Returns:
-        데코레이터 함수
+        Callable: 함수 데코레이터
+
+    Raises:
+        requests.RequestException: 모든 시도 실패 시 마지막 예외 재발생
+        requests.HTTPError: 4xx 클라이언트 에러 발생 시 즉시 실패
+
+    Example:
+        >>> @with_http_retry(max_attempts=5)
+        ... def fetch_data():
+        ...     return requests.get("https://api.example.com")
     """
     import requests
 
@@ -76,16 +87,28 @@ def with_api_retry(
     exceptions: tuple = (Exception,),
 ):
     """
-    API 호출 재시도 데코레이터
+    일반적인 API 호출 재시도 데코레이터.
+
+    지정된 예외 타입 발생 시 지수 백오프를 적용하여 자동 재시도합니다.
+    Gemma API 등 외부 API 호출에 사용합니다.
 
     Args:
-        max_attempts: 최대 시도 횟수 (초기 호출 포함)
-        initial_delay: 초기 대기 시간 (초)
-        backoff_factor: 백오프 배수 (지연 시간 = initial_delay * (backoff_factor ** attempt))
-        exceptions: 재시도할 예외 타입 튜플
+        max_attempts: 최대 시도 횟수 (기본값: 3, 초기 호출 포함)
+        initial_delay: 초기 대기 시간(초) (기본값: 1.0)
+        backoff_factor: 백오프 배수 (기본값: 2.0)
+            지연 시간 = initial_delay * (backoff_factor ** attempt)
+        exceptions: 재시도할 예외 타입 튜플 (기본값: (Exception,))
 
     Returns:
-        데코레이터 함수
+        Callable: 함수 데코레이터
+
+    Raises:
+        Exception: 지정된 예외 타입으로 모든 시도 실패 시 마지막 예외 재발생
+
+    Example:
+        >>> @with_api_retry(max_attempts=3, exceptions=(ConnectionError, TimeoutError))
+        ... def call_api():
+        ...     return external_api_client.request()
     """
 
     def decorator(func: Callable) -> Callable:

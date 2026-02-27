@@ -17,15 +17,24 @@ def setup_logger(
     log_file: Optional[Path] = None
 ) -> logging.Logger:
     """
-    로거 설정 및 초기화
+    구조화된 로거 설정 및 반환.
 
     Args:
-        name: 로거 이름
-        level: 로그 레벨 (기본값: INFO)
-        log_file: 로그 파일 경로 (선택 사항)
+        name: 로거 이름 (기본값: "today_vn_news")
+        level: 로그 레벨 (기본값: logging.INFO)
+        log_file: 로그 파일 경로 (선택 사항, None인 경우 파일 로그 미사용)
 
     Returns:
-        설정된 로거 인스턴스
+        logging.Logger: 설정된 로거 인스턴스
+
+    Note:
+        - 콘솔: 지정된 레벨 이상 출력
+        - 파일: log_file 지정 시 해당 파일에 기록
+        - 중복 호출 시 기존 핸들러 재사용
+
+    Example:
+        >>> logger = setup_logger()
+        >>> logger.info("테스트 메시지")
     """
     logger = logging.getLogger(name)
     logger.setLevel(level)
