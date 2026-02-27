@@ -7,6 +7,7 @@
 
 import logging
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -67,4 +68,6 @@ def setup_logger(
 
 
 # 전역 로거 인스턴스
-logger = setup_logger()
+_log_dir = Path(__file__).parent.parent / "logs"
+_log_file = _log_dir / f"today-vn-news-{datetime.now().strftime('%Y%m%d')}.log"
+logger = setup_logger(log_file=_log_file)
