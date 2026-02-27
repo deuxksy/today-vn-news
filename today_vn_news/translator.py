@@ -10,6 +10,9 @@ from google import genai
 from typing import List, Dict, Optional
 import os
 
+from today_vn_news.logger import logger
+from today_vn_news.exceptions import TranslationError
+
 
 def translate_weather_condition(condition: str) -> str:
     """
@@ -150,13 +153,13 @@ items:
     # Gemma API 호출
     api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if not api_key:
-        print("  [!] 번역 중단: API 키가 설정되지 않았습니다.")
-        return None
+        logger.error("번역 중단: API 키가 설정되지 않았습니다.")
+        raise TranslationError("Translation aborted: API key not configured")
 
     client = genai.Client(api_key=api_key)
 
     try:
-        print(f"  [번역] {source_name} 기사 {len(articles_to_translate)}개 번역 중...")
+        logger.info(f"{source_name} 기사 {len(articles_to_translate)}개 번역 시작")
 
         response = client.models.generate_content(
             model="gemma-3-27b-it", contents=prompt
@@ -181,27 +184,23 @@ items:
                 parsed_yaml = yaml.safe_load(content)
 
                 if isinstance(parsed_yaml, dict) and "items" in parsed_yaml:
-                    print(
-                        f"  [OK] {source_name} 번역 완료: {len(parsed_yaml['items'])}개 기사"
-                    )
+                    logger.info(f"{source_name} 번역 완료: {len(parsed_yaml['items'])}개 기사")
                     return parsed_yaml["items"]
                 elif isinstance(parsed_yaml, list):
-                    print(f"  [OK] {source_name} 번역 완료: {len(parsed_yaml)}개 기사")
+                    logger.info(f"{source_name} 번역 완료: {len(parsed_yaml)}개 기사")
                     return parsed_yaml
                 else:
-                    print(
-                        f"  [!] {source_name} 번역 결과 파싱 실패 - 빈값 또는 잘못된 형식"
-                    )
-                    return None
+                    logger.error(f"{source_name} 번역 결과 파싱 실패 - 빈값 또는 잘못된 형식")
+                    raise TranslationError(f"{source_name}: Translation result parsing failed - empty or invalid format")
             except yaml.YAMLError as e:
-                print(f"  [!] {source_name} YAML 파싱 실패: {str(e)}")
-                return None
+                logger.error(f"{source_name} YAML 파싱 실패: {str(e)}", exc_info=True)
+                raise TranslationError(f"{source_name}: YAML parsing failed: {str(e)}")
 
     except Exception as e:
-        print(f"  [!] {source_name} 번역 중 예외 발생: {str(e)}")
-        return None
-
-    return None
+        if isinstance(e, TranslationError):
+            raise
+        logger.error(f"{source_name} 번역 실패", exc_info=True)
+        raise TranslationError(f"Translation failed for {source_name}: {str(e)}")
 
 
 def save_translated_yaml(
@@ -221,7 +220,7 @@ def save_translated_yaml(
     import yaml
     import os
 
-    print(f"\n[*] 번역된 YAML 저장 시작...")
+    logger.info("번역된 YAML 저장 시작")
 
     yaml_data = {
         "metadata": {
@@ -243,7 +242,7 @@ def save_translated_yaml(
             yaml_data, f, allow_unicode=True, default_flow_style=False, sort_keys=False
         )
 
-    print(f"[+] 번역된 YAML 저장 완료: {output_path}")
+    logger.info(f"번역된 YAML 저장 완료: {output_path}")
     return True
 
 
@@ -259,8 +258,7 @@ def translate_and_save(scraped_data: Dict, date_str: str, output_path: str) -> b
     Returns:
         성공 여부
     """
-    print(f"\n[*] 모든 뉴스 번역 시작...")
-    print("-" * 50)
+    logger.info("모든 뉴스 번역 시작")
 
     translated_sections = []
     section_id = 1
@@ -342,9 +340,7 @@ def translate_and_save(scraped_data: Dict, date_str: str, output_path: str) -> b
 
             if section["items"]:
                 translated_sections.append(section)
-                print(
-                    f"  [OK] {source_name} 데이터 저장 완료: {len(section['items'])}개"
-                )
+                logger.info(f"{source_name} 데이터 저장 완료: {len(section['items'])}개")
 
             section_id += 1  # 안전 및 기상 관제 후 ID 증가
 
@@ -358,14 +354,17 @@ def translate_and_save(scraped_data: Dict, date_str: str, output_path: str) -> b
             }
 
             # 번역
-            translated_items = translate_articles(
-                articles, source_name, date_str, len(articles)
-            )
+            try:
+                translated_items = translate_articles(
+                    articles, source_name, date_str, len(articles)
+                )
+            except TranslationError:
+                translated_items = None
 
             if translated_items:
                 section["items"] = translated_items
                 translated_sections.append(section)
-                print(f"  [OK] {source_name} 번역 완료: {len(translated_items)}개")
+                logger.info(f"{source_name} 번역 완료: {len(translated_items)}개")
             else:
                 # 번역 실패 시 원본 데이터 저장
                 for article in articles:
@@ -377,13 +376,12 @@ def translate_and_save(scraped_data: Dict, date_str: str, output_path: str) -> b
                         }
                     )
                 translated_sections.append(section)
-                print(f"  [!] {source_name} 번역 실패, 원본 데이터 저장")
+                logger.warning(f"{source_name} 번역 실패, 원본 데이터 저장")
 
             section_id += 1
 
-    print("-" * 50)
     if not translated_sections:
-        print("[!] 번역된 뉴스가 전혀 없습니다.")
+        logger.error("번역된 뉴스가 전혀 없습니다.")
         return False
 
     # 번역된 YAML 저장
