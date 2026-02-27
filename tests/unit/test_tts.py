@@ -5,6 +5,7 @@ TTS 모듈 단위 테스트 (실제 API 사용)
 import pytest
 import os
 from today_vn_news.tts import parse_yaml_to_text, yaml_to_tts
+from today_vn_news.exceptions import TTSError
 
 
 @pytest.mark.unit
@@ -26,8 +27,8 @@ class TestYamlParsing:
         assert len(text) > 0
 
     def test_parse_yaml_missing_file(self):
-        text = parse_yaml_to_text("nonexistent.yaml")
-        assert text == ""
+        with pytest.raises(TTSError):
+            parse_yaml_to_text("nonexistent.yaml")
 
 
 @pytest.mark.unit

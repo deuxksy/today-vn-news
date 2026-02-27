@@ -7,6 +7,9 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
+from today_vn_news.logger import logger
+from today_vn_news.exceptions import UploadError
+
 """
 YouTube 업로드 모듈 (YouTube Data API v3 Wrapper)
 - 목적: 생성된 뉴스 영상을 유튜브 채널에 자동 업로드
@@ -42,32 +45,42 @@ def get_authenticated_service(data_dir: str = "data"):
         try:
             with open(token_path, 'rb') as token:
                 credentials = pickle.load(token)
-        except (EOFError, pickle.UnpicklingError):
+        except (EOFError, pickle.UnpicklingError) as e:
+            logger.warning(f"토큰 파일 로드 실패: {e}")
             credentials = None
 
     # 토큰이 없거나 만료된 경우 인증 수행
     if not credentials or not credentials.valid:
         if credentials and credentials.expired and credentials.refresh_token:
-            credentials.refresh(Request())
+            try:
+                credentials.refresh(Request())
+                logger.info("토큰 갱신 완료")
+            except Exception as e:
+                logger.error(f"토큰 갱신 실패: {e}")
+                raise UploadError(f"토큰 갱신 실패: {e}")
         else:
             if not os.path.exists(secrets_path):
-                print(f"[!] '{secrets_path}' 파일이 필요합니다. Google Cloud Console에서 다운로드하여 루트에 배치해 주세요.")
-                return None
-            
+                logger.error(f"'{secrets_path}' 파일이 필요합니다. Google Cloud Console에서 다운로드하여 루트에 배치해 주세요.")
+                raise UploadError(f"'{secrets_path}' 파일이 필요합니다.")
+
             flow = InstalledAppFlow.from_client_secrets_file(secrets_path, SCOPES)
             # 서버 환경이나 원격 환경을 고려하여 open_browser=False 설정
             try:
                 credentials = flow.run_local_server(port=58080, open_browser=False)
             except OSError as e:
                 if e.errno == 48:
-                    print("\n[!] 에러: 58080 포트가 이미 사용 중입니다.")
-                    print("    'lsof -ti :58080 | xargs kill -9' 명령어로 기존 프로세스를 종료 후 다시 시도해 주세요.\n")
-                    sys.exit(1)
-                raise e
+                    logger.error("58080 포트가 이미 사용 중입니다.")
+                    logger.error("'lsof -ti :58080 | xargs kill -9' 명령어로 기존 프로세스를 종료 후 다시 시도해 주세요.")
+                    raise UploadError("58080 포트가 이미 사용 중입니다.")
+                raise UploadError(f"OAuth 인증 중 오류 발생: {e}")
 
         # 토큰 저장
-        with open(token_path, 'wb') as token:
-            pickle.dump(credentials, token)
+        try:
+            with open(token_path, 'wb') as token:
+                pickle.dump(credentials, token)
+        except Exception as e:
+            logger.error(f"토큰 저장 실패: {e}")
+            raise UploadError(f"토큰 저장 실패: {e}")
 
     return build('youtube', 'v3', credentials=credentials)
 
@@ -75,7 +88,7 @@ def add_video_to_playlist(youtube, video_id, playlist_id):
     """
     영상을 특정 재생 목록에 추가
     """
-    print(f"[*] 재생 목록에 추가 중: {playlist_id}")
+    logger.info(f"재생 목록에 추가 중: {playlist_id}")
     try:
         request = youtube.playlistItems().insert(
             part="snippet",
@@ -90,11 +103,11 @@ def add_video_to_playlist(youtube, video_id, playlist_id):
             }
         )
         response = request.execute()
-        print(f"[+] 재생 목록 추가 완료! Item ID: {response.get('id')}")
+        logger.info(f"재생 목록 추가 완료! Item ID: {response.get('id')}")
         return True
     except Exception as e:
-        print(f"[!] 재생 목록 추가 중 오류 발생: {str(e)}")
-        return False
+        logger.error(f"재생 목록 추가 중 오류 발생: {str(e)}")
+        raise UploadError(f"재생 목록 추가 중 오류 발생: {str(e)}")
 
 def upload_video(yymmdd: str, data_dir: str = "data"):
     """
@@ -106,14 +119,18 @@ def upload_video(yymmdd: str, data_dir: str = "data"):
     """
     file_path = os.path.join(data_dir, f"{yymmdd}_final.mp4")
     if not os.path.exists(file_path):
-        print(f"[!] 업로드할 파일을 찾을 수 없습니다: {file_path}")
-        return False
+        logger.error(f"업로드할 파일을 찾을 수 없습니다: {file_path}")
+        raise UploadError(f"업로드할 파일을 찾을 수 없습니다: {file_path}")
 
-    youtube = get_authenticated_service(data_dir)
-    if not youtube:
-        return False
+    try:
+        youtube = get_authenticated_service(data_dir)
+    except UploadError:
+        raise
+    except Exception as e:
+        logger.error(f"유튜브 인증 실패: {e}")
+        raise UploadError(f"유튜브 인증 실패: {e}")
 
-    print(f"[*] 유튜브 업로드 시작: {file_path}")
+    logger.info(f"유튜브 업로드 시작: {file_path}")
 
     # 영상 정보 설정 (마크다운에서 제목 추출 로직 추가 권장)
     title = f"Today VN IT News - {yymmdd}"
@@ -146,17 +163,24 @@ def upload_video(yymmdd: str, data_dir: str = "data"):
     )
 
     response = None
-    while response is None:
-        status, response = request.next_chunk()
-        if status:
-            print(f"[*] 업로드 진행 중: {int(status.progress() * 100)}%")
+    try:
+        while response is None:
+            status, response = request.next_chunk()
+            if status:
+                logger.info(f"업로드 진행 중: {int(status.progress() * 100)}%")
+    except Exception as e:
+        logger.error(f"업로드 중 오류 발생: {str(e)}")
+        raise UploadError(f"업로드 중 오류 발생: {str(e)}")
 
     video_id = response.get('id')
-    print(f"[+] 업로드 완료! Video ID: {video_id}")
+    logger.info(f"업로드 완료! Video ID: {video_id}")
 
     # 재생 목록에 추가
     if video_id:
-        add_video_to_playlist(youtube, video_id, DEFAULT_PLAYLIST_ID)
+        try:
+            add_video_to_playlist(youtube, video_id, DEFAULT_PLAYLIST_ID)
+        except UploadError:
+            logger.warning("재생 목록 추가 실패 (업로드는 완료됨)")
 
     return True
 

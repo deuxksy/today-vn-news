@@ -3,6 +3,9 @@ import subprocess
 import os
 import sys
 
+from today_vn_news.logger import logger
+from today_vn_news.exceptions import VideoSynthesisError
+
 """
 영상 합성 엔진 (FFmpeg Wrapper)
 - 목적: 정제된 음성(MP3)과 배경 영상(MOV)을 합쳐 최종 뉴스 영상 생성
@@ -53,22 +56,22 @@ def synthesize_video(base_name: str, data_dir: str = "data"):
 
     if not os.path.exists(video_in):
         if os.path.exists(default_img):
-            print(f"[*] 영상을 찾을 수 없어 기본 이미지({default_img})를 사용합니다.")
+            logger.info(f"영상을 찾을 수 없어 기본 이미지({default_img})를 사용합니다.")
             video_in = default_img
             using_image = True
         else:
-            print(f"[!] 영상이나 기본 이미지({default_img})가 없습니다. 합성이 불가능합니다.")
-            return False
+            logger.error(f"영상이나 기본 이미지({default_img})가 없습니다. 합성이 불가능합니다.")
+            raise VideoSynthesisError(f"영상이나 기본 이미지({default_img})가 없습니다.")
 
     if not os.path.exists(audio_in):
-        print(f"[!] 필수 오디오 파일이 없습니다: {audio_in}")
-        return False
+        logger.error(f"필수 오디오 파일이 없습니다: {audio_in}")
+        raise VideoSynthesisError(f"필수 오디오 파일이 없습니다: {audio_in}")
 
     encoder, input_flags, output_flags = get_hw_encoder_config()
-    print(f"[*] 영상 합성 시작: {base_name}")
-    print(f"[*] 사용 인코더: {encoder}")
+    logger.info(f"영상 합성 시작: {base_name}")
+    logger.info(f"사용 인코더: {encoder}")
     if input_flags:
-        print(f"[*] 가속 옵션: {' '.join(input_flags)} {' '.join(output_flags)}")
+        logger.info(f"가속 옵션: {' '.join(input_flags)} {' '.join(output_flags)}")
     
     # FFmpeg 명령어 구성
     cmd = ["ffmpeg", "-y"]
@@ -106,20 +109,25 @@ def synthesize_video(base_name: str, data_dir: str = "data"):
     try:
         process = subprocess.run(cmd, capture_output=True, text=True)
         if process.returncode == 0:
-            print(f"[+] 최종 영상 생성 완료: {video_out}")
+            logger.info(f"최종 영상 생성 완료: {video_out}")
             return True
         else:
-            print(f"[!] FFmpeg 실행 에러:")
+            logger.error("FFmpeg 실행 에러:")
             # stderr 전체를 출력 (긴 로그도 잘리지 않음)
             if process.stderr:
-                print(process.stderr)
+                logger.error(process.stderr)
             # stdout도 있으면 출력
             if process.stdout:
-                print(f"[!] FFmpeg stdout: {process.stdout}")
-            return False
+                logger.error(f"FFmpeg stdout: {process.stdout}")
+            raise VideoSynthesisError("FFmpeg 실행 실패")
+    except FileNotFoundError:
+        logger.error("FFmpeg가 설치되지 않았습니다.")
+        raise VideoSynthesisError("FFmpeg가 설치되지 않았습니다.")
+    except VideoSynthesisError:
+        raise
     except Exception as e:
-        print(f"[!] 예기치 못한 오류: {str(e)}")
-        return False
+        logger.error(f"예기치 못한 오류: {str(e)}")
+        raise VideoSynthesisError(f"예기치 못한 오류: {str(e)}")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
