@@ -705,45 +705,23 @@ def scrape_weather_hochiminh() -> Dict[str, str]:
 
 def scrape_air_quality() -> Dict[str, str]:
     """
-    IQAir API (AQI) + Open-Meteo API (PM2.5, PM10) 혼합
+    Open-Meteo Air Quality API (AQI, PM2.5, PM10)
 
     Returns:
         공기질 정보 딕셔너리 {'aqi': str, 'status': str, 'pm25': str, 'pm10': str}
     """
-    logger.info("IQAir + Open-Meteo 공기질 정보 수집 시작")
+    logger.info("Open-Meteo 공기질 정보 수집 시작")
 
     try:
-        # IQAir 실제 관측소 좌표 (Quan Mot)
+        # 호치민 시 좌표 (Quan Mot 관측소)
         lat, lon = 10.78069, 106.69944
 
-        # 1. IQAir API로 AQI 가져오기
-        api_key = os.getenv("IQAIR_API_KEY")
-        if not api_key:
-            raise ValueError("IQAIR_API_KEY 환경 변수가 설정되지 않았습니다.")
-        iqair_url = f"http://api.airvisual.com/v2/nearest_city"
-        iqair_params = {
-            "lat": lat,
-            "lon": lon,
-            "key": api_key
-        }
-
-        iqair_response = _fetch_url_with_params(iqair_url, params=iqair_params)
-        iqair_data = iqair_response.json()
-
-        # AQI 추출
-        if iqair_data.get("status") == "success":
-            pollution = iqair_data["data"]["current"]["pollution"]
-            us_aqi = pollution.get("aqius")
-        else:
-            logger.warning(f"IQAir API 실패: {iqair_data.get('data', {}).get('message')}")
-            us_aqi = None
-
-        # 2. Open-Meteo API로 PM2.5, PM10 가져오기
+        # Open-Meteo Air Quality API
         openmeteo_url = "https://air-quality-api.open-meteo.com/v1/air-quality"
         openmeteo_params = {
             "latitude": lat,
             "longitude": lon,
-            "current": "pm2_5,pm10",
+            "current": "us_aqi,pm2_5,pm10",
             "timezone": "auto"
         }
 
@@ -751,6 +729,7 @@ def scrape_air_quality() -> Dict[str, str]:
         openmeteo_data = openmeteo_response.json()
 
         current = openmeteo_data.get("current", {})
+        us_aqi = current.get("us_aqi")
         pm25 = current.get("pm2_5")
         pm10 = current.get("pm10")
 
@@ -784,7 +763,7 @@ def scrape_air_quality() -> Dict[str, str]:
         else:
             pm10 = ""
 
-        logger.info(f"IQAir AQI={aqi}, Open-Meteo PM2.5={pm25} µg/m³, PM10={pm10} µg/m³")
+        logger.info(f"Open-Meteo AQI={aqi}, PM2.5={pm25} µg/m³, PM10={pm10} µg/m³")
         return {"aqi": aqi, "status": status, "pm25": pm25, "pm10": pm10}
 
     except requests.RequestException as e:
@@ -1487,7 +1466,7 @@ def scrape_and_save(date_str: str, output_path: str) -> Dict[str, List[Dict[str,
                 "pm25": air_data["pm25"],
                 "pm10": air_data["pm10"],
                 "content": f"AQI {aqi_str} ({status_str}), PM2.5: {pm25_str}, PM10: {pm10_str}",
-                "url": "https://www.iqair.com/vietnam/ho-chi-minh-city/ho-chi-minh-city/vinhomes-central-park-2",
+                "url": "https://open-meteo.com/",
             }
         )
         logger.info(f"공기질 정보 추가됨: AQI {aqi_str}, {status_str}, PM2.5: {pm25_str}, PM10: {pm10_str}")
