@@ -9,6 +9,7 @@ import datetime
 import yaml
 from pathlib import Path
 from typing import Dict
+from unittest.mock import Mock, AsyncMock
 
 # ====== 데이터 Fixtures ======
 
@@ -168,3 +169,40 @@ def auto_save_scraped_yaml(test_data_dir, request):
 
     # 테스트 종료 후 YAML 저장
     request.addfinalizer(save_after_test)
+
+
+# ====== Mock Fixtures ======
+
+
+@pytest.fixture
+def mock_gemma_client():
+    """Gemma API Mock"""
+    client = AsyncMock()
+    mock_response = Mock()
+    mock_response.text = """items:
+  - title: 테스트 기사 제목
+    content: 테스트 내용입니다. 두 번째 줄입니다. 세 번째 줄입니다.
+    url: https://example.com/test"""
+    client.models.generate_content.return_value = mock_response
+    return client
+
+
+@pytest.fixture
+def mock_http_response():
+    """HTTP 응답 Mock"""
+    mock = Mock()
+    mock.status_code = 200
+    mock.text = "<html><body><div class='title'>테스트</div><p>내용</p></body></html>"
+    return mock
+
+
+@pytest.fixture
+def mock_successful_translation():
+    """성공적인 번역 결과 Mock"""
+    return [
+        {
+            "title": "테스트 기사",
+            "content": "테스트 내용입니다.",
+            "url": "https://example.com"
+        }
+    ]
