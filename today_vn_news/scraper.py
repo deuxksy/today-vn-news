@@ -16,6 +16,7 @@ import html
 
 from today_vn_news.logger import logger
 from today_vn_news.exceptions import ScrapingError
+from today_vn_news.retry import with_http_retry
 
 
 def clean_text(text: str) -> str:
@@ -62,6 +63,54 @@ def clean_text(text: str) -> str:
     return text
 
 
+# ============================================================================
+# HTTP 요청 헬퍼 함수 (재시도 메커니즘 적용)
+# ============================================================================
+
+@with_http_retry(max_attempts=3)
+def _fetch_url(url: str, headers: dict = None, timeout: int = 10) -> requests.Response:
+    """
+    HTTP GET 요청 (재시도 적용)
+
+    Args:
+        url: 요청 URL
+        headers: HTTP 헤더
+        timeout: 타임아웃 (초)
+
+    Returns:
+        Response 객체
+    """
+    if headers is None:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+        }
+    response = requests.get(url, headers=headers, timeout=timeout)
+    response.raise_for_status()
+    return response
+
+
+@with_http_retry(max_attempts=3)
+def _fetch_url_with_params(url: str, params: dict = None, timeout: int = 10) -> requests.Response:
+    """
+    HTTP GET 요청 (쿼리 파라미터 포함, 재시도 적용)
+
+    Args:
+        url: 요청 URL
+        params: 쿼리 파라미터
+        timeout: 타임아웃 (초)
+
+    Returns:
+        Response 객체
+    """
+    response = requests.get(url, params=params, timeout=timeout)
+    response.raise_for_status()
+    return response
+
+
+# ============================================================================
+# 스크래핑 함수
+# ============================================================================
+
 def scrape_nhandan(date_str: str) -> List[Dict[str, str]]:
     """
     Nhân Dân(정부 기관지) 스크래핑
@@ -81,9 +130,7 @@ def scrape_nhandan(date_str: str) -> List[Dict[str, str]]:
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-
+        response = _fetch_url(url, headers=headers)
         soup = BeautifulSoup(response.text, "html.parser")
 
         # 오늘 날짜 형식 (예: 09/02/2025)
@@ -166,8 +213,8 @@ def scrape_nhandan(date_str: str) -> List[Dict[str, str]]:
         logger.info(f"Nhân Dân 스크래핑 완료: {len(articles)}개 기사 수집")
         return articles
 
-    except Exception as e:
-        logger.error(f"Nhân Dân 스크래핑 실패: {str(e)}", extra={"url": url})
+    except requests.RequestException as e:
+        logger.error(f"Nhân Dân 스크래핑 실패", exc_info=True)
         raise ScrapingError(f"Failed to scrape Nhân Dân: {str(e)}")
 
 
@@ -194,8 +241,7 @@ def scrape_suckhoedoisong(date_str: str) -> List[Dict[str, str]]:
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
-        response = requests.get(rss_url, headers=headers, timeout=10)
-        response.raise_for_status()
+        response = _fetch_url(rss_url, headers=headers)
 
         # XML 파싱
         root = ET.fromstring(response.text)
@@ -264,8 +310,8 @@ def scrape_suckhoedoisong(date_str: str) -> List[Dict[str, str]]:
         logger.info(f"Sức khỏe & Đời living RSS 파싱 완료: {len(articles)}개 기사 수집")
         return articles
 
-    except Exception as e:
-        logger.error(f"Sức khỏe & Đời living RSS 파싱 실패: {str(e)}", extra={"url": rss_url})
+    except requests.RequestException as e:
+        logger.error(f"Sức khỏe & Đời living RSS 파싱 실패", exc_info=True)
         raise ScrapingError(f"Failed to parse Sức khỏe & Đời living RSS: {str(e)}")
 
 
@@ -288,9 +334,7 @@ def scrape_tuoitre(date_str: str) -> List[Dict[str, str]]:
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-
+        response = _fetch_url(url, headers=headers)
         soup = BeautifulSoup(response.text, "html.parser")
 
         # 오늘 날짜 형식
@@ -354,8 +398,8 @@ def scrape_tuoitre(date_str: str) -> List[Dict[str, str]]:
         logger.info(f"Tuổi Trẻ 스크래핑 완료: {len(articles)}개 기사 수집")
         return articles
 
-    except Exception as e:
-        logger.error(f"Tuổi Trẻ 스크래핑 실패: {str(e)}", extra={"url": url})
+    except requests.RequestException as e:
+        logger.error(f"Tuổi Trẻ 스크래핑 실패", exc_info=True)
         raise ScrapingError(f"Failed to scrape Tuổi Trẻ: {str(e)}")
 
 
@@ -394,8 +438,7 @@ def scrape_vietnamnet(date_str: str) -> List[Dict[str, str]]:
             headers = {
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
             }
-            response = requests.get(rss_url, headers=headers, timeout=10)
-            response.raise_for_status()
+            response = _fetch_url(rss_url, headers=headers)
 
             # XML 파싱
             root = ET.fromstring(response.text)
@@ -514,8 +557,7 @@ def scrape_vnexpress(date_str: str) -> List[Dict[str, str]]:
             headers = {
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
             }
-            response = requests.get(rss_url, headers=headers, timeout=10)
-            response.raise_for_status()
+            response = _fetch_url(rss_url, headers=headers)
 
             # XML 파싱
             root = ET.fromstring(response.text)
@@ -611,9 +653,7 @@ def scrape_weather_hochiminh() -> Dict[str, str]:
 
         # NCHMF 호치민 날씨 페이지
         url = "https://nchmf.gov.vn/kttvsiteE/vi-VN/1/vung-tau-tp-ho-chi-minh-w31.html"
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-
+        response = _fetch_url(url, headers=headers)
         soup = BeautifulSoup(response.text, "html.parser")
 
         # 기상 데이터 추출 (explore agent 분석 기반 CSS 선택자 사용)
@@ -658,8 +698,8 @@ def scrape_weather_hochiminh() -> Dict[str, str]:
         logger.info("NCHMF 기상 정보 수집 완료")
         return {"temp": temp, "humidity": humidity, "condition": condition}
 
-    except Exception as e:
-        logger.error(f"NCHMF 기상 정보 스크래핑 실패: {str(e)}", extra={"url": url})
+    except requests.RequestException as e:
+        logger.error(f"NCHMF 기상 정보 스크래핑 실패", exc_info=True)
         return {"temp": "", "humidity": "", "condition": ""}
 
 
@@ -687,8 +727,7 @@ def scrape_air_quality() -> Dict[str, str]:
             "key": api_key
         }
 
-        iqair_response = requests.get(iqair_url, params=iqair_params, timeout=10)
-        iqair_response.raise_for_status()
+        iqair_response = _fetch_url_with_params(iqair_url, params=iqair_params)
         iqair_data = iqair_response.json()
 
         # AQI 추출
@@ -708,8 +747,7 @@ def scrape_air_quality() -> Dict[str, str]:
             "timezone": "auto"
         }
 
-        openmeteo_response = requests.get(openmeteo_url, params=openmeteo_params, timeout=10)
-        openmeteo_response.raise_for_status()
+        openmeteo_response = _fetch_url_with_params(openmeteo_url, params=openmeteo_params)
         openmeteo_data = openmeteo_response.json()
 
         current = openmeteo_data.get("current", {})
@@ -749,8 +787,8 @@ def scrape_air_quality() -> Dict[str, str]:
         logger.info(f"IQAir AQI={aqi}, Open-Meteo PM2.5={pm25} µg/m³, PM10={pm10} µg/m³")
         return {"aqi": aqi, "status": status, "pm25": pm25, "pm10": pm10}
 
-    except Exception as e:
-        logger.error(f"공기질 정보 스크래핑 실패: {str(e)}")
+    except requests.RequestException as e:
+        logger.error(f"공기질 정보 스크래핑 실패", exc_info=True)
         return {"aqi": "", "status": "", "pm25": "", "pm10": ""}
 
 
@@ -788,8 +826,7 @@ def scrape_thanhnien_rss(date_str: str) -> List[Dict[str, str]]:
             headers = {
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
             }
-            response = requests.get(rss_url, headers=headers, timeout=10)
-            response.raise_for_status()
+            response = _fetch_url(rss_url, headers=headers)
 
             # XML 파싱
             root = ET.fromstring(response.text)
@@ -896,9 +933,7 @@ def scrape_thanhnien(date_str: str) -> List[Dict[str, str]]:
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-
+        response = _fetch_url(url, headers=headers)
         soup = BeautifulSoup(response.text, "html.parser")
 
         # 오늘 날짜 형식
@@ -985,8 +1020,8 @@ def scrape_thanhnien(date_str: str) -> List[Dict[str, str]]:
         logger.info(f"Thanh Niên 스크래핑 완료: {len(articles)}개 기사 수집")
         return articles
 
-    except Exception as e:
-        logger.error(f"Thanh Niên 스크래핑 실패: {str(e)}", extra={"url": url})
+    except requests.RequestException as e:
+        logger.error(f"Thanh Niên 스크래핑 실패", exc_info=True)
         raise ScrapingError(f"Failed to scrape Thanh Niên: {str(e)}")
 
 
@@ -1013,8 +1048,7 @@ def scrape_vietnamnet_ttt(date_str: str) -> List[Dict[str, str]]:
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
-        response = requests.get(rss_url, headers=headers, timeout=10)
-        response.raise_for_status()
+        response = _fetch_url(rss_url, headers=headers)
 
         # XML 파싱
         root = ET.fromstring(response.text)
@@ -1083,8 +1117,8 @@ def scrape_vietnamnet_ttt(date_str: str) -> List[Dict[str, str]]:
         logger.info(f"VietnamNet 정보통신 RSS 파싱 완료: {len(articles)}개 기사 수집")
         return articles
 
-    except Exception as e:
-        logger.error(f"VietnamNet 정보통신 RSS 파싱 실패: {str(e)}", extra={"url": rss_url})
+    except requests.RequestException as e:
+        logger.error(f"VietnamNet 정보통신 RSS 파싱 실패", exc_info=True)
         raise ScrapingError(f"Failed to parse VietnamNet 정보통신 RSS: {str(e)}")
 
 
@@ -1111,8 +1145,7 @@ def scrape_vnexpress_tech(date_str: str) -> List[Dict[str, str]]:
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
-        response = requests.get(rss_url, headers=headers, timeout=10)
-        response.raise_for_status()
+        response = _fetch_url(rss_url, headers=headers)
 
         # XML 파싱
         root = ET.fromstring(response.text)
@@ -1181,8 +1214,8 @@ def scrape_vnexpress_tech(date_str: str) -> List[Dict[str, str]]:
         logger.info(f"VnExpress IT/과학 RSS 파싱 완료: {len(articles)}개 기사 수집")
         return articles
 
-    except Exception as e:
-        logger.error(f"VnExpress IT/과학 RSS 파싱 실패: {str(e)}", extra={"url": rss_url})
+    except requests.RequestException as e:
+        logger.error(f"VnExpress IT/과학 RSS 파싱 실패", exc_info=True)
         raise ScrapingError(f"Failed to parse VnExpress IT/과학 RSS: {str(e)}")
 
 
@@ -1205,9 +1238,7 @@ def scrape_saigontimes(date_str: str) -> List[Dict[str, str]]:
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-
+        response = _fetch_url(url, headers=headers)
         soup = BeautifulSoup(response.text, "html.parser")
 
         # 오늘 날짜 형식
@@ -1283,8 +1314,8 @@ def scrape_saigontimes(date_str: str) -> List[Dict[str, str]]:
         logger.info(f"The Saigon Times 스크래핑 완료: {len(articles)}개 기사 수집")
         return articles
 
-    except Exception as e:
-        logger.error(f"The Saigon Times 스크래핑 실패: {str(e)}", extra={"url": url})
+    except requests.RequestException as e:
+        logger.error(f"The Saigon Times 스크래핑 실패", exc_info=True)
         raise ScrapingError(f"Failed to scrape The Saigon Times: {str(e)}")
 
 
@@ -1309,8 +1340,7 @@ def scrape_earthquake(date_str: Optional[str] = None) -> List[Dict[str, str]]:
 
         # IGP-VAST RSS 피드 (영어)
         url = "http://igp-vast.vn/index.php/en/earthquake-news?format=feed"
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
+        response = _fetch_url(url, headers=headers)
 
         # XML 파싱
         root = ET.fromstring(response.content)
@@ -1382,8 +1412,8 @@ def scrape_earthquake(date_str: Optional[str] = None) -> List[Dict[str, str]]:
         logger.info(f"IGP-VAST 지진 정보 수집 완료: {len(earthquakes)}개 지진 정보 수집")
         return earthquakes
 
-    except Exception as e:
-        logger.error(f"IGP-VAST 지진 정보 스크래핑 실패: {str(e)}", extra={"url": url})
+    except requests.RequestException as e:
+        logger.error(f"IGP-VAST 지진 정보 스크래핑 실패", exc_info=True)
         return []
 
 
