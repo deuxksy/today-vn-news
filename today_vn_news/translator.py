@@ -253,6 +253,115 @@ async def translate_articles_async(
         )
 
 
+async def translate_all_sources_parallel(
+    scraped_data: Dict, date_str: str
+) -> List[Dict]:
+    """
+    모든 뉴스 소스를 비동기 병렬로 번역
+
+    Args:
+        scraped_data: 스크래핑된 원본 데이터 (안전 및 기상 관제 제외)
+        date_str: 기준일 표시용
+
+    Returns:
+        번역된 섹션 리스트
+    """
+    logger.info("비동기 병렬 번역 시작")
+
+    # 우선순위별 순서 (안전 및 기상 관제 제외)
+    source_order = [
+        "Sức khỏe & Đời sống",
+        "Nhân Dân",
+        "Tuổi Trẻ",
+        "VietnamNet",
+        "VnExpress",
+        "Thanh Niên",
+        "The Saigon Times",
+        "VietnamNet 정보통신",
+        "VnExpress IT/과학",
+    ]
+
+    # 병렬 번역 작업 생성
+    translation_tasks = []
+    for source_name in source_order:
+        if source_name not in scraped_data:
+            continue
+
+        articles = scraped_data[source_name]
+        if not articles:
+            continue
+
+        # 비동기 번역 작업 추가
+        task = translate_articles_async(
+            articles=articles,
+            source_name=source_name,
+            today_str=date_str,
+            max_articles=len(articles),
+        )
+        translation_tasks.append((source_name, task))
+
+    # 모든 번역 작업 병렬 실행
+    translated_sections = []
+    section_id = 2  # 안전 및 기상 관제가 ID 1이므로 2부터 시작
+
+    if translation_tasks:
+        semaphore = asyncio.Semaphore(3)  # Gemma API 요금 제한 고려
+        results = await asyncio.gather(
+            *[task for _, task in translation_tasks],
+            return_exceptions=True
+        )
+
+        for (source_name, _), result in zip(translation_tasks, results):
+            section = {
+                "id": str(section_id),
+                "name": source_name,
+                "priority": "P0" if "Sức khỏe" in source_name else "P2",
+                "items": [],
+            }
+
+            if isinstance(result, TranslationError):
+                # 번역 실패 - 원본 데이터 저장
+                articles = scraped_data[source_name]
+                for article in articles:
+                    section["items"].append({
+                        "title": article["title"],
+                        "content": article["content"],
+                        "url": article["url"],
+                    })
+                translated_sections.append(section)
+                logger.warning(f"{source_name} 번역 실패, 원본 데이터 저장")
+            elif isinstance(result, Exception):
+                logger.error(f"{source_name} 번역 중 예외 발생: {result}")
+                articles = scraped_data[source_name]
+                for article in articles:
+                    section["items"].append({
+                        "title": article["title"],
+                        "content": article["content"],
+                        "url": article["url"],
+                    })
+                translated_sections.append(section)
+            elif result:
+                section["items"] = result
+                translated_sections.append(section)
+                logger.info(f"{source_name} 번역 완료: {len(result)}개")
+            else:
+                # 빈 결과 - 원본 데이터 저장
+                articles = scraped_data[source_name]
+                for article in articles:
+                    section["items"].append({
+                        "title": article["title"],
+                        "content": article["content"],
+                        "url": article["url"],
+                    })
+                translated_sections.append(section)
+                logger.warning(f"{source_name} 번역 결과 없음, 원본 데이터 저장")
+
+            section_id += 1
+
+    logger.info(f"비동기 병렬 번역 완료: {len(translated_sections)}개 섹션")
+    return translated_sections
+
+
 def save_translated_yaml(
     translated_data: Dict, date_str: str, output_path: str
 ) -> bool:
