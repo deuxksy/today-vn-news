@@ -129,13 +129,13 @@ uv run pytest tests/unit/test_engine.py -v
 uv run pytest tests/unit/test_uploader.py -v
 ```
 
-### 통합/E2E 테스트
+### E2E 테스트 (전체 파이프라인)
 
 ```bash
-# 통합 테스트 (파이프라인 전체)
-uv run pytest tests/integration/test_pipeline.py -v
+# 업로드 제외 전체 플로우
+uv run pytest tests/e2e/test_full_pipeline.py -v
 
-# E2E 테스트 (실제 API 호출)
+# 실제 YouTube 업로드 포함
 uv run pytest tests/e2e/test_full_pipeline.py -v -m "slow"
 ```
 
