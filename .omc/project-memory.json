@@ -210,6 +210,18 @@
       "accessCount": 1,
       "lastAccessed": 1773586300666,
       "type": "file"
+    },
+    {
+      "path": "tests",
+      "accessCount": 1,
+      "lastAccessed": 1773586804643,
+      "type": "directory"
+    },
+    {
+      "path": "tests/conftest.py",
+      "accessCount": 1,
+      "lastAccessed": 1773586815175,
+      "type": "file"
     }
   ],
   "userDirectives": []
