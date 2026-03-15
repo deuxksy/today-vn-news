@@ -122,8 +122,10 @@ def translate_articles(
 """
 
     for i, article in enumerate(articles_to_translate, 1):
+        # 번역 전 제목에서 콜론 제거 (YAML 파싱 오류 방지)
+        clean_title = article["title"].replace(":", " -")
         prompt += f"""
-{i}. 제목: {article["title"]}
+{i}. 제목: {clean_title}
     URL: {article["url"]}
     내용: {article["content"]}
 """
@@ -202,15 +204,48 @@ items:
                 parsed_yaml = yaml.safe_load(content)
 
                 if isinstance(parsed_yaml, dict) and "items" in parsed_yaml:
-                    logger.info(f"{source_name} 번역 완료: {len(parsed_yaml['items'])}개 기사")
-                    return parsed_yaml["items"]
+                    items = parsed_yaml["items"]
+                    # 번역 후 제목에서 콜론 제거 (이중 안전장치)
+                    for item in items:
+                        if "title" in item and item["title"]:
+                            item["title"] = item["title"].replace(":", " -")
+                    logger.info(f"{source_name} 번역 완료: {len(items)}개 기사")
+                    return items
                 elif isinstance(parsed_yaml, list):
+                    # 번역 후 제목에서 콜론 제거 (이중 안전장치)
+                    for item in parsed_yaml:
+                        if "title" in item and item["title"]:
+                            item["title"] = item["title"].replace(":", " -")
                     logger.info(f"{source_name} 번역 완료: {len(parsed_yaml)}개 기사")
                     return parsed_yaml
                 else:
                     logger.error(f"{source_name} 번역 결과 파싱 실패 - 빈값 또는 잘못된 형식")
                     raise TranslationError(f"{source_name}: Translation result parsing failed - empty or invalid format")
             except yaml.YAMLError as e:
+                # 콜론으로 인한 파싱 실패 시, 콜론 치환 후 재시도
+                if "mapping values are not allowed here" in str(e):
+                    logger.warning(f"{source_name} YAML 파싱 실패 (콜론 문제), 콜론 치환 후 재시도")
+                    # 모든 콜론을 대시로 치환 (YAML key-value 구분자 문제 해결)
+                    fixed_content = content.replace(":", " -")
+                    try:
+                        parsed_yaml = yaml.safe_load(fixed_content)
+                        if isinstance(parsed_yaml, dict) and "items" in parsed_yaml:
+                            items = parsed_yaml["items"]
+                            for item in items:
+                                if "title" in item and item["title"]:
+                                    item["title"] = item["title"].replace(" -", " -")  # 이미 치환됨
+                            logger.info(f"{source_name} 번역 완료 (복구됨): {len(items)}개 기사")
+                            return items
+                        elif isinstance(parsed_yaml, list):
+                            for item in parsed_yaml:
+                                if "title" in item and item["title"]:
+                                    item["title"] = item["title"].replace(" -", " -")
+                            logger.info(f"{source_name} 번역 완료 (복구됨): {len(parsed_yaml)}개 기사")
+                            return parsed_yaml
+                    except yaml.YAMLError as e2:
+                        logger.error(f"{source_name} YAML 파싱 재시도 실패: {str(e2)}", exc_info=True)
+                        raise TranslationError(f"{source_name}: YAML parsing failed after retry: {str(e2)}")
+
                 logger.error(f"{source_name} YAML 파싱 실패: {str(e)}", exc_info=True)
                 raise TranslationError(f"{source_name}: YAML parsing failed: {str(e)}")
 

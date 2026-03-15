@@ -100,10 +100,58 @@ uv run python main.py 20260210     # 특정 날짜
 
 ## 🧪 테스트
 
+### 전체 테스트
+
 ```bash
 uv run pytest                      # 전체 테스트
-uv run pytest -m "not slow"        # 빠른 테스트
-uv run pytest --cov=today_vn_news  # 커버리지
+uv run pytest -m "not slow"        # 빠른 테스트 (API 호출 제외)
+uv run pytest --cov=today_vn_news  # 커버리지 포함
+```
+
+### 단계별 부분 테스트
+
+파이프라인 단계별로 개별 테스트 실행:
+
+```bash
+# 1. 스크래핑 테스트 (데이터 수집)
+uv run pytest tests/unit/test_scraper.py -v
+
+# 2. 번역 테스트 (Gemma API)
+uv run pytest tests/unit/test_translator.py -v
+
+# 3. TTS 테스트 (edge-tts)
+uv run pytest tests/unit/test_tts.py -v
+
+# 4. 영상 합성 테스트 (FFmpeg)
+uv run pytest tests/unit/test_engine.py -v
+
+# 5. YouTube 업로드 테스트
+uv run pytest tests/unit/test_uploader.py -v
+```
+
+### 통합/E2E 테스트
+
+```bash
+# 통합 테스트 (파이프라인 전체)
+uv run pytest tests/integration/test_pipeline.py -v
+
+# E2E 테스트 (실제 API 호출)
+uv run pytest tests/e2e/test_full_pipeline.py -v -m "slow"
+```
+
+### 특정 테스트만 실행
+
+```bash
+# 특정 함수 테스트
+uv run pytest tests/unit/test_scraper.py::test_nchmf_weather -v
+
+# 키워드로 필터링
+uv run pytest -k "weather" -v
+
+# 마커로 필터링
+uv run pytest -m "not slow" -v    # slow 테스트 제외
+uv run pytest -m upload -v        # 업로드 테스트만
+uv run pytest -m "not upload" -v  # 업로드 제외
 ```
 
 ## ⚖️ 라이선스
