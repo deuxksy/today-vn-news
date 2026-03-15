@@ -129,21 +129,11 @@ uv run pytest tests/unit/test_engine.py -v
 uv run pytest tests/unit/test_uploader.py -v
 ```
 
-### E2E 테스트 (전체 파이프라인)
-
-```bash
-# 업로드 제외 전체 플로우
-uv run pytest tests/e2e/test_full_pipeline.py -v
-
-# 실제 YouTube 업로드 포함
-uv run pytest tests/e2e/test_full_pipeline.py -v -m "slow"
-```
-
 ### 특정 테스트만 실행
 
 ```bash
 # 특정 함수 테스트
-uv run pytest tests/unit/test_scraper.py::test_nchmf_weather -v
+uv run pytest tests/unit/test_scraper.py::TestScraperNCHMF::test_scrape_weather_hochiminh_real_api -v
 
 # 키워드로 필터링
 uv run pytest -k "weather" -v

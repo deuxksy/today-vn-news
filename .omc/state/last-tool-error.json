@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"uv run python main.py 2>&1\",\"timeout\":180000,\"description\":\"Test the fix by running main.py\"}",
+  "error": "Exit code 1\n========================================\n🇻🇳 오늘의 베트남 뉴스 (today-vn-news)\n========================================\n\n[*] 1단계: 뉴스 스크래핑 시작...\n2026-03-15 21:24:42 - today_vn_news - INFO - 모든 소스 스크래핑 시작 (2026-03-15)\n2026-03-15 21:24:42 - today_vn_news - INFO - NCHMF 기상 정보 수집 시작\n2026-03-15 21:24:43 - today_vn_news - INFO - NCHMF 기상 정보 수집 완료\n2026-03-15 21:24:43 - today_vn_news - INFO - Open-Meteo 공기질 정보 수집 시작\n2026-03-15 21:24:44 - today_vn_news - INFO - Open-Meteo AQI=79, PM2.5=17.4 µg/m³, P...",
+  "timestamp": "2026-03-15T14:26:59.921Z",
+  "retry_count": 1
+}
