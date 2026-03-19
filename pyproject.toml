@@ -12,6 +12,8 @@ dependencies = [
     "pyyaml==6.0.3",
     "requests>=2.32.5",
     "beautifulsoup4>=4.13.0",
+    "numpy>=1.26.0",
+    "scipy>=1.11.0",
 ]
 
 [project.optional-dependencies]
@@ -20,6 +22,15 @@ dev = [
     "pytest-asyncio>=0.23.0",
     "pytest-cov>=5.0.0",
 ]
+qwen = [
+    "qwen-tts>=0.1.0",
+    "torch>=2.0.0",
+    "transformers>=4.35.0",
+]
+# Qwen3-TTS 0.6B CustomVoice 모델
+# - 메모리: 약 2-3GB (1.7B 대비 60% 감소)
+# - Mac M4 최적화
+# - 9 개 프리미엄 음성 지원
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

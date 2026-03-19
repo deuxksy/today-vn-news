@@ -17,6 +17,8 @@ credentials.json
 # 용량 큰 파일
 data/*.csv
 data/*.json
+data/*.yaml
+data/test/*
 *.mp3
 *.mp4
 *.wav

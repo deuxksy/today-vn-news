@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from today_vn_news.scraper import scrape_and_save
 from today_vn_news.translator import translate_and_save
 from today_vn_news.translator import translate_all_sources_parallel, save_translated_yaml, translate_weather_condition
-from today_vn_news.tts import yaml_to_tts
+from today_vn_news.tts import yaml_to_tts, TTSEngine
 from today_vn_news.engine import synthesize_video
 from today_vn_news.uploader import upload_video
 
@@ -30,13 +30,76 @@ async def main():
     # 데이터 디렉토리 설정
     data_dir = "data"
 
-    # 기본 대상일 설정
+    # 명령줄 인자 파싱
     if len(sys.argv) > 1:
+        if sys.argv[1] in ["--help", "-h"]:
+            print("""
+사용법:
+  python main.py [날짜] [--tts=edge|qwen] [--voice=음성명] [--instruct="설명"] [--language=언어]
+
+인자:
+  날짜          처리할 날짜 (YYYYMMDD_HHMM 형식, 생략 시 현재 시각)
+  --tts         사용할 TTS 엔진 (edge 또는 qwen, 기본값: edge)
+  --voice       TTS 음성
+                - edge: ko-KR-SunHiNeural, ko-KR-BongJinNeural 등
+                - qwen: Sohee, Vivian, Serena, Ryan, Aiden, Ono_Anna, Uncle_Fu, Dylan, Eric
+  --language    언어 (Qwen3-TTS 만 사용, 기본값: Korean)
+  --instruct    음성 스타일 설명 (Qwen3-TTS VoiceDesign 만 사용)
+                예: "따뜻한 아나운서 음성", "밝은 여성 음성", "낮은 남성 음성"
+
+예시:
+  python main.py                        # 현재 시각, Edge TTS (기본)
+  python main.py 20260319_1200          # 특정 날짜, Edge TTS (기본)
+  python main.py --tts=qwen             # Qwen3-TTS 사용 (Sohee 음성)
+  python main.py --tts=qwen --voice=Vivian  # Qwen3-TTS Vivian 음성
+  python main.py --tts=qwen --voice=Sohee --instruct="따뜻한 아나운서 음성"
+  python main.py --tss=qwen --voice=Ryan --language=English
+            """)
+            sys.exit(0)
+
         # 명령줄 인자로 날짜 지정 시 (YYMMDD 또는 YYMMDD-HHMM 형식 모두 지원)
-        yymmdd_hhmm = sys.argv[1]
+        # 옵션(--)으로 시작하지 않는 첫 번째 인자를 날짜로 간주
+        yymmdd_hhmm = None
+        for arg in sys.argv[1:]:
+            if not arg.startswith("--"):
+                yymmdd_hhmm = arg
+                break
+
+        if not yymmdd_hhmm:
+            # 날짜 인자가 없으면 현재 시각으로 자동 생성 (YYYYMMDD_HHMM)
+            yymmdd_hhmm = datetime.datetime.now().strftime("%Y%m%d_%H%M")
     else:
         # 인자 없이 실행 시 현재 시각으로 자동 생성 (YYYYMMDD_HHMM)
         yymmdd_hhmm = datetime.datetime.now().strftime("%Y%m%d_%H%M")
+
+    # TTS 엔진 선택 (환경 변수 또는 명령줄 인자)
+    tts_engine_name = os.getenv("TTS_ENGINE", "edge").lower()
+    tts_voice = None
+    tts_language = "korean"
+    tts_instruct = None
+
+    # 명령줄 인자에서 TTS 엔진, 음성, 언어, instruct 파싱 (전체 인자 스캔)
+    for arg in sys.argv[1:]:
+        if arg.startswith("--tts="):
+            tts_engine_name = arg.split("=")[1].lower()
+        elif arg.startswith("--voice="):
+            tts_voice = arg.split("=")[1]
+        elif arg.startswith("--language="):
+            tts_language = arg.split("=")[1]
+        elif arg.startswith("--instruct="):
+            tts_instruct = arg.split("=", 1)[1]  # = 이후 전체를 가져옴
+
+    # TTS 엔진 설정
+    if tts_engine_name == "qwen":
+        tts_engine = TTSEngine.QWEN
+        tts_voice = tts_voice or "Sohee"
+        print(f"\n📢 TTS 엔진: Qwen3-TTS (로컬) - Voice: {tts_voice}")
+        if tts_instruct:
+            print(f"   Instruct: {tts_instruct}")
+    else:
+        tts_engine = TTSEngine.EDGE
+        tts_voice = tts_voice or "ko-KR-SunHiNeural"
+        print(f"\n📢 TTS 엔진: Edge TTS (클라우드) - Voice: {tts_voice}")
 
     # 기준일 설정 (ISO 형식)
     today_iso = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -114,7 +177,7 @@ async def main():
 
     # 3. TTS 음성 변환 (항상 실행)
     print("\n[*] 3단계: TTS 음성 변환 시작...")
-    await yaml_to_tts(yaml_path)
+    await yaml_to_tts(yaml_path, engine=tts_engine, voice=tts_voice, language=tts_language, instruct=tts_instruct)
 
     # 4. 영상 합성 (항상 실행)
     default_bg = "assets/default_bg.png"
