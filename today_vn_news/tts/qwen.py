@@ -288,15 +288,14 @@ async def generate_tts(
         # CustomVoice 모드: 미리 정의된 스피커 사용
         cmd.extend(["--speaker", voice.lower()])
 
-    logger.debug(f"CLI 명령어: {' '.join(cmd)}")
+    logger.info(f"CLI 실행: {' '.join(cmd)}")
 
     try:
-        # CLI 실행
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        # CLI 실행 (실시간 로그 출력)
+        result = subprocess.run(cmd, text=True)
 
         if result.returncode != 0:
-            logger.error(f"qwen-tts CLI 실행 실패: {result.stderr}")
-            raise TTSError(f"qwen-tts CLI 실행 실패: {result.stderr}")
+            raise TTSError(f"qwen-tts CLI 실행 실패 (exit code: {result.returncode})")
 
         # WAV → MP3 변환
         _convert_wav_to_mp3(temp_wav, output_path)
