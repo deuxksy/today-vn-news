@@ -37,14 +37,10 @@ graph TD
 
     subgraph "💻 분산 인프라"
         NAS[N100 NAS: Inotify / Storage]
-        SD[Steam Deck: VAAPI Synth]
-        MAC[Mac Mini M4: VideoToolbox Dev]
     end
 
     YAML -.-> NAS
     Final -.-> NAS
-    Engine -.-> SD
-    Engine -.-> MAC
 ```
 
 ## 🎯 데이터 소스
