@@ -160,7 +160,7 @@ class TestGetGenaiClient:
 
         mock_client_class.assert_called_once_with(
             api_key="ts",
-            http_options={"api_endpoint": "https://ai.test.ts.net"}
+            http_options={"base_url": "https://ai.test.ts.net"}
         )
         assert model == "test-model"
 

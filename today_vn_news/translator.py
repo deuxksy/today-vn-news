@@ -33,7 +33,7 @@ def get_genai_client() -> tuple[genai.Client, str]:
         model = os.getenv("APERTURE_MODEL", "gemma-3-12b-it")
         client = genai.Client(
             api_key="ts",  # Tailscale 인증용 더미 키
-            http_options={"api_endpoint": base_url}
+            http_options={"base_url": base_url}
         )
         return client, model
 
