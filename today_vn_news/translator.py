@@ -16,13 +16,45 @@ from today_vn_news.exceptions import TranslationError
 from today_vn_news.retry import with_api_retry
 
 
+def get_genai_client() -> tuple[genai.Client, str]:
+    """
+    Aperture 우선, Fallback으로 Google AI Studio 사용
+
+    Returns:
+        (Client, model_name) 튜플
+
+    Raises:
+        TranslationError: API 키 미설정 시
+    """
+    base_url = os.getenv("APERTURE_BASE_URL")
+
+    if base_url:
+        # Aperture 사용 (Tailscale 인증)
+        model = os.getenv("APERTURE_MODEL", "gemma-3-12b-it")
+        client = genai.Client(
+            api_key="ts",  # Tailscale 인증용 더미 키
+            http_options={"api_endpoint": base_url}
+        )
+        return client, model
+
+    # Fallback: Google AI Studio
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        raise TranslationError("API key not configured")
+
+    model = os.getenv("GEMINI_MODEL", "gemma-3-27b-it")
+    client = genai.Client(api_key=api_key)
+    return client, model
+
+
 @with_api_retry(max_attempts=2)
-def _call_gemma_api(client, prompt: str):
+def _call_gemma_api(client, model_name: str, prompt: str):
     """
     Gemma API 호출 (재시도 적용)
 
     Args:
         client: GenAI 클라이언트
+        model_name: 사용할 모델명
         prompt: 전송할 프롬프트
 
     Returns:
@@ -32,7 +64,7 @@ def _call_gemma_api(client, prompt: str):
         Exception: API 호출 실패 시 (최대 2회 재시도 후)
     """
     return client.models.generate_content(
-        model="gemma-3-27b-it", contents=prompt
+        model=model_name, contents=prompt
     )
 
 
@@ -71,18 +103,16 @@ def translate_weather_condition(condition: str) -> str:
     for vn, kr in weather_dict.items():
         translated = translated.replace(vn.lower(), kr)
 
-    # 매칭 안되면 Gemma API 사용
+    # 매칭 안되면 API 사용
     if translated == condition.lower():
-        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-        if api_key:
-            client = genai.Client(api_key=api_key)
-            try:
-                prompt = f"베트남어 기상 상태 '{condition}'를 한국어 3글자 이내로 짧게 번역해주세요. 답변만 출력하세요."
-                response = _call_gemma_api(client, prompt)
-                if response.text:
-                    return response.text.strip()
-            except Exception:
-                pass
+        try:
+            client, model_name = get_genai_client()
+            prompt = f"베트남어 기상 상태 '{condition}'를 한국어 3글자 이내로 짧게 번역해주세요. 답변만 출력하세요."
+            response = _call_gemma_api(client, model_name, prompt)
+            if response.text:
+                return response.text.strip()
+        except Exception:
+            pass
 
     return translated
 
@@ -172,18 +202,16 @@ items:
 
 """
 
-    # Gemma API 호출
-    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        logger.error("번역 중단: API 키가 설정되지 않았습니다.")
-        raise TranslationError("Translation aborted: API key not configured")
-
-    client = genai.Client(api_key=api_key)
+    # API 클라이언트 생성
+    try:
+        client, model_name = get_genai_client()
+    except TranslationError:
+        raise
 
     try:
         logger.info(f"{source_name} 기사 {len(articles_to_translate)}개 번역 시작")
 
-        response = _call_gemma_api(client, prompt)
+        response = _call_gemma_api(client, model_name, prompt)
 
         if response.text:
             # YAML 파싱
@@ -277,7 +305,7 @@ async def translate_articles_async(
         번역된 기사 리스트 또는 None
     """
     if semaphore is None:
-        semaphore = asyncio.Semaphore(3)  # Gemma API 요금 제한 고려
+        semaphore = asyncio.Semaphore(3)  # AI Gateway 요금 제한 고려
 
     async with semaphore:
         loop = asyncio.get_event_loop()
@@ -340,7 +368,7 @@ async def translate_all_sources_parallel(
     section_id = 2  # 안전 및 기상 관제가 ID 1이므로 2부터 시작
 
     if translation_tasks:
-        semaphore = asyncio.Semaphore(3)  # Gemma API 요금 제한 고려
+        semaphore = asyncio.Semaphore(3)  # AI Gateway 요금 제한 고려
         results = await asyncio.gather(
             *[task for _, task in translation_tasks],
             return_exceptions=True

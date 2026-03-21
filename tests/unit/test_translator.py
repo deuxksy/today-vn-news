@@ -79,32 +79,20 @@ class TestTranslationMock:
         result = translate_weather_condition("")
         assert result == ""
 
-    @patch('today_vn_news.translator.genai.Client')
-    def test_translate_articles_mock_api(self, mock_client_class):
+    @patch('today_vn_news.translator.get_genai_client')
+    def test_translate_articles_mock_api(self, mock_get_client):
         """Gemma API Mock을 활용한 번역 테스트"""
-        # Mock 응답 설정
         mock_response = MagicMock()
         mock_response.text = """items:
   - title: 테스트 기사 제목
     content: 테스트 기사 내용 요약입니다. 두 번째 줄입니다. 세 번째 줄입니다.
     url: https://example.com"""
 
-        # Mock 클라이언트 설정
         mock_client = MagicMock()
         mock_client.models.generate_content.return_value = mock_response
-        mock_client_class.return_value = mock_client
+        mock_get_client.return_value = (mock_client, "test-model")
 
-        # 환경 변수 설정
-        os.environ["GEMINI_API_KEY"] = "test_key"
-
-        articles = [
-            {
-                "title": "Test Title",
-                "content": "Test Content",
-                "url": "https://example.com"
-            }
-        ]
-
+        articles = [{"title": "Test Title", "content": "Test Content", "url": "https://example.com"}]
         result = translate_articles(articles, "Test Source", "2026-02-27")
 
         assert result is not None
@@ -112,50 +100,88 @@ class TestTranslationMock:
         assert result[0]["title"] == "테스트 기사 제목"
         assert result[0]["url"] == "https://example.com"
 
-    @patch('today_vn_news.translator.genai.Client')
-    def test_translate_articles_mock_api_error(self, mock_client_class):
+    @patch('today_vn_news.translator.get_genai_client')
+    def test_translate_articles_mock_api_error(self, mock_get_client):
         """API 에러 발생 시 TranslationError 테스트"""
-        # Mock 클라이언트 설정 - 예외 발생
         mock_client = MagicMock()
         mock_client.models.generate_content.side_effect = Exception("API Error")
-        mock_client_class.return_value = mock_client
+        mock_get_client.return_value = (mock_client, "test-model")
 
-        # 환경 변수 설정
-        os.environ["GEMINI_API_KEY"] = "test_key"
+        articles = [{"title": "Test Title", "content": "Test Content", "url": "https://example.com"}]
 
-        articles = [
-            {
-                "title": "Test Title",
-                "content": "Test Content",
-                "url": "https://example.com"
-            }
-        ]
-
-        # TranslationError 발생 확인
         with pytest.raises(TranslationError):
             translate_articles(articles, "Test Source", "2026-02-27")
 
-    @patch('today_vn_news.translator.genai.Client')
-    def test_translate_articles_mock_invalid_yaml(self, mock_client_class):
+    @patch('today_vn_news.translator.get_genai_client')
+    def test_translate_articles_mock_invalid_yaml(self, mock_get_client):
         """잘못된 YAML 응답 파싱 테스트"""
-        # Mock 응답 설정 - 잘못된 YAML
         mock_response = MagicMock()
         mock_response.text = "invalid yaml content"
 
         mock_client = MagicMock()
         mock_client.models.generate_content.return_value = mock_response
-        mock_client_class.return_value = mock_client
+        mock_get_client.return_value = (mock_client, "test-model")
 
-        os.environ["GEMINI_API_KEY"] = "test_key"
+        articles = [{"title": "Test Title", "content": "Test Content", "url": "https://example.com"}]
 
-        articles = [
-            {
-                "title": "Test Title",
-                "content": "Test Content",
-                "url": "https://example.com"
-            }
-        ]
-
-        # TranslationError 발생 확인
         with pytest.raises(TranslationError):
             translate_articles(articles, "Test Source", "2026-02-27")
+
+    @patch('today_vn_news.translator.genai.Client')
+    def test_call_gemma_api_with_model_name(self, mock_client_class):
+        """_call_gemma_api가 model_name 인자를 올바르게 전달"""
+        mock_response = MagicMock()
+        mock_response.text = "test response"
+
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+
+        from today_vn_news.translator import _call_gemma_api
+        result = _call_gemma_api(mock_client, "custom-model", "test prompt")
+
+        mock_client.models.generate_content.assert_called_once_with(
+            model="custom-model",
+            contents="test prompt"
+        )
+        assert result == mock_response
+
+
+@pytest.mark.unit
+class TestGetGenaiClient:
+    """get_genai_client 헬퍼 함수 테스트"""
+
+    @patch.dict(os.environ, {"APERTURE_BASE_URL": "https://ai.test.ts.net", "APERTURE_MODEL": "test-model"})
+    @patch('today_vn_news.translator.genai.Client')
+    def test_get_genai_client_aperture(self, mock_client_class):
+        """Aperture 설정 시 올바른 클라이언트와 모델 반환"""
+        from today_vn_news.translator import get_genai_client
+
+        client, model = get_genai_client()
+
+        mock_client_class.assert_called_once_with(
+            api_key="ts",
+            http_options={"api_endpoint": "https://ai.test.ts.net"}
+        )
+        assert model == "test-model"
+
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "test-key", "GEMINI_MODEL": "gemini-model"}, clear=True)
+    @patch('today_vn_news.translator.genai.Client')
+    def test_get_genai_client_fallback(self, mock_client_class):
+        """APERTURE_BASE_URL 없으면 Google AI Studio fallback"""
+        from today_vn_news.translator import get_genai_client
+
+        # APERTURE_BASE_URL 제거 보장
+        os.environ.pop("APERTURE_BASE_URL", None)
+
+        client, model = get_genai_client()
+
+        mock_client_class.assert_called_once_with(api_key="test-key")
+        assert model == "gemini-model"
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_get_genai_client_no_key_raises(self):
+        """API 키 없으면 TranslationError 발생"""
+        from today_vn_news.translator import get_genai_client
+
+        with pytest.raises(TranslationError):
+            get_genai_client()
