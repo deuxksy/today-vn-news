@@ -2,7 +2,7 @@
 
 > **AI** 를 활용해 생성된 프로젝트입니다.
 
-베트남 뉴스 자동화 파이프라인. BeautifulSoup4 스크래핑 + Gemma-3-27b 번역 + TTS(Edge/Qwen) 음성 생성 + FFmpeg 영상 합성 + YouTube 업로드.
+베트남 뉴스 자동화 파이프라인. BeautifulSoup4 스크래핑 + **Tailscale AI Gateway**(Gemma-3) 번역 + TTS(Edge/Qwen) 음성 생성 + FFmpeg 영상 합성 + YouTube 업로드.
 
 ## 📺 생성된 콘텐츠
 
@@ -10,13 +10,13 @@
 
 [👉 유튜브 플레이리스트](https://www.youtube.com/playlist?list=PLzMxB6D1eypIA_JNasD_MNISMEUtMbHvK)
 
-## 🔄 데이터 파이프라인
+## 🏗️ 서비스 아키텍처
 
 ```mermaid
 graph TD
     subgraph "1. 데이터 수집 (Collection)"
         S[scraper.py] -->|BeautifulSoup4| RAW[data/YYYYMMDD_HHMM_raw.yaml]
-        RAW -->|Gemini API| G[Gemma-3-27b-it]
+        RAW -->|Aperture/Google AI| G[Gemma-3-it]
         G -->|Translation| YAML[data/YYYYMMDD_HHMM.yaml]
     end
 
@@ -100,6 +100,10 @@ cp .env.example .env
 # .env 파일에 API 키 설정: GEMINI_API_KEY, IQAIR_API_KEY
 # TTS 엔진 선택: TTS_ENGINE=edge (기본) 또는 TTS_ENGINE=qwen
 
+# Aperture AI Gateway 사용 시 (Tailscale 필요)
+# APERTURE_BASE_URL=http://ai
+# APERTURE_MODEL=gemma-3-12b-it
+
 # 2. 의존성 설치
 uv sync
 
@@ -111,6 +115,35 @@ uv run python main.py              # 현재 시간, Edge TTS 사용 (기본)
 uv run python main.py 20260210     # 특정 날짜, Edge TTS 사용 (기본)
 uv run python main.py --tts=qwen   # Qwen3-TTS 사용
 uv run python main.py --help       # 사용법 안내
+```
+
+### 번역 백엔드 선택
+
+번역은 **Tailscale AI Gateway** (Aperture) 또는 **Google AI Studio** 중 선택하여 사용할 수 있습니다.
+
+| 백엔드 | 방식 | 장점 | 단점 |
+|--------|------|------|------|
+| **Aperture** (기본) | Tailscale 네트워크 | 무료, 로컬 네트워크, 빠른 응답 | Tailscale 설정 필요 |
+| **Google AI Studio** | 클라우드 API | 별도 설정 없음 | API 키 필요, 요금 발생 가능 |
+
+#### Tailscale AI Gateway 설정
+
+Tailscale 네트워크에 연결된 Aperture 서버가 있는 경우:
+
+```bash
+# .env 파일에 추가
+APERTURE_BASE_URL=http://ai              # 또는 https://ai.your-tailnet.ts.net
+APERTURE_MODEL=gemma-3-12b-it            # 기본 모델
+```
+
+#### Google AI Studio Fallback
+
+`APERTURE_BASE_URL`이 설정되지 않으면 자동으로 Google AI Studio를 사용:
+
+```bash
+# .env 파일에 추가
+GEMINI_API_KEY=your-api-key-here
+GEMINI_MODEL=gemma-3-27b-it              # 기본 모델
 ```
 
 ### TTS 엔진 선택
