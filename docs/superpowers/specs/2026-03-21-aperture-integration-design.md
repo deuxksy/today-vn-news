@@ -28,7 +28,13 @@
 #### 3.1 환경변수
 
 ```bash
-APERTURE_BASE_URL=https://ai.bun-bull.ts.net  # 선택사항, 설정 시 Aperture 사용
+# Aperture 설정 (선택사항, 설정 시 Aperture 사용)
+APERTURE_BASE_URL=https://ai.bun-bull.ts.net
+APERTURE_MODEL=gemma-3-12b-it
+
+# Fallback (Google AI Studio)
+GEMINI_API_KEY=xxx
+GEMINI_MODEL=gemma-3-27b-it
 ```
 
 #### 3.2 클라이언트 및 모델 헬퍼 함수 (핵심 변경)
@@ -49,14 +55,16 @@ def get_genai_client() -> tuple[genai.Client, str]:
             api_key="ts",  # Tailscale 인증용 더미 키
             http_options={"api_endpoint": base_url}
         )
-        return client, "gemma-3-12b-it"
+        model = os.getenv("APERTURE_MODEL", "gemma-3-12b-it")
+        return client, model
 
     # Fallback: Google AI Studio
     api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if not api_key:
         raise TranslationError("API key not configured")
     client = genai.Client(api_key=api_key)
-    return client, "gemma-3-27b-it"
+    model = os.getenv("GEMINI_MODEL", "gemma-3-27b-it")
+    return client, model
 ```
 
 #### 3.3 `_call_gemma_api()` 수정
