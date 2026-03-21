@@ -31,41 +31,66 @@
 APERTURE_BASE_URL=https://ai.bun-bull.ts.net  # 선택사항, 설정 시 Aperture 사용
 ```
 
-#### 3.2 클라이언트 생성 로직
+#### 3.2 클라이언트 및 모델 헬퍼 함수 (핵심 변경)
 
 ```python
-# Aperture 우선, fallback으로 Google AI Studio
-base_url = os.getenv("APERTURE_BASE_URL")
+def get_genai_client() -> tuple[genai.Client, str]:
+    """
+    Aperture 우선, Fallback으로 Google AI Studio 사용
 
-if base_url:
-    client = genai.Client(
-        api_key="ts",  # Tailscale 인증용 더미 키
-        http_options={"api_endpoint": base_url}
-    )
-else:
+    Returns:
+        (Client, model_name) 튜플
+    """
+    base_url = os.getenv("APERTURE_BASE_URL")
+
+    if base_url:
+        # Aperture 사용 (Tailscale 인증)
+        client = genai.Client(
+            api_key="ts",  # Tailscale 인증용 더미 키
+            http_options={"api_endpoint": base_url}
+        )
+        return client, "gemma-3-12b-it"
+
+    # Fallback: Google AI Studio
     api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if not api_key:
         raise TranslationError("API key not configured")
     client = genai.Client(api_key=api_key)
+    return client, "gemma-3-27b-it"
 ```
 
-#### 3.3 모델명 상수화
+#### 3.3 `_call_gemma_api()` 수정
+
+기존 모델명 하드코딩을 인자로 변경:
 
 ```python
-MODEL_NAME = "gemma-3-12b-it"  # Aperture용
-# 또는 환경변수로 설정 가능
+@with_api_retry(max_attempts=2)
+def _call_gemma_api(client, model_name: str, prompt: str):
+    return client.models.generate_content(
+        model=model_name, contents=prompt
+    )
 ```
 
 ### 4. 호환성 고려사항
 
 - **Fallback**: `APERTURE_BASE_URL` 미설정 시 기존 Google AI Studio 동작 유지
-- **테스트**: 기존 단위 테스트 수정 필요 (mock 엔드포인트 변경)
+- **테스트**: 기존 단위 테스트 수정 필요 (mock 엔드포인트 + `http_options` 파라미터)
 
-### 5. 영향받는 함수
+### 5. 영향받는 함수 (총 5곳)
 
-- `_call_gemma_api()` - 모델명 변경
-- `translate_weather_condition()` - 클라이언트 생성
-- `translate_articles()` - 클라이언트 생성
+| 함수 | 변경 내용 |
+|------|-----------|
+| `get_genai_client()` | **신규** - 클라이언트 및 모델명 반환 헬퍼 |
+| `_call_gemma_api()` | 모델명 인자 추가 (`model_name: str`) |
+| `translate_weather_condition()` | `get_genai_client()` 사용 |
+| `translate_articles()` | `get_genai_client()` 사용 |
+| `translate_all_sources_parallel()` | 세마포어 주석 업데이트 ("Gemma API" → "Aperture/Gemini") |
+
+### 6. 테스트 수정 범위
+
+- `tests/unit/test_translator.py`
+- Mock이 `http_options` 파라미터 처리 필요
+- Aperture 사용/미사용 각각에 대한 테스트 케이스 추가
 
 ## 성공 기준
 
