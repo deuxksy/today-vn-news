@@ -1,0 +1,11 @@
+# config.yaml
+video:
+  media:
+    mount_path: "/Volumes/Media"
+    date_format: "YYMMDD"
+    auto_copy_latest: true
+  archive:
+    format: "{YYMM}/{DD}_{hhmm}.mp4"
+  fallback:
+    local_data_dir: "data"
+    default_image: "assets/default_bg.png"
