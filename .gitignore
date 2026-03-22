@@ -35,6 +35,9 @@ logs/
 *.avi
 *.mkv
 
+# Exception: Test fixtures
+!tests/fixtures/media/*.mp4
+
 # 테스트 결과 파일 (data/test는 제외하고 커밋하지 않음)
 data/test/
 
