@@ -1,6 +1,5 @@
 """MediaArchiver: 최종 영상을 Media로 복사/저장"""
 
-import os
 import shutil
 from pathlib import Path
 from today_vn_news.logger import logger
@@ -28,11 +27,15 @@ class MediaArchiver:
         Raises:
             MediaArchiveError: 복사 실패 시
         """
-        # base_name 파싱: YYMMDD_HHMM → YYMMDD, DD, HHMM
-        yymmdd = base_name[:6]  # YYMMDD
-        dd = base_name[4:6]    # DD (YYMMDD에서 인덱스 4-5)
-        hhmm = base_name[7:11]  # HHMM (_ 제외, 인덱스 7-10)
-        yymm = yymmdd[:4]      # YYMM
+        # base_name 포맷 검증: YYMMDD_HHMM
+        parts = base_name.split('_')
+        if len(parts) != 2 or len(parts[0]) != 6 or len(parts[1]) != 4:
+            raise ValueError(f"잘못된 base_name 포맷: {base_name} (YYMMDD_HHMM 형식 필요)")
+
+        yymmdd = parts[0]  # YYMMDD
+        hhmm = parts[1]    # HHMM
+        dd = yymmdd[4:6]   # DD (YYMMDD에서 인덱스 4-5)
+        yymm = yymmdd[:4]  # YYMM
 
         # 대상 경로: Media/{{YYMM}}/{{DD}}_{{hhmm}}.mp4
         media_base = Path(self.config.media_mount_path)
