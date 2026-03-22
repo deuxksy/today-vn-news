@@ -76,15 +76,18 @@ graph TD
 
 ### 최종 저장 경로
 
-확인된 영상 소스는 아래 경로로 복사됩니다:
+파이프라인 결과물은 아래 경로로 Media에 저장됩니다:
 
 ```
-data/YYYYMMDD/YYYYMMDD_HHMM_source.mp4
+Media/{{YYMM}}/{{DD}}_{{hhmm}}.mp4  # 최종 영상
+Media/{{YYMM}}/{{DD}}_{{hhmm}}.mp3  # TTS 음성
 ```
 
-- **자동 생성**: 디렉토리가 없으면 자동 생성
-- **중복 방지**: 이미 존재하면 복사 건너뜀
-- **에러 처리**: 모든 단계 실패 시 `VideoSourceNotFoundError` 발생
+**예시:** `Media/2603/22_1230.mp4`, `Media/2603/22_1230.mp3`
+
+- **자동 생성**: YYMM 폴더가 없으면 자동 생성
+- **데이터 보존**: shutil.copy2로 원본 보존 (로컬 파일 유지)
+- **순차 저장**: MP3 → MP4 순으로 저장 (어느것 실패해도 계속 진행)
 
 ### config.yaml 설정 예시
 

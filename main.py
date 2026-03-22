@@ -54,8 +54,21 @@ async def process_video_pipeline(
             source_path=str(source_path)
         )
 
-        # 3. Media에 저장 (최종 영상 보존)
+        # 3. Media에 저장 (최종 영상 및 음성 보존)
         local_final = f"{data_dir}/{yymmdd_hhmm}_final.mp4"
+        local_audio = f"{data_dir}/{yymmdd_hhmm}.mp3"
+
+        # 3-1. MP3 음성 저장
+        if os.path.exists(local_audio):
+            try:
+                print("\n[*] Media에 MP3 음성 저장 중...")
+                audio_media_path = archiver.archive_audio(local_audio, yymmdd_hhmm)
+                print(f"[+] Media MP3 저장 완료: {audio_media_path}")
+            except Exception as e:
+                print(f"[!] Media MP3 저장 실패 (로컬 유지): {e}")
+                # 저장 실패해도 로컬 파일은 있으므로 계속 진행
+
+        # 3-2. MP4 영상 저장
         if os.path.exists(local_final):
             try:
                 print("\n[*] Media에 영상 저장 중...")

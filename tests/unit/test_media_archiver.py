@@ -82,3 +82,36 @@ def test_archive_media_mount_failure(tmp_path):
 
     with pytest.raises(MediaArchiveError):
         archiver.archive("/fake/path/final.mp4", "260322_1230")
+
+
+def test_archive_audio_mp3(tmp_path):
+    """MP3 음성 파일도 같은 경로에 저장 확인"""
+    media_dir = tmp_path / "Media"
+    media_dir.mkdir()
+
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "260322_1230.mp3").touch()
+
+    config = VideoConfig(media_mount_path=str(media_dir))
+    archiver = MediaArchiver(config)
+
+    media_path = archiver.archive_audio(str(data_dir / "260322_1230.mp3"), "260322_1230")
+
+    # 검증: MP3 파일이 같은 경로에 저장
+    assert media_path.parent.exists()
+    assert media_path.parent.name == "2603"
+    assert media_path.name == "22_1230.mp3"
+    assert media_path.exists()
+
+
+def test_archive_audio_missing_file(tmp_path):
+    """MP3 파일 없을 때 예외 발생 확인"""
+    media_dir = tmp_path / "Media"
+    media_dir.mkdir()
+
+    config = VideoConfig(media_mount_path=str(media_dir))
+    archiver = MediaArchiver(config)
+
+    with pytest.raises(MediaArchiveError):
+        archiver.archive_audio("/nonexistent/260322_1230.mp3", "260322_1230")
