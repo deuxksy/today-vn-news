@@ -1,8 +1,8 @@
 # 영상 소스 우선순위 시스템 설계문서
 
 **작성일:** 2026-03-22
-**버전:** 0.1.0
-**상태:** Draft
+**버전:** 0.2.0
+**상태:** Revision (Draft)
 
 ## 1. 개요
 
@@ -71,15 +71,17 @@
    data/260322_1230.yaml → TTS → data/260322_1230.mp3
    data/260322_1230.mp3 + 소스 영상 → data/260322_1230_final.mp4
 
-3. 업로드
-   data/260322_1230_final.mp4 → YouTube 업로드
-
-4. 저장
+3. 저장 (데이터 보존 우선)
    data/260322_1230_final.mp4 → Media/2603/22_1230.mp4
    └─> 폴더 자동 생성: Media/2603/
+   └─> 원본 유지: shutil.copy (move 아님)
+
+4. 업로드
+   data/260322_1230_final.mp4 → YouTube 업로드
 
 5. 정리
    Media에서 복사한 임시 소스 삭제
+   로컬 _final.mp4 삭제 (선택적, 성공 시)
 ```
 
 ---
@@ -98,18 +100,21 @@ class VideoSourceResolver:
         self.config = config
         self.temp_copies: list[str] = []  # 정리할 임시 파일 추적
 
-    def resolve(self, yymmdd: str, hhmm: str) -> tuple[str, bool]:
+    def resolve(self, base_name: str) -> tuple[str, bool]:
         """
         우선순위에 따라 영상 소스 반환
 
         Args:
-            yymmdd: YYMMDD (예: 260322)
-            hhmm: HHMM (예: 1230)
+            base_name: YYMMDD_HHMM (예: 260322_1230)
+                       기존 코드와 형식 통일
 
         Returns:
             (source_path, is_temporary_copy)
             - source_path: 사용할 영상 경로
             - is_temporary_copy: Media에서 복사한 임시 파일인지 여부
+
+        Raises:
+            VideoSourceError: 모든 소스 실패 시
         """
 
     def _cleanup_temporary(self) -> None:
@@ -141,22 +146,24 @@ class MediaArchiver:
     def __init__(self, config: VideoConfig):
         self.config = config
 
-    def archive(self, local_final: str, yymmdd: str, hhmm: str) -> str:
+    def archive(self, local_final: str, base_name: str) -> str:
         """
-        로컬 _final.mp4를 Media/{{YYMM}}/{{DD}}_{{hhmm}}.mp4로 이동
+        로컬 _final.mp4를 Media/{{YYMM}}/{{DD}}_{{hhmm}}.mp4로 복사
 
         Args:
             local_final: 로컬 _final.mp4 경로
                        (예: data/260322_1230_final.mp4)
-            yymmdd: YYMMDD (예: 260322)
-            hhmm: HHMM (예: 1230)
+            base_name: YYMMDD_HHMM (예: 260322_1230)
 
         Returns:
             media_path: Media 저장소 경로
                         (예: /Volumes/Media/2603/22_1230.mp4)
 
         Raises:
-            MediaArchiveError: 이동 실패 시
+            MediaArchiveError: 복사 실패 시
+
+        Note:
+            shutil.copy 사용 (원본 보존, 데이터 손실 방지)
         """
 
     def _ensure_directory(self, media_base: str, yymm: str) -> None:
@@ -196,9 +203,17 @@ class VideoConfig:
     def from_yaml(cls, path: str = "config.yaml") -> "VideoConfig":
         """YAML 설정 로딩
 
+        Args:
+            path: 설정 파일 경로
+
+        Returns:
+            VideoConfig: 로드된 설정 (파일 없으면 기본값)
+
         Raises:
-            FileNotFoundError: 설정 파일 없음
-            YAMLError: YAML 파싱 실패
+            YAMLError: YAML 파싱 실패 (파일 있지만 잘못됨)
+
+        Note:
+            파일 없으면 경고 로그 후 기본값 반환 (조용히 진행)
         """
 ```
 
@@ -246,16 +261,19 @@ class MediaArchiveError(TodayVnNewsError):
 
 | 단계 | 에러 | 처리 방식 | 로그 레벨 |
 |:---|:---|:---|:---|
+| **설정 로딩** | config.yaml 없음 | 기본값 사용 후 경고 | warning |
 | **소스 확인** | Media 마운트 안됨 | Warning → Fallback | warning |
 | **소스 복사** | 복사 실패 | Warning → Fallback | warning |
 | **합성** | FFmpeg 실패 | Error → 중단 | error |
+| **저장** | Media 복사 실패 | Warning → 로컬 유지 | warning |
 | **업로드** | YouTube API 실패 | Error → 중단 | error |
-| **저장** | Media 이동 실패 | Warning → 로컬 유지 | warning |
+| **정리** | 임시 파일 삭제 실패 | Warning → 무시 | warning |
 
 **원칙:**
-- **소스 단계**: 최대한 유연하게 fallback (조용히 진행)
+- **설정/소스 단계**: 최대한 유연하게 fallback (조용히 진행)
+- **저장 단계**: 실패 시 로컬 유지 (복사라 원본 보존됨)
 - **합성/업로드 단계**: 실패 시 즉시 중단 (치명적)
-- **저장 단계**: 실패 시 로컬 유지하고 경고 (데이터 보존)
+- **정리 단계**: 실패해도 로그만 남기고 무시 (임시 파일)
 
 ---
 
@@ -270,34 +288,72 @@ video_mp4 = os.path.join(data_dir, f"{base_name}.mp4")
 video_in = video_mov if os.path.exists(video_mov) else video_mp4
 ```
 
-**신규:**
+**신규 (main.py):**
 ```python
 from today_vn_news.video_source.resolver import VideoSourceResolver
 from today_vn_news.video_source.archiver import MediaArchiver
 from today_vn_news.config.video_config import VideoConfig
 
-# 설정 로딩
+# 설정 로딩 (config.yaml 없으면 기본값 사용)
 config = VideoConfig.from_yaml()
 
-# 소스 영상 해결
+# 소스 영상 해결 (base_name: YYMMDD_HHMM 형식)
 resolver = VideoSourceResolver(config)
-source_path, is_temporary = resolver.resolve(yymmdd, hhmm)
+source_path, is_temporary = resolver.resolve(base_name)
 
-# 합성 (기존 로직 활용)
-synthesize_video(base_name, data_dir, source_path=source_path)
+try:
+    # 합성 (기존 engine.py 활용, source_path 지원하도록 수정)
+    synthesize_video(base_name, data_dir, source_path=source_path)
 
-# 정리
-if is_temporary:
-    resolver._cleanup_temporary()
+    # 저장 (데이터 보존 우선: 복사 후 업로드)
+    archiver = MediaArchiver(config)
+    media_path = archiver.archive(local_final, base_name)
+    logger.info(f"최종 영상 저장 완료: {media_path}")
 
-# 업로드 (기존 로직)
-upload_video(yymmdd, data_dir)
+    # 업로드 (기존 로직)
+    upload_video(base_name[:8], data_dir)
 
-# 저장 (신규)
-archiver = MediaArchiver(config)
-final_path = archiver.archive(local_final, yymmdd, hhmm)
-logger.info(f"최종 영상 저장 완료: {final_path}")
+    # 업로드 성공 시 로컬 정리
+    try:
+        os.remove(local_final)
+        logger.info(f"로컬 임시 파일 삭제: {local_final}")
+    except OSError:
+        logger.warning(f"로컬 파일 삭제 실패 (무시): {local_final}")
+
+finally:
+    # 정리: Media 임시 복사본 삭제 (항상 실행)
+    if is_temporary:
+        resolver._cleanup_temporary()
 ```
+
+### 5.2 engine.py 수정사항
+
+**기존 시그니처:**
+```python
+def synthesize_video(base_name: str, data_dir: str = "data"):
+```
+
+**신규 시그니처:**
+```python
+def synthesize_video(base_name: str, data_dir: str = "data", source_path: str = None):
+    """
+    영상과 음성을 합성하여 최종 MP4 생성
+
+    Args:
+        base_name: YYMMDD_HHMM (예: 260322_1230)
+        data_dir: 데이터 디렉토리
+        source_path: 소스 영상 경로 (None이면 기존 로직대로 .mov/.mp4 확인)
+
+    Note:
+        source_path 지정 시 해당 파일을 video_in으로 사용
+        None이면 기존 방식대로 data/{base_name}.mov/.mp4 확인
+    """
+```
+
+**수정 포인트:**
+- `source_path` 파라미터 추가 (선택적, 기본값 None)
+- source_path가 None이 아니면 해당 파일을 직접 사용
+- source_path가 None이면 기존 로직 (.mov → .mp4 → default_bg.png)
 
 ---
 
@@ -312,20 +368,30 @@ logger.info(f"최종 영상 저장 완료: {final_path}")
 - `test_resolve_local_fallback`: Media 모두 없을 때 로컬 .mov/mp4 반환
 - `test_resolve_default_image_fallback`: 모든 소스 없을 때 기본 이미지 반환
 - `test_temporary_copy_and_cleanup`: Media 소스 복사 후 정리 확인
+- `test_resolve_base_name_format`: YYMMDD_HHMM 형식 파싱 확인
 
 **파일:** `tests/unit/test_media_archiver.py`
 
 - `test_archive_creates_directory`: Media/{{YYMM}}/ 폴더 자동 생성 확인
-- `test_archive_moves_with_correct_name`: 파일명 {{DD}}_{{hhmm}}.mp4 형식 확인
-- `test_archive_handles_existing_file`: 동일 파일명 존재 시 덮어쓰기 확인
+- `test_archive_copies_not_moves`: shutil.copy 사용 확인 (원본 보존)
+- `test_archive_correct_naming`: 파일명 {{YYMM}}/{{DD}}_{{hhmm}}.mp4 형식 확인
+- `test_archive_overwrites_existing`: 동일 파일명 존재 시 덮어쓰기 확인
 - `test_archive_media_mount_failure`: Media 마운트 실패 시 예외 발생 확인
+
+**파일:** `tests/unit/test_video_config.py`
+
+- `test_from_yaml_missing_file`: config.yaml 없을 때 기본값 반환 확인
+- `test_from_yaml_invalid_yaml`: YAML 잘못됐을 때 예외 발생 확인
+- `test_from_yaml_valid_settings`: 올바른 YAML 로드 확인
 
 ### 6.2 통합 테스트
 
 **파일:** `tests/integration/test_video_pipeline.py`
 
-- `test_full_pipeline_with_media_source`: Media 소스 → 합성 → 업로드 → 저장 전체 흐름
+- `test_full_pipeline_with_media_source`: Media 소스 → 합성 → 저장 → 업로드 전체 흐름
 - `test_full_pipeline_fallback_to_local`: Media 없을 때 로컬 소스로 fallback 확인
+- `test_full_pipeline_save_fails_upload_succeeds`: 저장 실패 시 업로드 진행 확인
+- `test_full_pipeline_with_context_manager`: resolver cleanup 항상상 finally에서 실행 확인
 
 ### 6.3 모의 데이터 구조
 
@@ -406,13 +472,23 @@ tests/
 
 **git reset --hard HEAD~1** 로 충분:
 - 신규 파일만 추가 (기존 파일 수정 최소화)
-- `engine.py` 변경사항 되돌리기
+- `engine.py` 변경사항 되돌리기 (source_path 파라미터 제거)
 
-### 9.2 이슈 발생 시
+### 9.2 이슈 발생 시 대응
 
-- Media 마운트 실패 → fallback 동작으로 계속 진행
-- 설정 파일 없음 → 기본값(hardcode) 사용
-- 임시 파일 정리 실패 → 로그만 남기고 무시
+- **Media 마운트 실패**: fallback 동작으로 계속 진행 (로컬 소스 사용)
+- **설정 파일 없음**: 기본값(hardcode) 사용 후 경고 로그
+- **임시 파일 정리 실패**: 로그만 남기고 무시 (디스크 누적 모니터링 권장)
+- **저장 실패**: 로컬 파일 유지 (copy라 원본 보존됨) 후 업로드 진행
+- **업로드 실패**: 로컬 _final.mp4 유지 (저장 이미 완료됨)
+
+### 9.3 롤백 검증
+
+```bash
+# 롤백 후 기능 검증 커맨드
+uv run pytest tests/unit/test_engine.py -v
+uv run python main.py  # 기존 파이프라인 실행 확인
+```
 
 ---
 
