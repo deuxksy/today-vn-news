@@ -1,0 +1,11 @@
+# tests/fixtures/config.yaml
+video:
+  media:
+    mount_path: "./tests/fixtures/media"
+    date_format: "YYMMDD"
+    auto_copy_latest: true
+  archive:
+    format: "{YYMM}/{DD}_{hhmm}.mp4"
+  fallback:
+    local_data_dir: "tests/fixtures/data"
+    default_image: "tests/fixtures/default_bg.png"
