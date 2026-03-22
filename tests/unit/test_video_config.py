@@ -14,8 +14,13 @@ def test_default_values():
 def test_from_yaml_missing_file():
     config = VideoConfig.from_yaml("nonexistent.yaml")
 
-    # 파일 없으면 기본값 반환
+    # 파일 없으면 모든 기본값 반환 검증
     assert config.media_mount_path == "/Volumes/Media"
+    assert config.media_date_format == "YYMMDD"
+    assert config.auto_copy_latest is True
+    assert config.archive_format == "{YYMM}/{DD}_{hhmm}.mp4"
+    assert config.local_data_dir == "data"
+    assert config.default_image == "assets/default_bg.png"
 
 def test_from_yaml_valid_settings(tmp_path):
     import yaml
