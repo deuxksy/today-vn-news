@@ -25,11 +25,7 @@ os.makedirs("data", exist_ok=True)
 async def process_video_pipeline(
     yymmdd_hhmm: str,
     data_dir: str,
-    config: VideoConfig,
-    tts_engine: TTSEngine,
-    tts_voice: str,
-    tts_language: str,
-    tts_instruct: str | None
+    config: VideoConfig
 ) -> bool:
     """
     영상 파이프라인 처리: 소스 해결 → 합성 → 저장 → 업로드
@@ -38,22 +34,17 @@ async def process_video_pipeline(
         yymmdd_hhmm: YYMMDD_HHMM 형식 타임스탬프
         data_dir: 데이터 디렉토리 경로
         config: 비디오 설정
-        tts_engine: TTS 엔진
-        tts_voice: TTS 음성
-        tts_language: TTS 언어
-        tts_instruct: TTS 음성 스타일 설명
 
     Returns:
         bool: 파이프라인 성공 여부
     """
     resolver = VideoSourceResolver(config)
     archiver = MediaArchiver(config)
-    source_path = None
 
     try:
         # 1. 영상 소스 해결 (우선순위 체인)
         print("\n[*] 영상 소스 확인 중...")
-        source_path, is_temporary = resolver.resolve(yymmdd_hhmm)
+        source_path, _ = resolver.resolve(yymmdd_hhmm)
 
         # 2. 영상 합성 (source_path 전달)
         print("\n[*] 영상 합성 시작...")
@@ -256,11 +247,7 @@ async def main():
     success = await process_video_pipeline(
         yymmdd_hhmm=yymmdd_hhmm,
         data_dir=data_dir,
-        config=config,
-        tts_engine=tts_engine,
-        tts_voice=tts_voice,
-        tts_language=tts_language,
-        tts_instruct=tts_instruct
+        config=config
     )
 
     if success:
