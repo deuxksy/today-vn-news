@@ -94,6 +94,29 @@ def test_data_dir():
     return data_dir
 
 
+@pytest.fixture(scope="session")
+def sample_audio():
+    """테스트용 오디오 파일 (1초짜리 무음 MP3)"""
+    import subprocess
+    from pathlib import Path
+
+    audio_path = Path("data/test/sample_audio.mp3")
+
+    # 이미 존재하면 재생성하지 않음
+    if audio_path.exists():
+        return audio_path
+
+    audio_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # FFmpeg로 1초짜리 무음 MP3 생성
+    subprocess.run([
+        "ffmpeg", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
+        "-t", "1", "-q:a", "9", "-y", str(audio_path)
+    ], capture_output=True, check=True)
+
+    return audio_path
+
+
 @pytest.fixture
 def yaml_file(sample_sections, test_data_dir, test_timestamp):
     """자동 생성되는 YAML 파일 (data/test에 저장)"""

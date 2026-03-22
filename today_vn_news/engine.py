@@ -36,19 +36,37 @@ def get_hw_encoder_config():
         
     return "libx264", [], []
 
-def synthesize_video(base_name: str, data_dir: str = "data"):
+def synthesize_video(base_name: str, data_dir: str = "data", source_path: str = None):
     """
     영상과 음성을 합성하여 최종 MP4 생성
-    - 원본 영상의 소리는 제거하고 TTS 음성만 삽입
-    - 영상의 길이를 TTS 음성 길이에 정확히 맞춤 (부족하면 루프, 길면 컷)
+
+    Args:
+        base_name: YYMMDD_HHMM (예: 260322_1230)
+        data_dir: 데이터 디렉토리
+        source_path: 소스 영상 경로 (None이면 기존 로직대로 .mov/.mp4 확인)
+
+    Returns:
+        True: 합성 성공
+
+    Raises:
+        VideoSynthesisError: 합성 실패
+
+    Notes:
+        - 원본 영상의 소리는 제거하고 TTS 음성만 삽입
+        - 영상의 길이를 TTS 음성 길이에 정확히 맞춤 (부족하면 루프, 길면 컷)
     """
     video_mov = os.path.join(data_dir, f"{base_name}.mov")
     video_mp4 = os.path.join(data_dir, f"{base_name}.mp4")
     audio_in = os.path.join(data_dir, f"{base_name}.mp3")
     video_out = os.path.join(data_dir, f"{base_name}_final.mp4")
 
-    # MOV 또는 MP4 중 존재하는 파일 선택
-    video_in = video_mov if os.path.exists(video_mov) else video_mp4
+    # source_path가 지정되면 해당 파일을 video_in으로 사용
+    if source_path is not None:
+        video_in = source_path
+        logger.info(f"지정 소스 영상 사용: {video_in}")
+    else:
+        # 기존 로직: .mov → .mp4 확인
+        video_in = video_mov if os.path.exists(video_mov) else video_mp4
     
     # 기본 이미지 경로
     default_img = "assets/default_bg.png"
