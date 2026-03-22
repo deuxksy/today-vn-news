@@ -58,6 +58,41 @@ graph TD
 | **VietnamNet 정보통신** | IT/통신 | 스크래핑 |
 | **VnExpress IT/과학** | IT/과학 | 스크래핑 |
 
+## 🎬 영상 소스 관리
+
+영상 소스는 **4단계 우선순위 체인**을 통해 자동으로 관리됩니다.
+
+### 우선순위 체인
+
+```
+1. config.yaml에 명시된 로컬 경로 (video_source)
+   ↓ (파일 없음)
+2. YAML 메타데이터의 video_source 필드
+   ↓ (파일 없음)
+3. data/YYYYMMDD/ 디렉토리 내 .mp4 파일
+   ↓ (파일 없음)
+4. assets/videos/ 디렉토리 내 .mp4 파일
+```
+
+### 최종 저장 경로
+
+확인된 영상 소스는 아래 경로로 복사됩니다:
+
+```
+data/YYYYMMDD/YYYYMMDD_HHMM_source.mp4
+```
+
+- **자동 생성**: 디렉토리가 없으면 자동 생성
+- **중복 방지**: 이미 존재하면 복사 건너뜀
+- **에러 처리**: 모든 단계 실패 시 `VideoSourceNotFoundError` 발생
+
+### config.yaml 설정 예시
+
+```yaml
+# 영상 소스 우선순위 1단계
+video_source: "/path/to/default_background.mp4"
+```
+
 ## 📂 프로젝트 구조
 
 ```
