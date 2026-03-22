@@ -10,6 +10,9 @@ from today_vn_news.translator import translate_all_sources_parallel, save_transl
 from today_vn_news.tts import yaml_to_tts, TTSEngine
 from today_vn_news.engine import synthesize_video
 from today_vn_news.uploader import upload_video
+from today_vn_news.video_source.resolver import VideoSourceResolver
+from today_vn_news.video_source.archiver import MediaArchiver
+from today_vn_news.config import VideoConfig
 
 # .env 파일 로드
 load_dotenv()
@@ -17,6 +20,76 @@ load_dotenv()
 # 로그 및 데이터 디렉토리 생성
 os.makedirs("logs", exist_ok=True)
 os.makedirs("data", exist_ok=True)
+
+
+async def process_video_pipeline(
+    yymmdd_hhmm: str,
+    data_dir: str,
+    config: VideoConfig,
+    tts_engine: TTSEngine,
+    tts_voice: str,
+    tts_language: str,
+    tts_instruct: str | None
+) -> bool:
+    """
+    영상 파이프라인 처리: 소스 해결 → 합성 → 저장 → 업로드
+
+    Args:
+        yymmdd_hhmm: YYMMDD_HHMM 형식 타임스탬프
+        data_dir: 데이터 디렉토리 경로
+        config: 비디오 설정
+        tts_engine: TTS 엔진
+        tts_voice: TTS 음성
+        tts_language: TTS 언어
+        tts_instruct: TTS 음성 스타일 설명
+
+    Returns:
+        bool: 파이프라인 성공 여부
+    """
+    resolver = VideoSourceResolver(config)
+    archiver = MediaArchiver(config)
+    source_path = None
+
+    try:
+        # 1. 영상 소스 해결 (우선순위 체인)
+        print("\n[*] 영상 소스 확인 중...")
+        source_path, is_temporary = resolver.resolve(yymmdd_hhmm)
+
+        # 2. 영상 합성 (source_path 전달)
+        print("\n[*] 영상 합성 시작...")
+        synthesize_video(
+            base_name=yymmdd_hhmm,
+            data_dir=data_dir,
+            source_path=str(source_path)
+        )
+
+        # 3. Media에 저장 (최종 영상 보존)
+        local_final = f"{data_dir}/{yymmdd_hhmm}_final.mp4"
+        if os.path.exists(local_final):
+            try:
+                print("\n[*] Media에 영상 저장 중...")
+                media_path = archiver.archive(local_final, yymmdd_hhmm)
+                print(f"[+] Media 저장 완료: {media_path}")
+            except Exception as e:
+                print(f"[!] Media 저장 실패 (로컬 유지): {e}")
+                # 저장 실패해도 로컬 파일은 있으므로 계속 진행
+
+        # 4. 유튜브 업로드
+        if os.path.exists(local_final):
+            print("\n[*] 유튜브 업로드 시작...")
+            success = upload_video(yymmdd_hhmm, data_dir)
+            return success
+        else:
+            print("\n[!] 업로드할 최종 영상이 없습니다.")
+            return False
+
+    except Exception as e:
+        print(f"\n[!] 파이프라인 오류: {e}")
+        return False
+
+    finally:
+        # 5. 임시 파일 정리 (보장)
+        resolver.cleanup_temporary()
 
 
 async def main():
@@ -101,15 +174,15 @@ async def main():
         tts_voice = tts_voice or "ko-KR-SunHiNeural"
         print(f"\n📢 TTS 엔진: Edge TTS (클라우드) - Voice: {tts_voice}")
 
+    # 비디오 설정 로딩 (YAML에서 Media 경로 등 가져오기)
+    config = VideoConfig.from_yaml()
+    print(f"\n📹 Media 경로: {config.media_mount_path}")
+
     # 기준일 설정 (ISO 형식)
     today_iso = datetime.datetime.now().strftime("%Y-%m-%d")
     today_display = datetime.datetime.now().strftime("%Y년 %m월 %d일 %H:%M")
 
     yaml_path = f"{data_dir}/{yymmdd_hhmm}.yaml"
-    mov_path = f"{data_dir}/{yymmdd_hhmm}.mov"
-    mp4_path = f"{data_dir}/{yymmdd_hhmm}.mp4"
-    mp3_path = f"{data_dir}/{yymmdd_hhmm}.mp3"
-    final_video = f"{data_dir}/{yymmdd_hhmm}_final.mp4"
 
     # 1. 스크래핑
     print("\n[*] 1단계: 뉴스 스크래핑 시작...")
@@ -179,30 +252,21 @@ async def main():
     print("\n[*] 3단계: TTS 음성 변환 시작...")
     await yaml_to_tts(yaml_path, engine=tts_engine, voice=tts_voice, language=tts_language, instruct=tts_instruct)
 
-    # 4. 영상 합성 (항상 실행)
-    default_bg = "assets/default_bg.png"
-    if (
-        os.path.exists(mov_path)
-        or os.path.exists(mp4_path)
-        or os.path.exists(default_bg)
-    ):
-        print("\n[*] 4단계: 영상 합성(FFmpeg) 시작...")
-        synthesize_video(yymmdd_hhmm, data_dir)
-    else:
-        print(
-            f"\n[!] 4단계: 베이스 영상(.mov, .mp4) 또는 기본 배경 이미지({default_bg})가 없어 합성을 건너뜁니다."
-        )
+    # 4-5. 영상 파이프라인 (소스 해결 → 합성 → 저장 → 업로드)
+    success = await process_video_pipeline(
+        yymmdd_hhmm=yymmdd_hhmm,
+        data_dir=data_dir,
+        config=config,
+        tts_engine=tts_engine,
+        tts_voice=tts_voice,
+        tts_language=tts_language,
+        tts_instruct=tts_instruct
+    )
 
-    # 5. 유튜브 업로드 (항상 실행)
-    if os.path.exists(final_video):
-        print("\n[*] 5단계: 유튜브 업로드 시작...")
-        success = upload_video(yymmdd_hhmm, data_dir)
-        if success:
-            print("\n🎉 모든 파이프라인 작업이 성공적으로 완료되었습니다!")
-        else:
-            print("\n⚠️ 유튜브 업로드 단계에서 문제가 발생했습니다.")
+    if success:
+        print("\n🎉 모든 파이프라인 작업이 성공적으로 완료되었습니다!")
     else:
-        print("\n[!] 5단계: 업로드할 최종 영상이 없어 종료합니다.")
+        print("\n⚠️ 파이프라인 작업에서 문제가 발생했습니다.")
 
     print("=" * 40)
 
