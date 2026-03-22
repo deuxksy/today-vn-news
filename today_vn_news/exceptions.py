@@ -99,3 +99,69 @@ class UploadError(TodayVnNewsError):
         >>> raise UploadError("유튜브 업로드 실패: 인증 토큰 만료")
     """
     pass
+
+
+class MediaMountError(TodayVnNewsError):
+    """
+    Media 마운트 실패 예외.
+
+    지정된 Media 경로가 존재하지 않거나 접근 불가능할 때 발생.
+
+    Attributes:
+        message: 예외 메시지
+        media_path: 마운트 실패한 Media 경로 (선택 사항)
+
+    Example:
+        >>> raise MediaMountError("Media 경로 접근 실패: /Volumes/Media")
+    """
+    pass
+
+
+class MediaCopyError(TodayVnNewsError):
+    """
+    Media 파일 복사 실패 예외.
+
+    Media에서 로컬로 소스 영상 복사 실패 시 발생.
+
+    Attributes:
+        message: 예외 메시지
+        source: 복사하려던 소스 파일 경로 (선택 사항)
+        destination: 복사 대상 경로 (선택 사항)
+
+    Example:
+        >>> raise MediaCopyError("Media 파일 복사 실패: 디스크 공간 부족")
+    """
+    pass
+
+
+class MediaArchiveError(TodayVnNewsError):
+    """
+    Media 저장 실패 예외.
+
+    최종 영상을 Media로 이동/저장 실패 시 발생.
+
+    Attributes:
+        message: 예외 메시지
+        video_path: 저장 실패한 영상 파일 경로 (선택 사항)
+        target_dir: 저장하려던 Media 대상 경로 (선택 사항)
+
+    Example:
+        >>> raise MediaArchiveError("Media 아카이빙 실패: 쓰기 권한 없음")
+    """
+    pass
+
+
+class VideoSourceError(TodayVnNewsError):
+    """
+    영상 소스 탐색 실패 예외.
+
+    모든 우선순위 체인에서 소스를 찾을 수 없을 때 발생.
+
+    Attributes:
+        message: 예외 메시지
+        searched_paths: 검색한 경로 목록 (선택 사항)
+
+    Example:
+        >>> raise VideoSourceError("영상 소스를 찾을 수 없음: 모든 경로 실패")
+    """
+    pass
