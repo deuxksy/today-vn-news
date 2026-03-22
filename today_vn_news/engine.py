@@ -2,6 +2,7 @@
 import subprocess
 import os
 import sys
+from typing import Optional
 
 from today_vn_news.logger import logger
 from today_vn_news.exceptions import VideoSynthesisError
@@ -36,7 +37,7 @@ def get_hw_encoder_config():
         
     return "libx264", [], []
 
-def synthesize_video(base_name: str, data_dir: str = "data", source_path: str = None):
+def synthesize_video(base_name: str, data_dir: str = "data", source_path: Optional[str] = None):
     """
     영상과 음성을 합성하여 최종 MP4 생성
 
@@ -62,6 +63,9 @@ def synthesize_video(base_name: str, data_dir: str = "data", source_path: str = 
 
     # source_path가 지정되면 해당 파일을 video_in으로 사용
     if source_path is not None:
+        if not os.path.exists(source_path):
+            logger.error(f"지정된 소스 영상 파일이 존재하지 않습니다: {source_path}")
+            raise VideoSynthesisError(f"지정된 소스 영상 파일이 존재하지 않습니다: {source_path}")
         video_in = source_path
         logger.info(f"지정 소스 영상 사용: {video_in}")
     else:
