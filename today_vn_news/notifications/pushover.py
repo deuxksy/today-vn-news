@@ -106,7 +106,7 @@ class PushoverNotifier:
         logger.info("Pushover 알림 전송 성공")
         return True
 
-    def _format_message(self, status: PipelineStatus) -> tuple:
+    def _format_message(self, status: PipelineStatus) -> tuple[str, str, int, str | None]:
         """메시지 포맷팅 및 우선순위 결정"""
         if status.success:
             title = "✅ 뉴스 영상 완료"
