@@ -34,8 +34,6 @@ graph TD
 | **VietnamNet 정보통신** | IT/통신 | 스크래핑 |
 | **VnExpress IT/과학** | IT/과학 | 스크래핑 |
 
-```
-
 ## 📂 프로젝트 구조
 
 ```
@@ -99,42 +97,42 @@ uv run python main.py --tts=qwen   # Qwen3-TTS 사용
 uv run python main.py --help       # 사용법 안내
 ```
 
-## 1. 수집
+## 수집
 
 베트남 뉴스 기사와 DJI 영상 수집
 - NCHMF, IQAir, 정부 기관지 등 다양한 소스에서 스크래핑
 - DJI Osmo Nano로 촬영한 로컬 영상 사용
 
-## 2. 번역
+## 번역
 
 Gemma-3-it으로 베트남어 → 한국어 번역
 - Tailscale Aperture (AI Gateway) 경유
 - 병렬 처리로 빠른 번역 속도
 
-## 3. TTS
+## TTS
 
 Edge TTS 또는 Qwen3-TTS로 음성 변환
 - Edge TTS: 클라우드 API 방식 (Microsoft, 인터넷 연결 필요)
 - Qwen3-TTS: 로컬 LLM 방식 (오프라인스, 로컬에서 직접 실행, 처리 시간 약 20분, 실패 가능성 있음)
 
-## 4. 영상 합성
+## FFmpeg
 
 FFmpeg로 음성과 영상 결합
 - TTS MP3와 NAS 영상 믹스
 - 배경 이미지 또는 로컬 영상 사용
 
-## 5. YouTube
+## YouTube
 
 유튜브에 영상 업로드
 - YouTube Data API v3 사용
 - 플레이리스트 자동 추가
 
-## 6. 아카이빙
+## 아카이빙
 
 N100 NAS에 미디어 보관
 - 최종 영상과 TTS 음성 파일 저장
 
-## 7. 알림
+## 알림
 
 PushOver로 푸시 알림 발송 (iOS, Android, Desktop)
 - 파이프라인 상태별 우선순위 부여
