@@ -13,6 +13,8 @@ from today_vn_news.uploader import upload_video
 from today_vn_news.video_source.resolver import VideoSourceResolver
 from today_vn_news.video_source.archiver import MediaArchiver
 from today_vn_news.config import VideoConfig
+from today_vn_news.notifications import PipelineStatus, ALL_STEPS, STEP_SCRAPE, STEP_TRANSLATE, STEP_TTS, STEP_VIDEO, STEP_UPLOAD, STEP_ARCHIVE
+from today_vn_news.notifications.pushover import PushoverNotifier
 
 # .env 파일 로드
 load_dotenv()
@@ -25,7 +27,8 @@ os.makedirs("data", exist_ok=True)
 async def process_video_pipeline(
     yymmdd_hhmm: str,
     data_dir: str,
-    config: VideoConfig
+    config: VideoConfig,
+    status: PipelineStatus
 ) -> bool:
     """
     영상 파이프라인 처리: 소스 해결 → 합성 → 저장 → 업로드
@@ -53,6 +56,7 @@ async def process_video_pipeline(
             data_dir=data_dir,
             source_path=str(source_path)
         )
+        status.steps[STEP_VIDEO] = True
 
         # 3. Media에 저장 (최종 영상 및 음성 보존)
         local_final = f"{data_dir}/{yymmdd_hhmm}_final.mp4"
@@ -75,6 +79,7 @@ async def process_video_pipeline(
                 print("\n[*] Media에 영상 저장 중...")
                 media_path_final = archiver.archive(local_final, yymmdd_hhmm)
                 print(f"[+] Media 저장 완료: {media_path_final}")
+                status.steps[STEP_ARCHIVE] = True
             except Exception as e:
                 print(f"[!] Media 저장 실패 (로컬 유지): {e}")
                 # 저장 실패해도 로컬 파일은 있으므로 계속 진행
@@ -89,6 +94,11 @@ async def process_video_pipeline(
                 success = upload_video(yymmdd_hhmm, data_dir, video_path=str(media_path_final))
             else:
                 success = upload_video(yymmdd_hhmm, data_dir)
+
+            if success:
+                status.steps[STEP_UPLOAD] = True
+                # TODO: YouTube URL 저장 (uploader.py에서 반환받도록 수정 필요)
+
             return success
         else:
             print("\n[!] 업로드할 최종 영상이 없습니다.")
@@ -113,6 +123,9 @@ async def main():
 
     # 데이터 디렉토리 설정
     data_dir = "data"
+
+    # 파이프라인 상태 추적
+    status = PipelineStatus()
 
     # 명령줄 인자 파싱
     if len(sys.argv) > 1:
@@ -195,87 +208,105 @@ async def main():
 
     yaml_path = f"{data_dir}/{yymmdd_hhmm}.yaml"
 
-    # 1. 스크래핑
-    print("\n[*] 1단계: 뉴스 스크래핑 시작...")
-    raw_yaml_path = f"{data_dir}/{yymmdd_hhmm}_raw.yaml"
-    scraped_data = scrape_and_save(today_iso, raw_yaml_path)
+    try:
+        # 1. 스크래핑
+        print("\n[*] 1단계: 뉴스 스크래핑 시작...")
+        raw_yaml_path = f"{data_dir}/{yymmdd_hhmm}_raw.yaml"
+        scraped_data = scrape_and_save(today_iso, raw_yaml_path)
+        status.steps[STEP_SCRAPE] = True
 
-    # 2. 번역 (비동기 병렬 처리)
-    print("\n[*] 2단계: 뉴스 번역 시작 (병렬 처리)...")
+        # 2. 번역 (비동기 병렬 처리)
+        print("\n[*] 2단계: 뉴스 번역 시작 (병렬 처리)...")
 
-    # 안전 및 기상 관제는 별도 처리
-    safety_section = None
-    if "안전 및 기상 관제" in scraped_data:
-        safety_items = []
-        for item in scraped_data["안전 및 기상 관제"]:
-            if item.get("name") == "기상":
-                condition = item.get("condition", "")
-                translated_condition = translate_weather_condition(condition)
-                temp = item.get("temp", "")
-                humidity = item.get("humidity", "")
-                content = f"{translated_condition}, 온도 {temp}, 습도 {humidity}"
-                safety_items.append({
-                    "title": f"기상 (NCHMF)",
-                    "content": content,
-                    "url": item["url"]
-                })
-            elif item.get("name") == "공기":
-                safety_items.append({
-                    "title": f"공기질 (IQAir) - AQI {item.get('aqi', '')}",
-                    "content": item["content"],
-                    "url": item["url"]
-                })
-            elif item.get("name") == "지진":
-                safety_items.append({
-                    "title": item["title"],
-                    "content": item["content"],
-                    "url": item["url"]
-                })
+        # 안전 및 기상 관제는 별도 처리
+        safety_section = None
+        if "안전 및 기상 관제" in scraped_data:
+            safety_items = []
+            for item in scraped_data["안전 및 기상 관제"]:
+                if item.get("name") == "기상":
+                    condition = item.get("condition", "")
+                    translated_condition = translate_weather_condition(condition)
+                    temp = item.get("temp", "")
+                    humidity = item.get("humidity", "")
+                    content = f"{translated_condition}, 온도 {temp}, 습도 {humidity}"
+                    safety_items.append({
+                        "title": f"기상 (NCHMF)",
+                        "content": content,
+                        "url": item["url"]
+                    })
+                elif item.get("name") == "공기":
+                    safety_items.append({
+                        "title": f"공기질 (IQAir) - AQI {item.get('aqi', '')}",
+                        "content": item["content"],
+                        "url": item["url"]
+                    })
+                elif item.get("name") == "지진":
+                    safety_items.append({
+                        "title": item["title"],
+                        "content": item["content"],
+                        "url": item["url"]
+                    })
 
-        if safety_items:
-            safety_section = {
-                "id": "1",
-                "name": "안전 및 기상 관제",
-                "priority": "P0",
-                "items": safety_items
-            }
+            if safety_items:
+                safety_section = {
+                    "id": "1",
+                    "name": "안전 및 기상 관제",
+                    "priority": "P0",
+                    "items": safety_items
+                }
 
-    # 병렬 번역 실행
-    translated_sections = await translate_all_sources_parallel(scraped_data, today_display)
+        # 병렬 번역 실행
+        translated_sections = await translate_all_sources_parallel(scraped_data, today_display)
 
-    # 안전 및 기상 관제를 맨 앞에 추가
-    if safety_section:
-        translated_sections.insert(0, safety_section)
+        # 안전 및 기상 관제를 맨 앞에 추가
+        if safety_section:
+            translated_sections.insert(0, safety_section)
 
-    # YAML 저장
-    if not translated_sections:
-        print("\n[!] 2단계: 번역된 뉴스가 없어 파이프라인을 중단합니다.")
-        sys.exit(1)
+        # YAML 저장
+        if not translated_sections:
+            print("\n[!] 2단계: 번역된 뉴스가 없어 파이프라인을 중단합니다.")
+            sys.exit(1)
 
-    yaml_data = {"sections": translated_sections}
-    if not save_translated_yaml(yaml_data, today_display, yaml_path):
-        print("\n[!] 2단계: YAML 저장 실패로 파이프라인을 중단합니다.")
-        sys.exit(1)
+        yaml_data = {"sections": translated_sections}
+        if not save_translated_yaml(yaml_data, today_display, yaml_path):
+            print("\n[!] 2단계: YAML 저장 실패로 파이프라인을 중단합니다.")
+            sys.exit(1)
 
-    print(f"\n[+] 번역 완료: {len(translated_sections)}개 섹션")
+        print(f"\n[+] 번역 완료: {len(translated_sections)}개 섹션")
+        status.steps[STEP_TRANSLATE] = True
 
-    # 3. TTS 음성 변환 (항상 실행)
-    print("\n[*] 3단계: TTS 음성 변환 시작...")
-    await yaml_to_tts(yaml_path, engine=tts_engine, voice=tts_voice, language=tts_language, instruct=tts_instruct)
+        # 3. TTS 음성 변환 (항상 실행)
+        print("\n[*] 3단계: TTS 음성 변환 시작...")
+        await yaml_to_tts(yaml_path, engine=tts_engine, voice=tts_voice, language=tts_language, instruct=tts_instruct)
+        status.steps[STEP_TTS] = True
 
-    # 4-5. 영상 파이프라인 (소스 해결 → 합성 → 저장 → 업로드)
-    success = await process_video_pipeline(
-        yymmdd_hhmm=yymmdd_hhmm,
-        data_dir=data_dir,
-        config=config
-    )
+        # 4-5. 영상 파이프라인 (소스 해결 → 합성 → 저장 → 업로드)
+        success = await process_video_pipeline(
+            yymmdd_hhmm=yymmdd_hhmm,
+            data_dir=data_dir,
+            config=config,
+            status=status  # PipelineStatus 전달
+        )
 
-    if success:
-        print("\n🎉 모든 파이프라인 작업이 성공적으로 완료되었습니다!")
-    else:
-        print("\n⚠️ 파이프라인 작업에서 문제가 발생했습니다.")
+        if success:
+            print("\n🎉 모든 파이프라인 작업이 성공적으로 완료되었습니다!")
+        else:
+            print("\n⚠️ 파이프라인 작업에서 문제가 발생했습니다.")
 
-    print("=" * 40)
+    except Exception as e:
+        # 현재 실행 중인 단계 확인 후 에러 기록
+        current_step = next((s for s in ALL_STEPS if s not in status.steps), "unknown")
+        status.errors[current_step] = str(e)
+        print(f"\n[!] 파이프라인 오류: {e}")
+
+    finally:
+        # 7단계: Pushover 알림 (무조건 실행)
+        notifier = PushoverNotifier.from_env_or_none()
+        if notifier:
+            print("\n[*] 알림 전송 중...")
+            notifier.send_notification(status)
+
+        print("=" * 40)
 
 
 if __name__ == "__main__":
