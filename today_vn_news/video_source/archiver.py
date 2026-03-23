@@ -15,27 +15,27 @@ class MediaArchiver:
 
     def archive(self, local_final: str, base_name: str) -> Path:
         """
-        로컬 _final.mp4를 Media/{{YYMM}}/{{DD}}_{{hhmm}}.mp4로 복사
+        로컬 _final.mp4를 Media/{{YYMM}}/{{DD}}_{{hhmm}}.mp4로 이동
 
         Args:
             local_final: 로컬 _final.mp4 경로
-            base_name: YYMMDD_HHMM (예: 260322_1230)
+            base_name: YYYYMMDD_HHMM (예: 20260323_2053)
 
         Returns:
             media_path: Media 저장소 경로
 
         Raises:
-            MediaArchiveError: 복사 실패 시
+            MediaArchiveError: 이동 실패 시
         """
-        # base_name 포맷 검증: YYMMDD_HHMM
+        # base_name 포맷 검증: YYYYMMDD_HHMM
         parts = base_name.split('_')
-        if len(parts) != 2 or len(parts[0]) != 6 or len(parts[1]) != 4:
-            raise ValueError(f"잘못된 base_name 포맷: {base_name} (YYMMDD_HHMM 형식 필요)")
+        if len(parts) != 2 or len(parts[0]) != 8 or len(parts[1]) != 4:
+            raise ValueError(f"잘못된 base_name 포맷: {base_name} (YYYYMMDD_HHMM 형식 필요)")
 
-        yymmdd = parts[0]  # YYMMDD
-        hhmm = parts[1]    # HHMM
-        dd = yymmdd[4:6]   # DD (YYMMDD에서 인덱스 4-5)
-        yymm = yymmdd[:4]  # YYMM
+        yyyymmdd = parts[0]  # YYYYMMDD
+        hhmm = parts[1]      # HHMM
+        dd = yyyymmdd[6:8]  # DD (YYYYMMDD에서 인덱스 6-7)
+        yymm = yyyymmdd[2:6] # YYMM (YYYY에서 YY 추출)
 
         # 대상 경로: Media/{{YYMM}}/{{DD}}_{{hhmm}}.mp4
         media_base = Path(self.config.media_mount_path)
@@ -47,39 +47,39 @@ class MediaArchiver:
             # 폴더 생성
             archive_dir.mkdir(parents=True, exist_ok=True)
 
-            # 복사 (shutil.copy2로 원본 보존)
-            shutil.copy2(local_final, media_path)
-            logger.info(f"Media 저장 완료: {media_path}")
+            # 이동 (shutil.move로 원본 삭제)
+            shutil.move(local_final, media_path)
+            logger.info(f"Media 이동 완료: {media_path}")
             return media_path
 
         except FileNotFoundError:
             raise MediaArchiveError(f"Media 경로 없음 또는 접근 불가: {media_base}")
         except OSError as e:
-            raise MediaArchiveError(f"Media 복사 실패: {e}")
+            raise MediaArchiveError(f"Media 이동 실패: {e}")
 
     def archive_audio(self, local_audio: str, base_name: str) -> Path:
         """
-        로컬 MP3를 Media/{{YYMM}}/{{DD}}_{{hhmm}}.mp3로 복사
+        로컬 MP3를 Media/{{YYMM}}/{{DD}}_{{hhmm}}.mp3로 이동
 
         Args:
             local_audio: 로컬 MP3 경로
-            base_name: YYMMDD_HHMM (예: 260322_1230)
+            base_name: YYYYMMDD_HHMM (예: 20260323_2053)
 
         Returns:
             media_path: Media 저장소 경로
 
         Raises:
-            MediaArchiveError: 복사 실패 시
+            MediaArchiveError: 이동 실패 시
         """
-        # base_name 포맷 검증: YYMMDD_HHMM
+        # base_name 포맷 검증: YYYYMMDD_HHMM
         parts = base_name.split('_')
-        if len(parts) != 2 or len(parts[0]) != 6 or len(parts[1]) != 4:
-            raise ValueError(f"잘못된 base_name 포맷: {base_name} (YYMMDD_HHMM 형식 필요)")
+        if len(parts) != 2 or len(parts[0]) != 8 or len(parts[1]) != 4:
+            raise ValueError(f"잘못된 base_name 포맷: {base_name} (YYYYMMDD_HHMM 형식 필요)")
 
-        yymmdd = parts[0]  # YYMMDD
-        hhmm = parts[1]    # HHMM
-        dd = yymmdd[4:6]   # DD
-        yymm = yymmdd[:4]  # YYMM
+        yyyymmdd = parts[0]  # YYYYMMDD
+        hhmm = parts[1]      # HHMM
+        dd = yyyymmdd[6:8]  # DD (YYYYMMDD에서 인덱스 6-7)
+        yymm = yyyymmdd[2:6] # YYMM (YYYY에서 YY 추출)
 
         # 대상 경로: Media/{{YYMM}}/{{DD}}_{{hhmm}}.mp3
         media_base = Path(self.config.media_mount_path)
@@ -95,12 +95,12 @@ class MediaArchiver:
             if not Path(local_audio).exists():
                 raise MediaArchiveError(f"MP3 파일 존재하지 않음: {local_audio}")
 
-            # 복사 (shutil.copy2로 원본 보존)
-            shutil.copy2(local_audio, media_path)
-            logger.info(f"Media MP3 저장 완료: {media_path}")
+            # 이동 (shutil.move로 원본 삭제)
+            shutil.move(local_audio, media_path)
+            logger.info(f"Media MP3 이동 완료: {media_path}")
             return media_path
 
         except FileNotFoundError:
             raise MediaArchiveError(f"Media 경로 없음 또는 접근 불가: {media_base}")
         except OSError as e:
-            raise MediaArchiveError(f"Media MP3 복사 실패: {e}")
+            raise MediaArchiveError(f"Media MP3 이동 실패: {e}")

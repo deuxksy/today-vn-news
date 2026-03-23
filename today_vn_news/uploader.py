@@ -109,15 +109,21 @@ def add_video_to_playlist(youtube, video_id, playlist_id):
         logger.error(f"재생 목록 추가 중 오류 발생: {str(e)}")
         raise UploadError(f"재생 목록 추가 중 오류 발생: {str(e)}")
 
-def upload_video(yymmdd: str, data_dir: str = "data"):
+def upload_video(yymmdd: str, data_dir: str = "data", video_path: str = None):
     """
     영상을 유튜브에 업로드
 
     Args:
         yymmdd: 타임스탬프 (YYYYMMDD_HHMM 형식)
         data_dir: 데이터 디렉토리 경로
+        video_path: 업로드할 영상 경로 (None이면 data_dir에서 자동 탐색)
     """
-    file_path = os.path.join(data_dir, f"{yymmdd}_final.mp4")
+    # video_path가 지정되면 해당 경로 사용, 아니면 기본 경로 사용
+    if video_path is not None:
+        file_path = video_path
+    else:
+        file_path = os.path.join(data_dir, f"{yymmdd}_final.mp4")
+
     if not os.path.exists(file_path):
         logger.error(f"업로드할 파일을 찾을 수 없습니다: {file_path}")
         raise UploadError(f"업로드할 파일을 찾을 수 없습니다: {file_path}")

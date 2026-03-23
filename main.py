@@ -57,6 +57,7 @@ async def process_video_pipeline(
         # 3. Media에 저장 (최종 영상 및 음성 보존)
         local_final = f"{data_dir}/{yymmdd_hhmm}_final.mp4"
         local_audio = f"{data_dir}/{yymmdd_hhmm}.mp3"
+        media_path_final = None  # Media 이동 후 경로 저장
 
         # 3-1. MP3 음성 저장
         if os.path.exists(local_audio):
@@ -72,16 +73,22 @@ async def process_video_pipeline(
         if os.path.exists(local_final):
             try:
                 print("\n[*] Media에 영상 저장 중...")
-                media_path = archiver.archive(local_final, yymmdd_hhmm)
-                print(f"[+] Media 저장 완료: {media_path}")
+                media_path_final = archiver.archive(local_final, yymmdd_hhmm)
+                print(f"[+] Media 저장 완료: {media_path_final}")
             except Exception as e:
                 print(f"[!] Media 저장 실패 (로컬 유지): {e}")
                 # 저장 실패해도 로컬 파일은 있으므로 계속 진행
 
-        # 4. 유튜브 업로드
-        if os.path.exists(local_final):
+        # 4. 유튜브 업로드 (Media 이동 후 경로 우선, 없으면 로컬 파일 확인)
+        upload_target = media_path_final if media_path_final and os.path.exists(media_path_final) else local_final
+
+        if os.path.exists(upload_target):
             print("\n[*] 유튜브 업로드 시작...")
-            success = upload_video(yymmdd_hhmm, data_dir)
+            # Media 경로인 경우 data_dir 대신 Media 파일 직접 업로드
+            if media_path_final and os.path.exists(media_path_final):
+                success = upload_video(yymmdd_hhmm, data_dir, video_path=str(media_path_final))
+            else:
+                success = upload_video(yymmdd_hhmm, data_dir)
             return success
         else:
             print("\n[!] 업로드할 최종 영상이 없습니다.")
