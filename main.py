@@ -13,7 +13,16 @@ from today_vn_news.uploader import upload_video
 from today_vn_news.video_source.resolver import VideoSourceResolver
 from today_vn_news.video_source.archiver import MediaArchiver
 from today_vn_news.config import VideoConfig
-from today_vn_news.notifications import PipelineStatus, ALL_STEPS, STEP_SCRAPE, STEP_TRANSLATE, STEP_TTS, STEP_VIDEO, STEP_UPLOAD, STEP_ARCHIVE
+from today_vn_news.notifications.pipeline_status import (
+    PipelineStatus,
+    ALL_STEPS,
+    STEP_SCRAPE,
+    STEP_TRANSLATE,
+    STEP_TTS,
+    STEP_VIDEO,
+    STEP_UPLOAD,
+    STEP_ARCHIVE,
+)
 from today_vn_news.notifications.pushover import PushoverNotifier
 
 # .env 파일 로드
@@ -265,12 +274,12 @@ async def main():
         # YAML 저장
         if not translated_sections:
             print("\n[!] 2단계: 번역된 뉴스가 없어 파이프라인을 중단합니다.")
-            sys.exit(1)
+            raise RuntimeError("번역된 뉴스가 없습니다")
 
         yaml_data = {"sections": translated_sections}
         if not save_translated_yaml(yaml_data, today_display, yaml_path):
             print("\n[!] 2단계: YAML 저장 실패로 파이프라인을 중단합니다.")
-            sys.exit(1)
+            raise RuntimeError("YAML 저장 실패")
 
         print(f"\n[+] 번역 완료: {len(translated_sections)}개 섹션")
         status.steps[STEP_TRANSLATE] = True
@@ -294,8 +303,18 @@ async def main():
             print("\n⚠️ 파이프라인 작업에서 문제가 발생했습니다.")
 
     except Exception as e:
-        # 현재 실행 중인 단계 확인 후 에러 기록
-        current_step = next((s for s in ALL_STEPS if s not in status.steps), "unknown")
+        # 마지막 완료된 단계 다음이 현재 실패 단계
+        current_step = "unknown"
+        completed = status.completed_steps
+        if completed:
+            # 완료된 단계 중 가장 마지막 단계 찾기
+            last_completed_idx = ALL_STEPS.index(completed[-1])
+            if last_completed_idx + 1 < len(ALL_STEPS):
+                current_step = ALL_STEPS[last_completed_idx + 1]
+        else:
+            # 완료된 단계가 없으면 첫 번째 단계가 실패
+            current_step = ALL_STEPS[0] if ALL_STEPS else "unknown"
+
         status.errors[current_step] = str(e)
         print(f"\n[!] 파이프라인 오류: {e}")
 
