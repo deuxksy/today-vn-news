@@ -4,13 +4,13 @@
 프로젝트로 생성된 뉴스 영상들을 유튜브에서 확인하세요:
 [👉 유튜브 플레이리스트](https://www.youtube.com/playlist?list=PLzMxB6D1eypIA_JNasD_MNISMEUtMbHvK)
 
-1. 수집
-2. 번역
-3. TTSB
-4. FFmpeg
-5. youtube
-6. Archive
-7. 알림
+1. 수집.
+2. 번역.
+3. TTS.
+4. FFmpeg.
+5. Youtube.
+6. Archive.
+7. 알림.
 
 ## 🏗️ 서비스 아키텍처
 
