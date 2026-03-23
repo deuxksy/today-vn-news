@@ -1,7 +1,6 @@
 # 오늘의 베트남 뉴스 (today-vn-news)
 
-베트남 뉴스 자동화 파이프라인 입니다.
-프로젝트로 생성된 뉴스 영상들을 유튜브에서 확인하세요:
+베트남 뉴스 자동화 파이프라인 입니다. 뉴스 영상들을 유튜브에서 확인하세요.
 [👉 유튜브 플레이리스트](https://www.youtube.com/playlist?list=PLzMxB6D1eypIA_JNasD_MNISMEUtMbHvK)
 
 1. 수집.
