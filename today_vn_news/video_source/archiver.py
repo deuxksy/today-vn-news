@@ -19,7 +19,7 @@ class MediaArchiver:
 
         Args:
             local_final: 로컬 _final.mp4 경로
-            base_name: YYYYMMDD_HHMM (예: 20260323_2053)
+            base_name: YYMMDD (예: 260319)
 
         Returns:
             media_path: Media 저장소 경로
@@ -27,15 +27,16 @@ class MediaArchiver:
         Raises:
             MediaArchiveError: 이동 실패 시
         """
-        # base_name 포맷 검증: YYYYMMDD_HHMM
-        parts = base_name.split('_')
-        if len(parts) != 2 or len(parts[0]) != 8 or len(parts[1]) != 4:
-            raise ValueError(f"잘못된 base_name 포맷: {base_name} (YYYYMMDD_HHMM 형식 필요)")
+        # base_name 포맷: YYMMDD (6자리)
+        # 현재 시간에서 hhmm 추출
+        from datetime import datetime
+        hhmm = datetime.now().strftime("%H%M")
 
-        yyyymmdd = parts[0]  # YYYYMMDD
-        hhmm = parts[1]      # HHMM
-        dd = yyyymmdd[6:8]  # DD (YYYYMMDD에서 인덱스 6-7)
-        yymm = yyyymmdd[2:6] # YYMM (YYYY에서 YY 추출)
+        if len(base_name) != 6:
+            raise ValueError(f"잘못된 base_name 포맷: {base_name} (YYMMDD 6자리 필요)")
+
+        yymm = base_name[:4]  # YYMM
+        dd = base_name[4:6]    # DD
 
         # 대상 경로: Media/{{YYMM}}/{{DD}}_{{hhmm}}.mp4
         media_base = Path(self.config.media_mount_path)
@@ -63,7 +64,7 @@ class MediaArchiver:
 
         Args:
             local_audio: 로컬 MP3 경로
-            base_name: YYYYMMDD_HHMM (예: 20260323_2053)
+            base_name: YYMMDD (예: 260319)
 
         Returns:
             media_path: Media 저장소 경로
@@ -71,15 +72,16 @@ class MediaArchiver:
         Raises:
             MediaArchiveError: 이동 실패 시
         """
-        # base_name 포맷 검증: YYYYMMDD_HHMM
-        parts = base_name.split('_')
-        if len(parts) != 2 or len(parts[0]) != 8 or len(parts[1]) != 4:
-            raise ValueError(f"잘못된 base_name 포맷: {base_name} (YYYYMMDD_HHMM 형식 필요)")
+        # base_name 포맷: YYMMDD (6자리)
+        # 현재 시간에서 hhmm 추출
+        from datetime import datetime
+        hhmm = datetime.now().strftime("%H%M")
 
-        yyyymmdd = parts[0]  # YYYYMMDD
-        hhmm = parts[1]      # HHMM
-        dd = yyyymmdd[6:8]  # DD (YYYYMMDD에서 인덱스 6-7)
-        yymm = yyyymmdd[2:6] # YYMM (YYYY에서 YY 추출)
+        if len(base_name) != 6:
+            raise ValueError(f"잘못된 base_name 포맷: {base_name} (YYMMDD 6자리 필요)")
+
+        yymm = base_name[:4]  # YYMM
+        dd = base_name[4:6]    # DD
 
         # 대상 경로: Media/{{YYMM}}/{{DD}}_{{hhmm}}.mp3
         media_base = Path(self.config.media_mount_path)
