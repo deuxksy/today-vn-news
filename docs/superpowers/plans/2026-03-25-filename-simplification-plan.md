@@ -636,13 +636,8 @@ async def process_video_pipeline(
                 else:
                     print(f"[+] archiver 완료 파일 존재 ({yymmdd}.archiver.done), 건너뜀기")
                     # 완료 파일만 존재하고 Media 경로를 모르는 경우
-                    # archiver.archive()를 다시 호출하여 경로 확인
-                    try:
-                        media_path_final = archiver.resolve_existing(yymmdd)
-                        print(f"[+] Media 경로 확인 완료: {media_path_final}")
-                    except Exception:
-                        # Media 경로 확인 실패 시 로컬 파일 사용 계속
-                        pass
+                    # Media 경로 형식: {YYMM}/{DD}_{hhmm}.mp4 (구체 파일명은 알 수 없으므로 None 처리)
+                    media_path_final = None
                     status.steps[STEP_ARCHIVE] = True
             except Exception as e:
                 print(f"[!] Media 저장 실패 (로컬 유지): {e}")
