@@ -104,3 +104,24 @@ class MediaArchiver:
             raise MediaArchiveError(f"Media 경로 없음 또는 접근 불가: {media_base}")
         except OSError as e:
             raise MediaArchiveError(f"Media MP3 이동 실패: {e}")
+
+    def resolve_existing(self, yymmdd: str) -> str | None:
+        """
+        기존 Media 경로 확인
+
+        Args:
+            yymmdd: YYMMDD 타임스탬프 (6자리)
+
+        Returns:
+            Media 파일 경로 또는 None
+        """
+        # Media/{YYMM}/ 경로 확인
+        yymm = yymmdd[:4]  # YYMM
+        media_dir = Path(self.config.media_mount_path) / yymm
+
+        if media_dir.exists():
+            # 해당 월의 MP4 파일 찾기
+            mp4_files = list(media_dir.glob("*.mp4"))
+            if mp4_files:
+                return str(mp4_files[0])
+        return None

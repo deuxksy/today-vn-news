@@ -81,28 +81,46 @@ async def process_video_pipeline(
 
             # 3-2. MP4 영상 저장 (이미 완료되어 있을 가능성 높음)
             if os.path.exists(local_final):
-                try:
-                    print("\n[*] Media에 영상 저장 중...")
-                    media_path_final = archiver.archive(local_final, yymmdd)
-                    print(f"[+] Media 저장 완료: {media_path_final}")
-                    status.steps[STEP_ARCHIVE] = True
-                except Exception as e:
-                    print(f"[!] Media 저장 실패 (로컬 유지): {e}")
+                # 완료된 단계 건너뛰기
+                if not exists_done(yymmdd, "archiver"):
+                    try:
+                        print("\n[*] Media에 영상 저장 중...")
+                        media_path_final = archiver.archive(local_final, yymmdd)
+                        print(f"[+] Media 저장 완료: {media_path_final}")
+                        create_done(yymmdd, "archiver")
+                        status.steps[STEP_ARCHIVE] = True
+                    except Exception as e:
+                        print(f"[!] Media 저장 실패 (로컬 유지): {e}")
+                        # 저장 실패해도 로컬 파일은 있으므로 계속 진행
+                else:
+                    print("[+] Media 아카이빙 완료 파일이 존재합니다. 건너뜁니다.")
+                    # 기존 Media 경로 로드 (resolver의 latest.mp4 확인)
+                    media_path_final = archiver.resolve_existing(yymmdd)
+                    if media_path_final:
+                        print(f"[+] 기존 Media 경로 확인: {media_path_final}")
 
             # 4. 유튜브 업로드 (Media 이동 후 경로 우선, 없으면 로컬 파일 확인)
             upload_target = media_path_final if media_path_final and os.path.exists(media_path_final) else local_final
 
             if os.path.exists(upload_target):
                 print("\n[*] 유튜브 업로드 시작...")
-                # Media 경로인 경우 data_dir 대신 Media 파일 직접 업로드
-                if media_path_final and os.path.exists(media_path_final):
-                    success = upload_video(yymmdd, data_dir, video_path=str(media_path_final))
-                else:
-                    success = upload_video(yymmdd, data_dir)
 
-                if success:
+                # 완료된 단계 건너뛰기
+                if not exists_done(yymmdd, "uploader"):
+                    # Media 경로인 경우 data_dir 대신 Media 파일 직접 업로드
+                    if media_path_final and os.path.exists(media_path_final):
+                        success = upload_video(yymmdd, data_dir, video_path=str(media_path_final))
+                    else:
+                        success = upload_video(yymmdd, data_dir)
+
+                    if success:
+                        create_done(yymmdd, "uploader")
+                        status.steps[STEP_UPLOAD] = True
+                        # TODO: YouTube URL 저장 (uploader.py에서 반환받도록 수정 필요)
+                else:
+                    print("[+] 5단계: 유튜브 업로드 완료 파일이 존재합니다. 건너뜁니다.")
+                    success = True  # 이미 업로드된 것으로 간주
                     status.steps[STEP_UPLOAD] = True
-                    # TODO: YouTube URL 저장 (uploader.py에서 반환받도록 수정 필요)
 
                 return success
             else:
@@ -143,29 +161,46 @@ async def process_video_pipeline(
 
             # 3-2. MP4 영상 저장
             if os.path.exists(local_final):
-                try:
-                    print("\n[*] Media에 영상 저장 중...")
-                    media_path_final = archiver.archive(local_final, yymmdd)
-                    print(f"[+] Media 저장 완료: {media_path_final}")
-                    status.steps[STEP_ARCHIVE] = True
-                except Exception as e:
-                    print(f"[!] Media 저장 실패 (로컬 유지): {e}")
-                    # 저장 실패해도 로컬 파일은 있으므로 계속 진행
+                # 완료된 단계 건너뛰기
+                if not exists_done(yymmdd, "archiver"):
+                    try:
+                        print("\n[*] Media에 영상 저장 중...")
+                        media_path_final = archiver.archive(local_final, yymmdd)
+                        print(f"[+] Media 저장 완료: {media_path_final}")
+                        create_done(yymmdd, "archiver")
+                        status.steps[STEP_ARCHIVE] = True
+                    except Exception as e:
+                        print(f"[!] Media 저장 실패 (로컬 유지): {e}")
+                        # 저장 실패해도 로컬 파일은 있으므로 계속 진행
+                else:
+                    print("[+] Media 아카이빙 완료 파일이 존재합니다. 건너뜁니다.")
+                    # 기존 Media 경로 로드 (resolver의 latest.mp4 확인)
+                    media_path_final = archiver.resolve_existing(yymmdd)
+                    if media_path_final:
+                        print(f"[+] 기존 Media 경로 확인: {media_path_final}")
 
             # 4. 유튜브 업로드 (Media 이동 후 경로 우선, 없으면 로컬 파일 확인)
             upload_target = media_path_final if media_path_final and os.path.exists(media_path_final) else local_final
 
             if os.path.exists(upload_target):
                 print("\n[*] 유튜브 업로드 시작...")
-                # Media 경로인 경우 data_dir 대신 Media 파일 직접 업로드
-                if media_path_final and os.path.exists(media_path_final):
-                    success = upload_video(yymmdd, data_dir, video_path=str(media_path_final))
-                else:
-                    success = upload_video(yymmdd, data_dir)
 
-                if success:
+                # 완료된 단계 건너뛰기
+                if not exists_done(yymmdd, "uploader"):
+                    # Media 경로인 경우 data_dir 대신 Media 파일 직접 업로드
+                    if media_path_final and os.path.exists(media_path_final):
+                        success = upload_video(yymmdd, data_dir, video_path=str(media_path_final))
+                    else:
+                        success = upload_video(yymmdd, data_dir)
+
+                    if success:
+                        create_done(yymmdd, "uploader")
+                        status.steps[STEP_UPLOAD] = True
+                        # TODO: YouTube URL 저장 (uploader.py에서 반환받도록 수정 필요)
+                else:
+                    print("[+] 5단계: 유튜브 업로드 완료 파일이 존재합니다. 건너뜁니다.")
+                    success = True  # 이미 업로드된 것으로 간주
                     status.steps[STEP_UPLOAD] = True
-                    # TODO: YouTube URL 저장 (uploader.py에서 반환받도록 수정 필요)
 
                 return success
             else:
