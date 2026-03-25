@@ -34,7 +34,7 @@ class VideoSourceResolver:
         """우선순위에 따라 영상 소스 반환
 
         Args:
-            base_name: YYMMDD (예: 260325) 또는 YYMMDD_HHMM (예: 260322_1230)
+            base_name: YYMMDD 형식 (예: 260325)
 
         Returns:
             (source_path, is_temporary_copy)
