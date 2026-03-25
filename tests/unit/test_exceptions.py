@@ -5,7 +5,7 @@
 """
 
 import pytest
-from today_vn_news.exceptions import TodayVnNewsError
+from today_vn_news.exceptions import TodayVnNewsError, PipelineRestartError
 
 
 def test_media_exceptions_exist():
@@ -36,3 +36,10 @@ def test_media_exceptions_exist():
     assert isinstance(err2, TodayVnNewsError)
     assert isinstance(err3, TodayVnNewsError)
     assert isinstance(err4, TodayVnNewsError)
+
+
+def test_pipeline_restart_error():
+    """PipelineRestartError should be instantiable with message"""
+    error = PipelineRestartError("선행 단계가 완료되지 않았습니다")
+    assert str(error) == "선행 단계가 완료되지 않았습니다"
+    assert isinstance(error, TodayVnNewsError)

@@ -165,3 +165,20 @@ class VideoSourceError(TodayVnNewsError):
         >>> raise VideoSourceError("영상 소스를 찾을 수 없음: 모든 경로 실패")
     """
     pass
+
+
+class PipelineRestartError(TodayVnNewsError):
+    """
+    파이프라인 재시작 필요 예외.
+
+    선행 단계의 완료 파일(.done)이 누락된 경우 발생합니다.
+    사용자가 관련 파일을 삭제하고 처음부터 다시 실행해야 합니다.
+
+    Attributes:
+        message: 예외 메시지
+        missing_stage: 완료 파일이 누락된 선행 단계 (선택 사항)
+
+    Example:
+        >>> raise PipelineRestartError("선행 단계가 완료되지 않았습니다")
+    """
+    pass
