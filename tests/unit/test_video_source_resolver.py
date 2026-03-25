@@ -188,3 +188,47 @@ def test_resolve_media_missing_skips_to_local(tmp_path):
     source_path, is_temp = resolver.resolve("260322_1230")
     assert is_temp is False
     assert "260322_1230.mov" == source_path.name
+
+
+def test_extract_yymmdd_from_new_format(tmp_path):
+    """YYMMDD 형식(6자리) base_name에서 Media 파일 정상 매칭"""
+    # 새로운 YYMMDD 형식 (6자리)
+    media_dir = tmp_path / "Media"
+    media_dir.mkdir()
+    (media_dir / "260325.mp4").touch()
+
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    config = VideoConfig(
+        media_mount_path=str(media_dir),
+        local_data_dir=str(data_dir)
+    )
+    resolver = VideoSourceResolver(config)
+
+    # YYMMDD 형식으로 resolve
+    source_path, is_temp = resolver.resolve("260325")
+    assert is_temp is True
+    assert source_path.exists()
+
+
+def test_extract_yymmdd_backward_compatible(tmp_path):
+    """기존 YYMMDD_HHMM 형식(10자리)과의 호환성 유지"""
+    # 기존 형식도 지원해야 함 (backward compatibility)
+    media_dir = tmp_path / "Media"
+    media_dir.mkdir()
+    (media_dir / "260325.mp4").touch()
+
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    config = VideoConfig(
+        media_mount_path=str(media_dir),
+        local_data_dir=str(data_dir)
+    )
+    resolver = VideoSourceResolver(config)
+
+    # YYMMDD_HHMM 형식으로도 동일한 Media 파일을 찾을 수 있어야 함
+    source_path, is_temp = resolver.resolve("260325_1200")
+    assert is_temp is True
+    assert source_path.exists()

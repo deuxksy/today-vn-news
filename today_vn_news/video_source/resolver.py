@@ -34,7 +34,7 @@ class VideoSourceResolver:
         """우선순위에 따라 영상 소스 반환
 
         Args:
-            base_name: YYMMDD_HHMM (예: 260322_1230)
+            base_name: YYMMDD (예: 260325) 또는 YYMMDD_HHMM (예: 260322_1230)
 
         Returns:
             (source_path, is_temporary_copy)
@@ -45,7 +45,11 @@ class VideoSourceResolver:
             VideoSourceError: 모든 소스 실패 시
         """
         # base_name에서 YYMMDD 추출 (Media/{{YYMMDD}}.mp4용)
-        yymmdd = base_name[:6]  # YYMMDDHHMM에서 앞 6자
+        # 새로운 형식: YYMMDD (6자리), 기존 형식: YYMMDD_HHMM (10자리)
+        if len(base_name) == 6:
+            yymmdd = base_name  # YYMMDD (6자리)
+        else:
+            yymmdd = base_name[:6]  # YYMMDDHHMM에서 앞 6자 (기존 호환)
 
         # 1. Media/{{YYMMDD}}.mp4 확인
         media_source = Path(self.config.media_mount_path) / f"{yymmdd}.mp4"
