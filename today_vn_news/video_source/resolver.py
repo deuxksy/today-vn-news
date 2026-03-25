@@ -45,11 +45,8 @@ class VideoSourceResolver:
             VideoSourceError: 모든 소스 실패 시
         """
         # base_name에서 YYMMDD 추출 (Media/{{YYMMDD}}.mp4용)
-        # 새로운 형식: YYMMDD (6자리), 기존 형식: YYMMDD_HHMM (10자리)
-        if len(base_name) == 6:
-            yymmdd = base_name  # YYMMDD (6자리)
-        else:
-            yymmdd = base_name[:6]  # YYMMDDHHMM에서 앞 6자 (기존 호환)
+        # base_name은 이미 YYMMDD 형식 (6자리)
+        yymmdd = base_name
 
         # 1. Media/{{YYMMDD}}.mp4 확인
         media_source = Path(self.config.media_mount_path) / f"{yymmdd}.mp4"
