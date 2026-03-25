@@ -114,12 +114,13 @@ def assert_exists_done(yymmdd: str, required_module: str) -> None:
 
 | 모듈 | 수정 내용 | 영향도 |
 |:---|:---|:---|
-| **main.py** | 타임스탬프 파싱, 건너뛰기 로직 추가 | 🔴 높음 |
+| **main.py** | 타임스탬프 파싱(기본값 현재 시각 YYMMDD), 건너뛰기 로직 추가 | 🔴 높음 |
 | **today_vn_news/timestamp.py** | 신규 생성 (유틸리티 함수) | 🔴 높음 |
-| **video_source/resolver.py** | `base_name[:6]`으로 YYMMDD 추출 로직 확인 | 🟡 낮음 |
-| **engine.py** | `synthesize_video(base_name)` 인자 처리 확인 | 🟡 낮음 |
+| **video_source/resolver.py** | `base_name[:6]` → `base_name` 로직 수정 (YYMMDD 추출) | 🔴 높음 |
+| **engine.py** | `synthesize_video(base_name)` 인자 YYMMDD 사용 확인 | 🟡 낮음 |
 | **translator.py** | YAML 파일명 처리 확인 | 🟡 낮음 |
 | **tts/__init__.py** | MP3 파일명 처리 확인 | 🟡 낮음 |
+| **video_source/archiver.py** | Media 파일명 매핑 로직 검증 | 🟡 낮음 |
 | **notifications/pipeline_status.py** | 단계명 상수 업데이트 | 🟢 낮음 |
 
 ### 신규 유틸리티 모듈
@@ -178,7 +179,8 @@ def validate_yymmdd(timestamp: str) -> bool:
 ### 커스텀 예외 정의
 
 ```python
-class PipelineRestartError(Exception):
+# today_vn_news/exceptions.py (기존 파일에 추가)
+class PipelineRestartError(TodayVnNewsError):
     """파이프라인 재시작 필요 예외"""
     pass
 ```
@@ -287,9 +289,32 @@ python main.py 260319
 python main.py                    # 오늘 날짜 (YYMMDD)
 ```
 
+### main.py 수정 필요 (명령줄 인자 없을 때 기본값)
+
+```python
+# 변경 전 (main.py ~179행)
+yymmdd_hhmm = datetime.datetime.now().strftime("%Y%m%d_%H%M")
+
+# 변경 후
+yymmdd = datetime.datetime.now().strftime("%y%m%d")
+```
+
 ---
 
-## 9. 영향 받는 설정 파일
+## 9. 영향 받는 설정 파일 및 모듈
+
+### video_source/archiver.py 검증 필요
+
+`archiver.py`에서 Media 저장 시 파일명 매핑 로직을 확인해야 합니다:
+
+**Media 경로**: `Media/{YYMM}/{DD}_{hhmm}.mp4`
+**파이프라인 산출물**: `data/{YYMMDD}_final.mp4`
+
+**질문**: `archiver.py`에서 `260319_final.mp4`를 어떤 Media 경로로 저장하는지 확인 필요합니다.
+
+### config.yaml
+
+Media 파일명 형식(`{YYMM}/{DD}_{hhmm}.mp4`)은 변경하지 않고 유지됩니다.
 
 ### video_source/resolver.py 확인
 
@@ -299,6 +324,22 @@ python main.py                    # 오늘 날짜 (YYMMDD)
 # resolver.py 기존 코드 (유지)
 yymmdd = base_name[:6]  # YYMMDDHHMM에서 앞 6자
 media_source = Path(self.config.media_mount_path) / f"{yymmdd}.mp4"
+```
+
+### video_source/resolver.py 수정
+
+파일명이 `YYMMDD` 6자리로 변경되므로, resolver.py의 YYMMDD 추출 로직도 수정해야 합니다:
+
+**수정 전:**
+```python
+# resolver.py 기존 코드
+yymmdd = base_name[:6]  # YYMMDDHHMM에서 앞 6자
+```
+
+**수정 후:**
+```python
+# resolver.py 수정 코드
+yymmdd = base_name  # 이미 YYMMDD 형식 (6자리)
 ```
 
 ### config.yaml
@@ -316,46 +357,67 @@ video:
 
 ---
 
-## 10. 하루 여러 번 실행 시나리오
+## 10. 하루 여러 번 실행 정책 (중요)
 
-### 가정: 하루에 한 번만 실행
+### 제약사항: 하루에 한 번만 실행
 
-파일명이 `YYMMDD`로 단순화되므로, 하루에 여러 번 실행 시:
+**가정**: 하루에 오직 한 번만 실행합니다.
 
-1. **매번 덮어쓰기**: 기존 `260319.yaml`, `260319.mp3` 등을 덮어씀움
-2. **완료 파일 갱신**: `260319.scraper.done` 등도 갱신
+### 동작
 
-**결과**: 가장 최신 실행 결과만 보존됨
+같은 날짜(`260319`)로 여러 번 실행 시:
 
-### 만약 하루에 여러 버전 필요 시
+1. **기존 파일 덮어쓰기**: `260319.yaml`, `260319.mp3` 등 기존 파일 덮어씀움
+2. **완료 파일 갱신**: `260319.scraper.done` 등 타임스탬프 갱신
 
-요구가 있다면 다음과 같이 확장 가능:
+**결과**: 가장 최신 실행 결과만 보존됨, 이전 실행 결과는 손실
 
-```python
-# 옵션: 버전 번호 부여
-python main.py 260319_v1    # 첫 번째 실행
-python main.py 260319_v2    # 두 번째 실행
-```
+### 주의사항
 
-하지만 현재 요구사항에는 포함되지 않음.
+하루에 여러 번 실행할 필요성이 있다면(예: 오전 수정, 오후 재실행), 이는 **별도의 기능**으로 설계되어야 합니다. 현재 요구사항에는 포함되지 않습니다.
 
 ---
 
-## 11. 기존 파일 마이그레이션 (선택 사항)
+## 11. 기존 파일 마이그레이션 (선택 사항, 주의 필요)
 
 기존 `20260323_1300_*` 파일들을 `260323_*`로 변환하는 스크립트:
 
 ```bash
-# migration.sh
 #!/bin/bash
-for file in data/20*_*.yaml data/20*_raw.yaml data/20*.mp3 data/20*_final.mp4; do
+# migration.sh - 사용 전 data/ 디렉토리 백업 필수!
+
+cd data || exit 1
+
+for file in 20*_raw.yaml 20*.yaml 20*.mp3 20*_final.mp4; do
     # 20260319_1955_raw.yaml → 260319_raw.yaml
-    new_name=$(echo "$file" | sed -E 's/data\/20[0-9]{2}([0-9]{2})([0-9]{2})_[0-9]{4}/data\/\2\3/')
-    mv "$file" "$new_name"
+    if [[ $file =~ ^20[0-9]{2}([0-9]{2})([0-9]{2})_[0-9]{4} ]]; then
+        new_name="${BASH_REMATCH[1]}${BASH_REMATCH[2]}${BASH_REMATCH[3]}_${BASH_REMATCH[4]}_${BASH_REMATCH[5]}"
+        new_name="${new_name:2:8}"  # 앞 2자리(20) 제외 → 260319_1955
+        new_name_yymmdd=$(echo "$new_name" | cut -d'_' -f1 | sed 's/^20//')  # 260319_1955 → 260319
+
+        # raw.yaml → yymmdd_raw.yaml
+        if [[ $new_name_yymmdd =~ ^(.*)_raw\.yaml$ ]]; then
+            base="${BASH_REMATCH[1]}"
+            mv "$file" "${base}_raw.yaml"
+        elif [[ $new_name_yymmdd =~ ^(.*)\.yaml$ ]]; then
+            base="${BASH_REMATCH[1]}"
+            mv "$file" "${base}.yaml"
+        elif [[ $new_name_yymmdd =~ ^(.*)_final\.mp4$ ]]; then
+            base="${BASH_REMATCH[1]}"
+            mv "$file" "${base}_final.mp4"
+        elif [[ $new_name_yymmdd =~ ^(.*)\.mp3$ ]]; then
+            base="${BASH_REMATCH[1]}"
+            mv "$file" "${base}.mp3"
+        fi
+    fi
 done
 ```
 
-**주의**: 이 스크립트는 기존 파일을 덮어쓸 위험이 있으니 신중하게 사용해야 합니다.
+**주의사항**:
+- 이 스크립트는 **data/ 디렉토리 내부**에서 실행한다고 가정합니다.
+- **반드시 백업 후 실행**: `cp -r data data_backup`
+- 같은 날짜의 다른 시간대 파일(`20260319_1200_*`, `20260319_1955_*`)가 있을 경우 나중에 처리된 파일이 먼저 덮어씌워집니다.
+- 사용자 책임 하에 실행 필요합니다.
 
 ---
 
