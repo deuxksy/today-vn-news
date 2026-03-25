@@ -7,11 +7,11 @@
 
 ```mermaid
 graph TD
-    SCRAPE[기사 수집<br/>scraper.py] -->|20260319_1955_raw.yaml| TRANSLATE[번역<br/>translator.py]
-    TRANSLATE -->|20260319_1955.yaml| TTS[TTS<br/>tts/__init__.py]
-    TTS -->|20260319_1955.mp3| FFMPEG[FFmpeg<br/>engine.py]
+    SCRAPE[기사 수집<br/>scraper.py] -->|260319_raw.yaml| TRANSLATE[번역<br/>translator.py]
+    TRANSLATE -->|260319.yaml| TTS[TTS<br/>tts/__init__.py]
+    TTS -->|260319.mp3| FFMPEG[FFmpeg<br/>engine.py]
 
-    VIDEO[영상 수집<br/>수동] -->|20260319_1955.mp4| NAS[NAS<br/>video_source/resolver.py<br/>video_source/archiver.py]
+    VIDEO[영상 수집<br/>수동] -->|260319.mp4| NAS[NAS<br/>video_source/resolver.py<br/>video_source/archiver.py]
     NAS -->|latest.mp4| FFMPEG
 
     FFMPEG --> YOUTUBE[YouTube<br/>uploader.py]
@@ -92,7 +92,7 @@ uv sync
 
 # 3. 실행
 uv run python main.py              # 현재 시간, Edge TTS 사용 (기본)
-uv run python main.py 20260210     # 특정 날짜, Edge TTS 사용 (기본)
+uv run python main.py 260210       # 특정 날짜, Edge TTS 사용 (기본)
 uv run python main.py --tts=qwen   # Qwen3-TTS 사용
 uv run python main.py --help       # 사용법 안내
 ```
