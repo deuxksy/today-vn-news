@@ -610,3 +610,27 @@ def translate_and_save(scraped_data: Dict, date_str: str, output_path: str) -> b
     return save_translated_yaml(
         {"sections": translated_sections}, date_str, output_path
     )
+
+
+def load_yaml(yaml_path: str) -> list:
+    """
+    YAML 파일에서 번역된 섹션 로드
+
+    Args:
+        yaml_path: YAML 파일 경로
+
+    Returns:
+        번역된 섹션 리스트
+    """
+    import yaml
+
+    try:
+        with open(yaml_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+            return data.get("sections", [])
+    except FileNotFoundError:
+        logger.error(f"YAML 파일을 찾을 수 없습니다: {yaml_path}")
+        raise
+    except yaml.YAMLError as e:
+        logger.error(f"YAML 파싱 오류: {e}")
+        raise
