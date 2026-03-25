@@ -5,8 +5,12 @@ import os
 import sys
 from dotenv import load_dotenv
 from today_vn_news.scraper import scrape_and_save
-from today_vn_news.translator import translate_and_save
-from today_vn_news.translator import translate_all_sources_parallel, save_translated_yaml, translate_weather_condition
+from today_vn_news.translator import (
+    translate_and_save,
+    translate_all_sources_parallel,
+    save_translated_yaml,
+    translate_weather_condition,
+)
 from today_vn_news.tts import yaml_to_tts, TTSEngine
 from today_vn_news.engine import synthesize_video
 from today_vn_news.uploader import upload_video

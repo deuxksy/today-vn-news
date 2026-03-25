@@ -106,8 +106,7 @@ class MediaArchiver:
             raise MediaArchiveError(f"Media MP3 이동 실패: {e}")
 
     def resolve_existing(self, yymmdd: str) -> str | None:
-        """
-        기존 Media 경로 확인
+        """YYMMDD에 해당하는 Media 경로 확인
 
         Args:
             yymmdd: YYMMDD 타임스탬프 (6자리)
@@ -115,13 +114,16 @@ class MediaArchiver:
         Returns:
             Media 파일 경로 또는 None
         """
-        # Media/{YYMM}/ 경로 확인
         yymm = yymmdd[:4]  # YYMM
+        dd = yymmdd[4:6]   # DD
+
         media_dir = Path(self.config.media_mount_path) / yymm
 
         if media_dir.exists():
-            # 해당 월의 MP4 파일 찾기
-            mp4_files = list(media_dir.glob("*.mp4"))
+            # 해당 일(DD)로 시작하는 MP4 파일 찾기
+            pattern = f"{dd}_*.mp4"
+            mp4_files = list(media_dir.glob(pattern))
             if mp4_files:
-                return str(mp4_files[0])
+                # 시간순 정렬 후 가장 최신 파일 반환
+                return str(sorted(mp4_files)[-1])
         return None
