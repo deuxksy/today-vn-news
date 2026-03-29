@@ -1,11 +1,42 @@
 #!/usr/bin/env python3
 import subprocess
 import os
+import shutil
 import sys
 from typing import Optional
 
 from today_vn_news.logger import logger
 from today_vn_news.exceptions import VideoSynthesisError
+
+
+# 이미지 확장자 (FFmpeg 루프 입력 + libx264 필요)
+_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.bmp', '.gif', '.webp', '.tiff'}
+
+
+def _is_image_file(path: str) -> bool:
+    return os.path.splitext(path)[1].lower() in _IMAGE_EXTENSIONS
+
+
+# cron 환경 등 제한된 PATH에서도 ffmpeg를 찾기 위한 대체 경로
+_FFMPEG_FALLBACK_PATHS = [
+    os.path.expanduser("~/.nix-profile/bin/ffmpeg"),
+    "/opt/homebrew/bin/ffmpeg",
+    "/usr/local/bin/ffmpeg",
+]
+
+
+def _find_ffmpeg() -> str:
+    """PATH 및 대체 경로에서 ffmpeg 바이너리를 탐색"""
+    # 1) 시스템 PATH에서 탐색
+    found = shutil.which("ffmpeg")
+    if found:
+        return found
+    # 2) 대체 경로에서 탐색 (cron 등 PATH가 최소화된 환경 대응)
+    for path in _FFMPEG_FALLBACK_PATHS:
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            logger.info(f"대체 경로에서 ffmpeg 발견: {path}")
+            return path
+    return "ffmpeg"  # 최후의 수단: subprocess가 FileNotFoundError를 발생시키도록 위임
 
 """
 영상 합성 엔진 (FFmpeg Wrapper)
@@ -26,7 +57,7 @@ def get_hw_encoder_config():
     try:
         # Check for renderD128 (common DRI render node)
         if os.path.exists("/dev/dri/renderD128"):
-            res = subprocess.run(["ffmpeg", "-encoders"], capture_output=True, text=True)
+            res = subprocess.run([_find_ffmpeg(), "-encoders"], capture_output=True, text=True)
             if "h264_vaapi" in res.stdout:
                 # Steam Deck / Standard Linux VAAPI
                 # Input args: -vaapi_device /dev/dri/renderD128
@@ -71,7 +102,7 @@ def synthesize_video(base_name: str, data_dir: str = "data", source_path: Option
     else:
         # 기존 로직: .mov → .mp4 확인
         video_in = video_mov if os.path.exists(video_mov) else video_mp4
-    
+
     # 기본 이미지 경로
     default_img = "assets/default_bg.png"
     using_image = False
@@ -85,18 +116,33 @@ def synthesize_video(base_name: str, data_dir: str = "data", source_path: Option
             logger.error(f"영상이나 기본 이미지({default_img})가 없습니다. 합성이 불가능합니다.")
             raise VideoSynthesisError(f"영상이나 기본 이미지({default_img})가 없습니다.")
 
+    # source_path가 이미지 파일(PNG 등)인 경우에도 using_image = True
+    if not using_image and _is_image_file(video_in):
+        using_image = True
+        logger.info(f"이미지 파일 입력 감지: {video_in}")
+
     if not os.path.exists(audio_in):
         logger.error(f"필수 오디오 파일이 없습니다: {audio_in}")
         raise VideoSynthesisError(f"필수 오디오 파일이 없습니다: {audio_in}")
 
+    ffmpeg_bin = _find_ffmpeg()
     encoder, input_flags, output_flags = get_hw_encoder_config()
+
+    # 이미지 루프 입력에서는 하드웨어 인코더(h264_videotoolbox 등)가
+    # 초기화 단계에서 교착(hang)할 수 있으므로 libx264 사용
+    if using_image and encoder != "libx264":
+        logger.info(f"이미지 입력이므로 {encoder} 대신 libx264 사용 (하드웨어 인코더 호환성)")
+        encoder = "libx264"
+        input_flags = []
+        output_flags = []
+
     logger.info(f"영상 합성 시작: {base_name}")
-    logger.info(f"사용 인코더: {encoder}")
+    logger.info(f"FFmpeg 경로: {ffmpeg_bin}, 인코더: {encoder}")
     if input_flags:
         logger.info(f"가속 옵션: {' '.join(input_flags)} {' '.join(output_flags)}")
-    
+
     # FFmpeg 명령어 구성
-    cmd = ["ffmpeg", "-y"]
+    cmd = [ffmpeg_bin, "-y"]
     cmd.extend(input_flags)
     
     if using_image:
