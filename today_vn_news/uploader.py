@@ -9,6 +9,7 @@ from googleapiclient.http import MediaFileUpload
 
 from today_vn_news.logger import logger
 from today_vn_news.exceptions import UploadError
+from today_vn_news.config import YOUTUBE_PLAYLIST_ID
 
 """
 YouTube 업로드 모듈 (YouTube Data API v3 Wrapper)
@@ -24,7 +25,7 @@ SCOPES = [
 ]
 
 # 기본 재생 목록 ID (오늘의 베트남 뉴스)
-DEFAULT_PLAYLIST_ID = "PLzMxB6D1eypIA_JNasD_MNISMEUtMbHvK"
+DEFAULT_PLAYLIST_ID = YOUTUBE_PLAYLIST_ID
 
 def get_authenticated_service(data_dir: str = "data"):
     """

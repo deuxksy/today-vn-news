@@ -6,6 +6,7 @@ import requests
 from today_vn_news.logger import logger
 from today_vn_news.notifications.pipeline_status import PipelineStatus
 from today_vn_news.notifications import STEP_SCRAPE
+from today_vn_news.config import YOUTUBE_PLAYLIST_ID
 
 # Emergency priority 기본값
 DEFAULT_RETRY = 300      # 5분마다 재시도
@@ -17,7 +18,7 @@ MAX_TITLE_LENGTH = 250
 MAX_URL_LENGTH = 512
 
 # YouTube 재생목록 URL (업로드 URL fallback)
-PLAYLIST_URL = "https://www.youtube.com/playlist?list=PLzMxB6D1eypIA_JNasD_MNISMEUtMbHvK"
+PLAYLIST_URL = f"https://www.youtube.com/playlist?list={YOUTUBE_PLAYLIST_ID}"
 
 
 class PushoverNotifier:
