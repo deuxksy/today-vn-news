@@ -188,7 +188,8 @@ def upload_video(yymmdd: str, data_dir: str = "data", video_path: str = None):
         except UploadError:
             logger.warning("재생 목록 추가 실패 (업로드는 완료됨)")
 
-    return True
+    # video_id 반환 (알림 URL 생성용)
+    return video_id
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

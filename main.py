@@ -113,20 +113,20 @@ async def process_video_pipeline(
                 if not exists_done(yymmdd, "uploader"):
                     # Media 경로인 경우 data_dir 대신 Media 파일 직접 업로드
                     if media_path_final and os.path.exists(media_path_final):
-                        success = upload_video(yymmdd, data_dir, video_path=str(media_path_final))
+                        video_id = upload_video(yymmdd, data_dir, video_path=str(media_path_final))
                     else:
-                        success = upload_video(yymmdd, data_dir)
+                        video_id = upload_video(yymmdd, data_dir)
 
-                    if success:
+                    if video_id:
                         create_done(yymmdd, "uploader")
                         status.steps[STEP_UPLOAD] = True
-                        # TODO: YouTube URL 저장 (uploader.py에서 반환받도록 수정 필요)
+                        status.youtube_url = f"https://youtube.com/watch?v={video_id}"
                 else:
                     print("[+] 5단계: 유튜브 업로드 완료 파일이 존재합니다. 건너뜁니다.")
-                    success = True  # 이미 업로드된 것으로 간주
+                    video_id = True  # 이미 업로드된 것으로 간주
                     status.steps[STEP_UPLOAD] = True
 
-                return success
+                return video_id
             else:
                 print("\n[!] 업로드할 최종 영상이 없습니다.")
                 return False
@@ -193,20 +193,20 @@ async def process_video_pipeline(
                 if not exists_done(yymmdd, "uploader"):
                     # Media 경로인 경우 data_dir 대신 Media 파일 직접 업로드
                     if media_path_final and os.path.exists(media_path_final):
-                        success = upload_video(yymmdd, data_dir, video_path=str(media_path_final))
+                        video_id = upload_video(yymmdd, data_dir, video_path=str(media_path_final))
                     else:
-                        success = upload_video(yymmdd, data_dir)
+                        video_id = upload_video(yymmdd, data_dir)
 
-                    if success:
+                    if video_id:
                         create_done(yymmdd, "uploader")
                         status.steps[STEP_UPLOAD] = True
-                        # TODO: YouTube URL 저장 (uploader.py에서 반환받도록 수정 필요)
+                        status.youtube_url = f"https://youtube.com/watch?v={video_id}"
                 else:
                     print("[+] 5단계: 유튜브 업로드 완료 파일이 존재합니다. 건너뜁니다.")
-                    success = True  # 이미 업로드된 것으로 간주
+                    video_id = True  # 이미 업로드된 것으로 간주
                     status.steps[STEP_UPLOAD] = True
 
-                return success
+                return video_id
             else:
                 print("\n[!] 업로드할 최종 영상이 없습니다.")
                 return False

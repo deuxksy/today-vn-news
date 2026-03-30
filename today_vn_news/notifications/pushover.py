@@ -16,6 +16,9 @@ MAX_MESSAGE_LENGTH = 1024
 MAX_TITLE_LENGTH = 250
 MAX_URL_LENGTH = 512
 
+# YouTube 재생목록 URL (업로드 URL fallback)
+PLAYLIST_URL = "https://www.youtube.com/playlist?list=PLzMxB6D1eypIA_JNasD_MNISMEUtMbHvK"
+
 
 class PushoverNotifier:
     """Pushover 알림 전송"""
@@ -112,7 +115,7 @@ class PushoverNotifier:
             title = "✅ 뉴스 영상 완료"
             message = f"완료 단계: {', '.join(status.completed_steps)}"
             priority = 0
-            url = status.youtube_url
+            url = status.youtube_url or PLAYLIST_URL
 
         elif status.completed_steps:
             failed = status.failed_step
