@@ -1,3 +1,4 @@
+[![Daily VN News Pipeline](https://github.com/deuxksy/today-vn-news/actions/workflows/daily-pipeline.yml/badge.svg?branch=main)](https://github.com/deuxksy/today-vn-news/actions/workflows/daily-pipeline.yml)
 # 오늘의 베트남 뉴스 (today-vn-news)
 
 베트남 뉴스 자동화 파이프라인 입니다. [📺유튜브에서 확인하세요](https://www.youtube.com/playlist?list=PLzMxB6D1eypIA_JNasD_MNISMEUtMbHvK)
