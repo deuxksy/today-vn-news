@@ -1,0 +1,35 @@
+name: Daily VN News Pipeline
+
+on:
+  schedule:
+    - cron: '0 5 * * *'        # UTC 05:00 = VNT 12:00
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'YYMMDD (비워두면 오늘 날짜)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  pipeline:
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /Users/crong/git/today-vn-news
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Pipeline
+        run: |
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            DATE="${{ github.event.inputs.date }}"
+          else
+            DATE=$(TZ=Asia/Ho_Chi_Minh date +%y%m%d)
+          fi
+          echo "=== Pipeline Start: $DATE ==="
+          uv run python main.py "$DATE"

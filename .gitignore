@@ -103,5 +103,9 @@ out/
 htmlcov/
 *.cover
 
-
+bin
 .omc/
+externals/
+
+# === GitHub Actions Self-hosted Runner ===
+actions-runner/
