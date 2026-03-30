@@ -9,17 +9,28 @@
 
 ```mermaid
 graph TD
-    SCRAPE[기사 수집<br/>scraper.py] -->|260319_raw.yaml| TRANSLATE[번역<br/>translator.py]
-    TRANSLATE -->|260319.yaml| TTS[TTS<br/>tts/__init__.py]
-    TTS -->|260319.mp3| FFMPEG[FFmpeg<br/>engine.py]
+    SCHEDULE[GitHub Actions<br/>Self-hosted Runner<br/>Mac Mini] -->|cron: VNT 12:00| SCRAPE
+    SCRAPE[기사 수집<br/>scraper.py] -->|YYMMDD_raw.yaml| TRANSLATE[번역<br/>translator.py]
+    TRANSLATE -->|YYMMDD.yaml| TTS[TTS<br/>tts/__init__.py]
+    TTS -->|YYMMDD.mp3| FFMPEG[FFmpeg<br/>engine.py]
 
-    VIDEO[영상 수집<br/>수동] -->|260319.mp4| NAS[NAS<br/>video_source/resolver.py<br/>video_source/archiver.py]
+    VIDEO[영상 수집<br/>수동] -->|YYMMDD.mp4| NAS[NAS<br/>video_source/resolver.py<br/>video_source/archiver.py]
     NAS -->|latest.mp4| FFMPEG
 
     FFMPEG --> YOUTUBE[YouTube<br/>uploader.py]
     YOUTUBE --> NAS
     NAS --> ALERT[알림<br/>notifications/pushover.py]
 ```
+
+## ⚙️ CI/CD
+
+| 항목 | 내용 |
+|:---|:---|
+| **Runner** | GitHub Self-hosted Runner (Mac Mini) |
+| **스케줄** | 매일 VNT 12:00 (UTC 05:00) 자동 실행 |
+| **수동 실행** | GitHub Actions → Run workflow (YYMMDD 날짜 지정 가능) |
+| **Workflow** | `.github/workflows/daily-pipeline.yml` |
+| **환경** | uv + 기존 프로젝트 경로 그대로 사용 |
 
 ## 🎯 데이터 소스
 
@@ -66,6 +77,8 @@ today-vn-news/
 │   ├── exceptions.py                    # 커스텀 예외
 │   ├── logger.py                       # 로깅 설정
 │   └── retry.py                        # 재시도 처리
+├── .github/workflows/                  # GitHub Actions CI/CD
+│   └── daily-pipeline.yml               # 일일 파이프라인 워크플로우
 ├── tests/                              # pytest 테스트
 │   ├── conftest.py                     # 공통 fixture
 │   ├── unit/                           # 단위 테스트
