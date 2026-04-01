@@ -2,6 +2,7 @@
 import os
 import sys
 import pickle
+from datetime import datetime, timezone
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
@@ -52,13 +53,21 @@ def get_authenticated_service(data_dir: str = "data"):
 
     # 토큰이 없거나 만료된 경우 인증 수행
     if not credentials or not credentials.valid:
-        if credentials and credentials.expired and credentials.refresh_token:
-            try:
-                credentials.refresh(Request())
-                logger.info("토큰 갱신 완료")
-            except Exception as e:
-                logger.error(f"토큰 갱신 실패: {e}")
-                raise UploadError(f"토큰 갱신 실패: {e}")
+        if credentials and credentials.refresh_token:
+            # 만료 1일 전 선제 갱신으로 7일 토큰 만료 방지
+            should_refresh = credentials.expired
+            if not should_refresh and credentials.expiry:
+                remaining = (credentials.expiry - datetime.now(timezone.utc)).total_seconds()
+                if remaining < 172800:  # 48시간 이내 만료 예정
+                    should_refresh = True
+                    logger.info(f"토큰 만료 {remaining/3600:.1f}시간 남아 선제 갱신")
+            if should_refresh:
+                try:
+                    credentials.refresh(Request())
+                    logger.info("토큰 갱신 완료")
+                except Exception as e:
+                    logger.error(f"토큰 갱신 실패: {e}")
+                    raise UploadError(f"토큰 갱신 실패: {e}")
         else:
             if not os.path.exists(secrets_path):
                 logger.error(f"'{secrets_path}' 파일이 필요합니다. Google Cloud Console에서 다운로드하여 루트에 배치해 주세요.")
