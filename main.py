@@ -121,6 +121,8 @@ async def process_video_pipeline(
                         create_done(yymmdd, "uploader")
                         status.steps[STEP_UPLOAD] = True
                         status.youtube_url = f"https://youtube.com/watch?v={video_id}"
+                    else:
+                        status.errors[STEP_UPLOAD] = "업로드 실패: video_id 없음"
                 else:
                     print("[+] 5단계: 유튜브 업로드 완료 파일이 존재합니다. 건너뜁니다.")
                     video_id = True  # 이미 업로드된 것으로 간주
@@ -129,6 +131,7 @@ async def process_video_pipeline(
                 return video_id
             else:
                 print("\n[!] 업로드할 최종 영상이 없습니다.")
+                status.errors[STEP_UPLOAD] = "업로드할 최종 영상이 없습니다"
                 return False
         else:
             # 선행 단계 확인
@@ -201,6 +204,8 @@ async def process_video_pipeline(
                         create_done(yymmdd, "uploader")
                         status.steps[STEP_UPLOAD] = True
                         status.youtube_url = f"https://youtube.com/watch?v={video_id}"
+                    else:
+                        status.errors[STEP_UPLOAD] = "업로드 실패: video_id 없음"
                 else:
                     print("[+] 5단계: 유튜브 업로드 완료 파일이 존재합니다. 건너뜁니다.")
                     video_id = True  # 이미 업로드된 것으로 간주
@@ -209,10 +214,12 @@ async def process_video_pipeline(
                 return video_id
             else:
                 print("\n[!] 업로드할 최종 영상이 없습니다.")
+                status.errors[STEP_UPLOAD] = "업로드할 최종 영상이 없습니다"
                 return False
 
     except Exception as e:
         print(f"\n[!] 파이프라인 오류: {e}")
+        status.errors[STEP_UPLOAD] = str(e)
         return False
 
     finally:
