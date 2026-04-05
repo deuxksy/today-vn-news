@@ -6,7 +6,7 @@
 
 ### 1.1 데이터 원천
 
-- 웹 스크래핑을 수행하여 원천 데이터를 YAML 파일로 저장하고, Gemma-3-27b-it을 통해 한국어 번역 및 요약한다.
+- 웹 스크래핑을 수행하여 원천 데이터를 YAML 파일로 저장하고, Gemma-4-31b-it을 통해 한국어 번역 및 요약한다.
 
 ### 1.2 주요 안전 및 기상정보 소스
 
@@ -31,14 +31,14 @@
 ### 3.1 핵심 기술 스택
 
 - **Language:** Python 3.13+
-- **Translation:** Gemma-3-27b-it (google-genai SDK)
+- **Translation:** Gemma-4-31b-it (google-genai SDK)
 - **TTS:** edge-tts
 - **Video:** FFmpeg (VideoToolbox/VAAPI 하드웨어 가속)
 
 ## 4. 데이터 수집 (scraper.py) 세부 명세
 
 **핵심 변경점 (v0.6.2)**: 모든 데이터는 **YAML** 구조로 저장되며, `scraper.py`는 `google-genai` SDK를 사용합니다.
-모든 데이터는 Gemma-3-27b-it을 통해 정제되며, **TTS 최적화(특수문자/영어 제거)**를 거쳐 `data/` 폴더의 YAML 파일에 저장 됩니다.
+모든 데이터는 Gemma-4-31b-it을 통해 정제되며, **TTS 최적화(특수문자/영어 제거)**를 거쳐 `data/` 폴더의 YAML 파일에 저장 됩니다.
 
 ### 4.1 안전 및 기상 관제
 

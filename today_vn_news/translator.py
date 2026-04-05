@@ -30,7 +30,7 @@ def get_genai_client() -> tuple[genai.Client, str]:
 
     if base_url:
         # Aperture 사용 (Tailscale 인증)
-        model = os.getenv("APERTURE_MODEL", "gemma-3-12b-it")
+        model = os.getenv("APERTURE_MODEL", "gemma-4-31b-it")
         client = genai.Client(
             api_key="ts",  # Tailscale 인증용 더미 키
             http_options={"base_url": base_url}
@@ -42,7 +42,7 @@ def get_genai_client() -> tuple[genai.Client, str]:
     if not api_key:
         raise TranslationError("API key not configured")
 
-    model = os.getenv("GEMINI_MODEL", "gemma-3-27b-it")
+    model = os.getenv("GEMINI_MODEL", "gemma-4-31b-it")
     client = genai.Client(api_key=api_key)
     return client, model
 
