@@ -76,7 +76,8 @@ today-vn-news/
 │   │   └── pushover.py                  # Pushover 알림
 │   ├── exceptions.py                    # 커스텀 예외
 │   ├── logger.py                       # 로깅 설정
-│   └── retry.py                        # 재시도 처리
+│   ├── retry.py                        # 재시도 처리
+│   └── timestamp.py                    # 타임스탬프 유틸
 ├── .github/workflows/                  # GitHub Actions CI/CD
 │   └── daily-pipeline.yml               # 일일 파이프라인 워크플로우
 ├── tests/                              # pytest 테스트
@@ -120,9 +121,10 @@ uv run python main.py --help       # 사용법 안내
 
 ## 번역
 
-Gemma-3-it으로 베트남어 → 한국어 번역
-- Tailscale Aperture (AI Gateway) 경유
+Gemma-4-31b-it (Dense)로 베트남어 → 한국어 번역 (v0.7.0~)
+- **Aperture (Tailscale AI Gateway)** 우선, Fallback으로 **Google AI Studio** 사용
 - 병렬 처리로 빠른 번역 속도
+- API 타임아웃 180초 (MoE 모델 대비 안정성 확보)
 
 ## TTS
 
