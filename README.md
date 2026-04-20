@@ -144,6 +144,26 @@ FFmpeg로 음성과 영상 결합
 - YouTube Data API v3 사용
 - 플레이리스트 자동 추가
 
+### OAuth2 인증
+
+`client_secrets.json`이 프로젝트 루트에 필요합니다 ([Google Cloud Console](https://console.cloud.google.com/apis/credentials)에서 다운로드).
+
+```bash
+# 최초 인증 또는 토큰 만료 시
+.venv/bin/python -c "
+import os, pickle
+from google_auth_oauthlib.flow import InstalledAppFlow
+SCOPES = ['https://www.googleapis.com/auth/youtube.upload','https://www.googleapis.com/auth/youtube']
+flow = InstalledAppFlow.from_client_secrets_file('client_secrets.json', SCOPES)
+creds = flow.run_local_server(port=58080, open_browser=True)
+os.makedirs('data', exist_ok=True)
+with open('data/token.pickle','wb') as f: pickle.dump(creds,f)
+print('인증 완료!')
+"
+```
+
+브라우저가 열리면 Google 계정으로 로그인하면 됩니다. 인증 정보는 `data/token.pickle`에 저장됩니다.
+
 ## 아카이빙
 
 N100 NAS에 미디어 보관
